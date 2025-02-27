@@ -155,7 +155,7 @@ const enemyStats = {
 
 const enemyGroupsTemplate = {
   easy: ["goblins", "kobolds", "wolves", "fairy folk", "brigands"],
-  medium: ["skeletons", "ghouls", "shadows", "zombies", "bat_swarm"],
+  medium: ["skeletons", "ghouls", "shadows", "zombies", "bat swarm"],
   hard: ["dragons", "wyverns", "demons", "hydras", "liches"],
 };
 

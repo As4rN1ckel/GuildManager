@@ -1,73 +1,72 @@
-// UI management
-const heroRoster = document.getElementById("hero-roster");
-const formationGrid = document.getElementById("formation-grid");
-const dungeonList = document.getElementById("dungeon-list");
-const recruitBtn = document.getElementById("recruit-btn");
-const embarkBtn = document.getElementById("embark-btn");
-const continueBtn = document.getElementById("continue-btn");
-const backToGuildBtn = document.getElementById("back-to-guild-btn");
-const goldAmount = document.getElementById("gold-amount");
-const dayCount = document.getElementById("day-count");
-const mainScreen = document.getElementById("main-screen");
-const battleScreen = document.getElementById("battle-screen");
-const resultsScreen = document.getElementById("results-screen");
-const shopScreen = document.getElementById("shop-screen");
-const staticTooltip = document.getElementById("static-tooltip");
-const shopTooltip = document.getElementById("shop-tooltip");
+const heroRoster = document.getElementById('hero-roster');
+const formationGrid = document.getElementById('formation-grid');
+const dungeonList = document.getElementById('dungeon-list');
+const recruitBtn = document.getElementById('recruit-btn');
+const embarkBtn = document.getElementById('embark-btn');
+const continueBtn = document.getElementById('continue-btn');
+const backToGuildBtn = document.getElementById('back-to-guild-btn');
+const goldAmount = document.getElementById('gold-amount');
+const dayCount = document.getElementById('day-count');
+const mainScreen = document.getElementById('main-screen');
+const battleScreen = document.getElementById('battle-screen');
+const resultsScreen = document.getElementById('results-screen');
+const shopScreen = document.getElementById('shop-screen');
+const staticTooltip = document.getElementById('static-tooltip');
+const shopTooltip = document.getElementById('shop-tooltip');
 
-const saveBtn = document.createElement("button");
-saveBtn.textContent = "SAVE";
-saveBtn.className = "primary";
+const saveBtn = document.createElement('button');
+saveBtn.textContent = 'SAVE';
+saveBtn.className = 'primary';
 
-const loadBtn = document.createElement("button");
-loadBtn.textContent = "LOAD";
-loadBtn.className = "primary";
+const loadBtn = document.createElement('button');
+loadBtn.textContent = 'LOAD';
+loadBtn.className = 'primary';
 
-const resetBtn = document.createElement("button");
-resetBtn.textContent = "RESET";
-resetBtn.className = "primary";
+const resetBtn = document.createElement('button');
+resetBtn.textContent = 'RESET';
+resetBtn.className = 'primary';
 
 function initGame() {
-  for (let i = 0; i < 9; i++) {
-    const slot = document.createElement("div");
-    slot.className = "formation-slot";
-    slot.dataset.index = i;
-    slot.addEventListener("click", () => handleFormationSlotClick(i));
-    formationGrid.appendChild(slot);
-  }
-
-  dungeons.forEach((dungeon) => {
-    const dungeonEl = document.createElement("div");
-    dungeonEl.className = "dungeon";
-    dungeonEl.innerHTML = `
+    for (let i = 0; i < 9; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'formation-slot';
+        slot.dataset.index = i;
+        slot.addEventListener('click', () => handleFormationSlotClick(i));
+        formationGrid.appendChild(slot);
+    }
+    
+    dungeons.forEach(dungeon => {
+        const dungeonEl = document.createElement('div');
+        dungeonEl.className = 'dungeon';
+        dungeonEl.innerHTML = `
             <div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div>
             <div>Reward: ${dungeon.reward} Gold</div>
         `;
-    dungeonEl.addEventListener("click", () => selectDungeon(dungeon));
-    dungeonList.appendChild(dungeonEl);
-  });
-
-  recruitBtn.addEventListener("click", showShopScreen);
-  embarkBtn.addEventListener("click", startMission);
-  speedBtn.addEventListener("click", toggleBattleSpeed);
-  continueBtn.addEventListener("click", returnToGuild);
-  backToGuildBtn.addEventListener("click", hideShopScreen);
-
-  // Add save/load/reset buttons to the header
-  const headerButtons = document.createElement("div");
-  headerButtons.style.display = "flex";
-  headerButtons.style.gap = "10px";
-  headerButtons.appendChild(saveBtn);
-  headerButtons.appendChild(loadBtn);
-  headerButtons.appendChild(resetBtn);
-  document.querySelector(".header").appendChild(headerButtons);
-
-  // Add event listeners for save/load/reset
-  saveBtn.addEventListener("click", saveGame);
-  loadBtn.addEventListener("click", loadGame);
-  resetBtn.addEventListener("click", resetGame);
-
-  updateUI();
+        dungeonEl.addEventListener('click', () => selectDungeon(dungeon));
+        dungeonList.appendChild(dungeonEl);
+    });
+    
+    recruitBtn.addEventListener('click', showShopScreen);
+    embarkBtn.addEventListener('click', startMission);
+    speedBtn.addEventListener('click', toggleBattleSpeed);
+    continueBtn.addEventListener('click', returnToGuild);
+    backToGuildBtn.addEventListener('click', hideShopScreen);
+    
+    // Add save/load/reset buttons to the header
+    const headerButtons = document.createElement('div');
+    headerButtons.style.display = 'flex';
+    headerButtons.style.gap = '10px';
+    headerButtons.appendChild(saveBtn);
+    headerButtons.appendChild(loadBtn);
+    headerButtons.appendChild(resetBtn);
+    document.querySelector('.header').appendChild(headerButtons);
+    
+    // Add event listeners for save/load/reset
+    saveBtn.addEventListener('click', saveGame);
+    loadBtn.addEventListener('click', loadGame);
+    resetBtn.addEventListener('click', resetGame);
+    
+    updateUI();
 }
 
 function renderHeroRoster() {
