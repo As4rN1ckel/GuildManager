@@ -15,6 +15,18 @@ const shopScreen = document.getElementById('shop-screen');
 const staticTooltip = document.getElementById('static-tooltip');
 const shopTooltip = document.getElementById('shop-tooltip');
 
+const saveBtn = document.createElement('button');
+saveBtn.textContent = 'SAVE';
+saveBtn.className = 'primary';
+
+const loadBtn = document.createElement('button');
+loadBtn.textContent = 'LOAD';
+loadBtn.className = 'primary';
+
+const resetBtn = document.createElement('button');
+resetBtn.textContent = 'RESET';
+resetBtn.className = 'primary';
+
 function initGame() {
     for (let i = 0; i < 3; i++) addHero(generateHero());
     
@@ -42,6 +54,20 @@ function initGame() {
     speedBtn.addEventListener('click', toggleBattleSpeed);
     continueBtn.addEventListener('click', returnToGuild);
     backToGuildBtn.addEventListener('click', hideShopScreen);
+    
+    // Add save/load/reset buttons to the header
+    const headerButtons = document.createElement('div');
+    headerButtons.style.display = 'flex';
+    headerButtons.style.gap = '10px';
+    headerButtons.appendChild(saveBtn);
+    headerButtons.appendChild(loadBtn);
+    headerButtons.appendChild(resetBtn);
+    document.querySelector('.header').appendChild(headerButtons);
+    
+    // Add event listeners for save/load/reset
+    saveBtn.addEventListener('click', saveGame);
+    loadBtn.addEventListener('click', loadGame);
+    resetBtn.addEventListener('click', resetGame);
     
     updateUI();
 }
@@ -142,8 +168,8 @@ function renderShop() {
         recruitEl.innerHTML = `
             <div class="shape"></div>
             <div class="hero-info">${recruit.name}</div>
-            <div>Class: ${capitalize(recruit.class)}</div>
-            <div>ATK: ${recruit.attack}</div>
+            <div class="class-info">Class: ${capitalize(recruit.class)}</div>
+            <div class="stats">HP: ${recruit.hp} | ATK: ${recruit.attack}</div>
             <div class="cost">${recruit.cost} Gold</div>
         `;
         recruitEl.addEventListener('click', () => recruitHero(recruit, recruitEl));
@@ -173,6 +199,8 @@ function hideShopScreen() {
 function updateUI() {
     goldAmount.textContent = gameState.gold;
     dayCount.textContent = gameState.day;
+    renderHeroRoster();
+    updateFormationGrid();
 }
 
 function showTooltip(hero, tooltipElement) {

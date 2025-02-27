@@ -57,10 +57,9 @@ body {
 
 .panel-title {
     color: var(--accent-color);
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #444;
+    margin: 0 0 10px 0;
     padding-bottom: 5px;
+    border-bottom: 1px solid #444;
 }
 
 .hero-roster {
@@ -113,13 +112,14 @@ body {
     width: 30px;
     height: 30px;
     background-color: var(--mage-color);
-    transform: rotate(45deg);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
 .hero.cleric .shape {
     width: 30px;
     height: 30px;
     background-color: var(--cleric-color);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
 }
 
 .hero-info {
@@ -143,11 +143,11 @@ body {
 
 .formation-grid {
     display: grid;
-    grid-template-columns: repeat(3, 66.67px); /* Fixed width for 3 columns */
-    grid-template-rows: repeat(3, 66.67px); /* Fixed height for 3 rows */
+    grid-template-columns: repeat(3, 66.67px);
+    grid-template-rows: repeat(3, 66.67px);
     gap: 10px;
-    width: 200px; /* Fixed total width */
-    height: 200px; /* Fixed total height */
+    width: 200px;
+    height: 200px;
     margin: 0 auto 20px auto;
     position: relative;
 }
@@ -160,9 +160,9 @@ body {
     justify-content: center;
     cursor: pointer;
     position: relative;
-    width: 66.67px; /* Fixed slot width */
-    height: 66.67px; /* Fixed slot height */
-    box-sizing: border-box; /* Ensure padding/border doesn’t affect size */
+    width: 66.67px;
+    height: 66.67px;
+    box-sizing: border-box;
 }
 
 .formation-slot:hover {
@@ -246,7 +246,6 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* Battle screen */
 .battle-screen {
     display: none;
     flex-direction: column;
@@ -266,25 +265,24 @@ button:disabled {
     margin-bottom: 5px;
 }
 
-/* Existing styles for other log entries (unchanged) */
 .log-entry.attack {
-    color: #f86a5a; /* Red for hero attacks (unchanged for now, but repurposed) */
+    color: #f86a5a;
 }
 
 .log-entry.enemy-attack {
-    color: #770000; /* Slightly darker red for enemy attacks, or choose another color like orange (#ff8c00) for contrast */
+    color: #770000;
 }
 
 .log-entry.heal {
-    color: #2ecc71; /* Green for healing (unchanged) */
+    color: #2ecc71;
 }
 
 .log-entry.special {
-    color: #3498db; /* Blue for special abilities (unchanged) */
+    color: #3498db;
 }
 
 .log-entry.system {
-    color: #f1c40f; /* Yellow for system messages (unchanged) */
+    color: #f1c40f;
 }
 
 .progress-bar {
@@ -312,7 +310,6 @@ button:disabled {
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
 }
 
-/* Results screen */
 .results-screen {
     display: none;
     flex-direction: column;
@@ -341,44 +338,154 @@ button:disabled {
     margin: 5px 0;
 }
 
-/* Shop screen */
 .shop-screen {
     display: none;
     flex-direction: column;
     gap: 20px;
+    padding: 20px;
+    background-color: var(--panel-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 10px;
+    max-width: 800px;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.shop-screen .panel-title {
+    color: var(--accent-color);
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #444;
+    text-align: center;
+    font-size: 1.5em;
+    text-transform: uppercase;
 }
 
 .recruit-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    justify-items: center;
+    padding: 15px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .recruit-hero {
-    width: 100px;
-    height: 140px;
-    border: 1px solid #555;
+    width: 150px;
+    height: 200px;
+    border: 2px solid #444;
+    background-color: #333;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 10px;
     cursor: pointer;
-    background-color: #333;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
 }
 
 .recruit-hero:hover {
     border-color: var(--accent-color);
     background-color: #3a3a3a;
+    transform: scale(1.05);
+}
+
+.recruit-hero .shape {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 8px;
+}
+
+.recruit-hero.warrior .shape {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 30px solid var(--warrior-color);
+}
+
+.recruit-hero.archer .shape {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--archer-color);
+}
+
+.recruit-hero.mage .shape {
+    width: 30px;
+    height: 30px;
+    background-color: var(--mage-color);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.recruit-hero.cleric .shape {
+    width: 30px;
+    height: 30px;
+    background-color: var(--cleric-color);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+.recruit-hero .hero-info {
+    font-size: 1em;
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 5px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.recruit-hero .class-info {
+    font-size: 0.8em;
+    color: #aaa;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.recruit-hero .stats {
+    font-size: 0.9em;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    text-align: center;
 }
 
 .recruit-hero .cost {
-    margin-top: 10px;
+    font-size: 1em;
     font-weight: bold;
     color: gold;
+    margin-top: 5px;
+    text-align: center;
 }
 
-/* Static Tooltip */
+.shop-screen .buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.shop-screen button {
+    background-color: #444;
+    color: var(--text-color);
+    border: 1px solid #555;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.shop-screen button:hover {
+    background-color: #555;
+    border-color: var(--accent-color);
+}
+
 .tooltip {
     position: absolute;
     background-color: #1a1a1a;
@@ -389,8 +496,8 @@ button:disabled {
     z-index: 10;
     display: none;
     white-space: pre-wrap;
-    min-width: 250px; /* Minimum width for better content fit */
-    max-width: 300px; /* Maximum width to prevent excessive stretching */
+    min-width: 250px;
+    max-width: 300px;
     top: 50px;
     right: 20px;
 }
