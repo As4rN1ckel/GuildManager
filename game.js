@@ -18,9 +18,9 @@ const heroClasses = [
 ];
 
 const dungeons = [
-    { name: 'Forest Ruins', difficulty: 'Easy', reward: 200, enemyCount: 3, description: 'A ruined temple overrun by goblins.', deathChance: 0.1 },
-    { name: 'Dark Caverns', difficulty: 'Medium', reward: 400, enemyCount: 5, description: 'Ancient caves filled with undead.', deathChance: 0.2 },
-    { name: 'Dragon\'s Lair', difficulty: 'Hard', reward: 800, enemyCount: 7, description: 'Home to a terrible dragon.', deathChance: 0.4 }
+    { name: 'Forest Ruins', difficulty: 'Easy', reward: 200, enemyCount: 3, description: 'A ruined temple overrun by goblins.'},
+    { name: 'Dark Caverns', difficulty: 'Medium', reward: 400, enemyCount: 5, description: 'Ancient caves filled with undead.'},
+    { name: 'Dragon\'s Lair', difficulty: 'Hard', reward: 800, enemyCount: 7, description: 'Home to a terrible dragon.'}
 ];
 
 function generateHero() {
