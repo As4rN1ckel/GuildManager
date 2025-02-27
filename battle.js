@@ -112,44 +112,59 @@ function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
 
     const randomAction = Math.random();
     // Inside formationHeroes.forEach in simulateBattleStep, replace the attack and special logic with:
-if (randomAction < 0.75) { // 75% chance to act (25% not fight)
-    let damage = hero.attack;
-    const passive = passiveAbilities.find(p => p.name === hero.passive);
-    if (passive) damage *= passive.value;
+    if (randomAction < 0.75) {
+      // 75% chance to act (25% not fight)
+      let damage = hero.attack;
+      const passive = passiveAbilities.find((p) => p.name === hero.passive);
+      if (passive) damage *= passive.value;
 
-    // 80% chance to hit (20% miss chance)
-    if (Math.random() < 0.8) {
+      // 80% chance to hit (20% miss chance)
+      if (Math.random() < 0.8) {
         enemyGroup.hp -= damage;
-        addLogEntry('attack', `${hero.name} attacks the ${enemyGroup.type} for ${damage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`);
-    } else {
-        addLogEntry('attack', `${hero.name} misses the ${enemyGroup.type}!`);
-    }
-} else if (randomAction < 0.85 && hero.cooldown === 0) {
-    const special = specialAbilities.find(s => s.name === hero.special);
-    let specialDamage = hero.attack * (special && special.value || 1.0);
-    const passive = passiveAbilities.find(p => p.name === hero.passive);
-    if (passive) specialDamage *= passive.value;
+        addLogEntry(
+          "attack",
+          `${hero.name} attacks the ${enemyGroup.type} for ${damage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+        );
+      } else {
+        addLogEntry("attack", `${hero.name} misses the ${enemyGroup.type}!`);
+      }
+    } else if (randomAction < 0.85 && hero.cooldown === 0) {
+      const special = specialAbilities.find((s) => s.name === hero.special);
+      let specialDamage = hero.attack * ((special && special.value) || 1.0);
+      const passive = passiveAbilities.find((p) => p.name === hero.passive);
+      if (passive) specialDamage *= passive.value;
 
-    if (Math.random() < 0.8) {
+      if (Math.random() < 0.8) {
         enemyGroup.hp -= specialDamage;
-        addLogEntry('special', `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`);
-    } else {
-        addLogEntry('special', `${hero.name} misses with ${hero.special}!`);
-    }
-    hero.cooldown = 2;
-} else if (hero.class === 'cleric') {
-    // Find a random ally who is not at full health
-    const injuredAllies = formationHeroes.filter(ally => ally.hp < ally.maxHp);
-    if (injuredAllies.length > 0) {
-        const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-        const special = specialAbilities.find(s => s.name === hero.special);
-        const healAmount = Math.floor(hero.attack * (special && special.value || 1.0));
+        addLogEntry(
+          "special",
+          `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+        );
+      } else {
+        addLogEntry("special", `${hero.name} misses with ${hero.special}!`);
+      }
+      hero.cooldown = 2;
+    } else if (hero.class === "cleric") {
+      // Find a random ally who is not at full health
+      const injuredAllies = formationHeroes.filter(
+        (ally) => ally.hp < ally.maxHp
+      );
+      if (injuredAllies.length > 0) {
+        const healTarget =
+          injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+        const special = specialAbilities.find((s) => s.name === hero.special);
+        const healAmount = Math.floor(
+          hero.attack * ((special && special.value) || 1.0)
+        );
         healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
-        addLogEntry('heal', `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`);
-    } else {
-        addLogEntry('heal', `${hero.name} finds no allies needing healing!`);
+        addLogEntry(
+          "heal",
+          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`
+        );
+      } else {
+        addLogEntry("heal", `${hero.name} finds no allies needing healing!`);
+      }
     }
-}
 
     if (hero.cooldown > 0) hero.cooldown--;
   });
@@ -203,33 +218,60 @@ if (randomAction < 0.75) { // 75% chance to act (25% not fight)
 }
 
 function applyPassiveEffects(hero, formationHeroes, index) {
-    switch (hero.class) {
-        case 'warrior':
-            const warriorPassive = passiveAbilities.find(p => p.name === hero.passive);
-            addLogEntry('system', `${hero.name}'s passive increases damage by ${(warriorPassive.value - 1) * 100}%.`);
-            break;
-        case 'archer':
-            const archerPassive = passiveAbilities.find(p => p.name === hero.passive);
-            addLogEntry('system', `${hero.name}'s passive increases damage by ${(archerPassive.value - 1) * 100}%.`);
-            break;
-        case 'mage':
-            const magePassive = passiveAbilities.find(p => p.name === hero.passive);
-            addLogEntry('system', `${hero.name}'s passive increases damage by ${(magePassive.value - 1) * 100}%.`);
-            break;
-        case 'cleric':
-            const clericPassive = passiveAbilities.find(p => p.name === hero.passive);
-            formationHeroes.forEach(ally => {
-                if (ally.hp < ally.maxHp) {
-                    const healAmount = Math.floor(hero.attack * clericPassive.value);
-                    ally.hp = Math.min(ally.maxHp, ally.hp + healAmount);
-                    addLogEntry('heal', `${hero.name}'s passive heals ${ally.name} for ${healAmount} HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`);
-                }
-            });
-            if (formationHeroes.every(ally => ally.hp === ally.maxHp)) {
-                addLogEntry('heal', `${hero.name}'s passive finds no allies needing healing!`);
-            }
-            break;
-    }
+  switch (hero.class) {
+    case "warrior":
+      const warriorPassive = passiveAbilities.find(
+        (p) => p.name === hero.passive
+      );
+      addLogEntry(
+        "system",
+        `${hero.name}'s passive increases damage by ${
+          (warriorPassive.value - 1) * 100
+        }%.`
+      );
+      break;
+    case "archer":
+      const archerPassive = passiveAbilities.find(
+        (p) => p.name === hero.passive
+      );
+      addLogEntry(
+        "system",
+        `${hero.name}'s passive increases damage by ${
+          (archerPassive.value - 1) * 100
+        }%.`
+      );
+      break;
+    case "mage":
+      const magePassive = passiveAbilities.find((p) => p.name === hero.passive);
+      addLogEntry(
+        "system",
+        `${hero.name}'s passive increases damage by ${
+          (magePassive.value - 1) * 100
+        }%.`
+      );
+      break;
+    case "cleric":
+      const clericPassive = passiveAbilities.find(
+        (p) => p.name === hero.passive
+      );
+      formationHeroes.forEach((ally) => {
+        if (ally.hp < ally.maxHp) {
+          const healAmount = Math.floor(hero.attack * clericPassive.value);
+          ally.hp = Math.min(ally.maxHp, ally.hp + healAmount);
+          addLogEntry(
+            "heal",
+            `${hero.name}'s passive heals ${ally.name} for ${healAmount} HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`
+          );
+        }
+      });
+      if (formationHeroes.every((ally) => ally.hp === ally.maxHp)) {
+        addLogEntry(
+          "heal",
+          `${hero.name}'s passive finds no allies needing healing!`
+        );
+      }
+      break;
+  }
 }
 
 function addLogEntry(type, text) {
