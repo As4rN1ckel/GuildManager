@@ -1,7 +1,7 @@
 // Game state and core logic
 const gameState = {
     gold: 250,
-    cycle: 'day', // Track day/night cycle instead of day number
+    cycle: 'day', 
     heroes: [],
     formation: Array(9).fill(null),
     selectedHero: null,
@@ -48,6 +48,9 @@ const heroClasses = [
     passive: "Heals all allies for 50% attack per battle step",
   },
 ];
+
+// XP thresholds for leveling up (e.g., 100 XP for Level 2, 200 for Level 3, etc.)
+const xpThresholds = [0, 5, 10, 15, 20, 25]; // Levels 1-6 (adjust as needed)
 
 function generateHeroName(className) {
   const firstNames = [
@@ -198,6 +201,7 @@ function generateHero() {
     cost: heroClass.cost,
     passive: heroClass.passive,
     cooldown: 0,
+    xp: 0
   };
 }
 
@@ -216,6 +220,21 @@ function checkVictory() {
     gameState.casualties.length <
     gameState.formation.filter((id) => id !== null).length
   );
+}
+
+function levelUpHero(hero) {
+    const currentLevel = hero.level;
+    const maxLevel = xpThresholds.length - 1;
+    if (currentLevel >= maxLevel) return; // Prevent leveling beyond max level
+    
+    if (hero.xp >= xpThresholds[currentLevel]) {
+        hero.xp = 0;
+        hero.level++;
+        hero.maxHp += 10;
+        hero.hp = Math.min(hero.maxHp, hero.hp + 10);
+        hero.attack += 2;
+        addLogEntry('system', `${hero.name} leveled up to Level ${hero.level}!`);
+    }
 }
 
 function saveGame() {

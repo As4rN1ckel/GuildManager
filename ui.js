@@ -131,6 +131,7 @@ function renderHeroRoster() {
                 <div class="hp-bar">
                     <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
                 </div>
+                <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
             `;
             heroEl.addEventListener('click', () => selectHero(hero.id));
             heroEl.addEventListener('mouseenter', () => showTooltip(hero, staticTooltip));
@@ -254,6 +255,7 @@ function showTooltip(hero, tooltipElement) {
         Class: ${capitalize(hero.class)}
         HP: ${hero.hp}/${hero.maxHp}
         Attack: ${hero.attack}
+        XP: ${hero.xp}/${xpThresholds[hero.level]}
         Special: ${hero.special}
         Passive: ${hero.passive}
         Level: ${hero.level}

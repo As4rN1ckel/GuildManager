@@ -169,26 +169,30 @@ function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
     if (hero.cooldown > 0) hero.cooldown--;
   });
 
+  // XP and Level Up Reward after killing group of enemies
+  if (enemyGroup.hp <= 0) {
+    const xpAward = step === totalSteps ? 3 : 1;
+    formationHeroes.forEach((hero) => {
+      hero.xp += xpAward;
+      levelUpHero(hero);
+      addLogEntry(
+        "system",
+        `${hero.name} gained ${xpAward} XP. (Total: ${hero.xp} XP)`
+      );
+    });
+  }
+
   // Enemies attack heroes if still alive
   if (enemyGroup.hp > 0) {
     formationHeroes.forEach((hero, index) => {
-      // Adjust hit chance based on row position
       let hitChance = 0;
-      if (index < 3) {
-        // Front row (positions 0-2)
-        hitChance = 0.9; // 90% chance to be hit
-      } else if (index < 6) {
-        // Middle row (positions 3-5)
-        hitChance = 0.7; // 70% chance to be hit
-      } else {
-        // Back row (positions 6-8)
-        hitChance = 0.5; // 50% chance to be hit
-      }
+      if (index < 3) hitChance = 0.9; // Front row
+      else if (index < 6) hitChance = 0.7; // Middle row
+      else hitChance = 0.5; // Back row
 
       if (Math.random() < hitChance) {
-        // Use row-specific hit chance
         const damage =
-          enemyGroup.damage * (index < 3 ? 1 : index < 6 ? 0.8 : 0.5); // Front: full, Middle: 80%, Back: half
+          enemyGroup.damage * (index < 3 ? 1 : index < 6 ? 0.8 : 0.5);
         hero.hp -= damage;
         addLogEntry(
           "enemy-attack",
@@ -309,13 +313,7 @@ function showResults() {
         const survivors = gameState.formation
             .filter(id => id && !gameState.casualties.includes(id))
             .map(id => gameState.heroes.find(h => h.id === id));
-        survivors.forEach(hero => {
-            hero.level++;
-            hero.maxHp += 10;
-            hero.hp = Math.min(hero.maxHp, hero.hp + 5); // No auto-heal after victory, just adding half maxhealth
-            hero.attack += 2;
-        });
-        rewardsList.innerHTML += `<div class="reward-item">Survivors leveled up!</div>`;
+        rewardsList.innerHTML += `<div class="reward-item">Dungeon Cleared!</div>`;
     }
     
     gameState.heroes = gameState.heroes.filter(h => !gameState.casualties.includes(h.id));
