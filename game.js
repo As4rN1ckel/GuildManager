@@ -1,13 +1,13 @@
 // Game state and core logic
 const gameState = {
-  gold: 250,
-  day: 1,
-  heroes: [],
-  formation: Array(9).fill(null),
-  selectedHero: null,
-  selectedDungeon: null,
-  battleSpeed: 1,
-  casualties: [],
+    gold: 250,
+    cycle: 'day', // Track day/night cycle instead of day number
+    heroes: [],
+    formation: Array(9).fill(null),
+    selectedHero: null,
+    selectedDungeon: null,
+    battleSpeed: 1,
+    casualties: []
 };
 
 const heroClasses = [
@@ -235,6 +235,7 @@ function loadGame() {
 function resetGame() {
   gameState.gold = 250;
   gameState.day = 1;
+  gameState.cycle = 'day';
   gameState.heroes = [];
   gameState.formation = Array(9).fill(null);
   gameState.selectedHero = null;
@@ -244,6 +245,13 @@ function resetGame() {
   for (let i = 0; i < 3; i++) addHero(generateHero());
   localStorage.removeItem("gameState");
   updateUI();
+}
+
+function toggleCycle() {
+    gameState.cycle = gameState.cycle === 'day' ? 'night' : 'day';
+    if (gameState.cycle === 'day') {
+        gameState.day++;
+    }
 }
 
 if (typeof window !== "undefined") {

@@ -26,6 +26,10 @@ const resetBtn = document.createElement('button');
 resetBtn.textContent = 'RESET';
 resetBtn.className = 'primary';
 
+const restBtn = document.createElement('button');
+restBtn.textContent = 'Rest';
+restBtn.className = 'primary';
+
 function initGame() {
     for (let i = 0; i < 9; i++) {
         const slot = document.createElement('div');
@@ -61,11 +65,43 @@ function initGame() {
     headerButtons.appendChild(resetBtn);
     document.querySelector('.header').appendChild(headerButtons);
     
+    // Add event listener for rest button
+    restBtn.addEventListener('click', restHeroes);
+    
     // Add event listeners for save/load/reset
     saveBtn.addEventListener('click', saveGame);
     loadBtn.addEventListener('click', loadGame);
     resetBtn.addEventListener('click', resetGame);
     
+    updateUI();
+}
+
+function updateUI() {
+    goldAmount.textContent = gameState.gold;
+    dayCount.textContent = `${gameState.cycle === 'day' ? 'Day' : 'Night'} ${gameState.day}`;
+    renderHeroRoster();
+    updateFormationGrid();
+}
+
+function returnToGuild() {
+    resultsScreen.style.display = 'none';
+    mainScreen.style.display = 'block';
+    toggleCycle();
+    gameState.selectedDungeon = null;
+    updateFormationGrid();
+    renderHeroRoster();
+    updateUI();
+}
+
+function restHeroes() {
+    gameState.heroes.forEach(hero => {
+        if (hero.hp < hero.maxHp) {
+            const healAmount = Math.floor(hero.maxHp * 0.5);
+            hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
+            addLogEntry('heal', `${hero.name} rests and recovers ${healAmount} HP. (HP: ${hero.hp}/${hero.maxHp})`);
+        }
+    });
+    toggleCycle();
     updateUI();
 }
 
@@ -93,31 +129,28 @@ function renderHeroRoster() {
 }
 
 function selectHero(heroId) {
-  gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
-  renderHeroRoster();
-  updateFormationGrid();
-  checkEmbarkButton();
+    gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
+    renderHeroRoster();
+    updateFormationGrid();
+    checkEmbarkButton();
 }
 
 function handleFormationSlotClick(index) {
-  const currentHeroId = gameState.formation[index];
-  if (currentHeroId && !gameState.selectedHero) {
-    gameState.formation[index] = null;
-  } else if (gameState.selectedHero && !currentHeroId) {
-    gameState.formation[index] = gameState.selectedHero;
-    gameState.selectedHero = null;
-  } else if (gameState.selectedHero && currentHeroId) {
-    const slotWithSelected = gameState.formation.findIndex(
-      (id) => id === gameState.selectedHero
-    );
-    if (slotWithSelected !== -1)
-      gameState.formation[slotWithSelected] = currentHeroId;
-    gameState.formation[index] = gameState.selectedHero;
-    gameState.selectedHero = null;
-  }
-  renderHeroRoster();
-  updateFormationGrid();
-  checkEmbarkButton();
+    const currentHeroId = gameState.formation[index];
+    if (currentHeroId && !gameState.selectedHero) {
+        gameState.formation[index] = null;
+    } else if (gameState.selectedHero && !currentHeroId) {
+        gameState.formation[index] = gameState.selectedHero;
+        gameState.selectedHero = null;
+    } else if (gameState.selectedHero && currentHeroId) {
+        const slotWithSelected = gameState.formation.findIndex(id => id === gameState.selectedHero);
+        if (slotWithSelected !== -1) gameState.formation[slotWithSelected] = currentHeroId;
+        gameState.formation[index] = gameState.selectedHero;
+        gameState.selectedHero = null;
+    }
+    renderHeroRoster();
+    updateFormationGrid();
+    checkEmbarkButton();
 }
 
 function updateFormationGrid() {
@@ -148,77 +181,63 @@ function updateFormationGrid() {
 }
 
 function selectDungeon(dungeon) {
-  gameState.selectedDungeon = dungeon;
-  dungeonList
-    .querySelectorAll(".dungeon")
-    .forEach((el) => el.classList.remove("selected"));
-  dungeonList.children[dungeons.indexOf(dungeon)].classList.add("selected");
-  checkEmbarkButton();
+    gameState.selectedDungeon = dungeon;
+    dungeonList.querySelectorAll('.dungeon').forEach(el => el.classList.remove('selected'));
+    dungeonList.children[dungeons.indexOf(dungeon)].classList.add('selected');
+    checkEmbarkButton();
 }
 
 function checkEmbarkButton() {
-  embarkBtn.disabled = !(
-    gameState.formation.some((slot) => slot !== null) &&
-    gameState.selectedDungeon
-  );
+    embarkBtn.disabled = !(gameState.formation.some(slot => slot !== null) && gameState.selectedDungeon);
 }
 
 function showShopScreen() {
-  mainScreen.style.display = "none";
-  shopScreen.style.display = "flex";
-  renderShop();
+    mainScreen.style.display = 'none';
+    shopScreen.style.display = 'flex';
+    renderShop();
 }
 
 function renderShop() {
-  const recruitList = document.getElementById("recruit-list");
-  recruitList.innerHTML = "";
-  for (let i = 0; i < 4; i++) {
-    const recruit = generateHero();
-    const recruitEl = document.createElement("div");
-    recruitEl.className = `recruit-hero ${recruit.class}`;
-    recruitEl.innerHTML = `
+    const recruitList = document.getElementById('recruit-list');
+    recruitList.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+        const recruit = generateHero();
+        const recruitEl = document.createElement('div');
+        recruitEl.className = `recruit-hero ${recruit.class}`;
+        recruitEl.innerHTML = `
             <div class="shape"></div>
             <div class="hero-info">${recruit.name}</div>
             <div class="class-info">Class: ${capitalize(recruit.class)}</div>
             <div class="stats">HP: ${recruit.hp} | ATK: ${recruit.attack}</div>
             <div class="cost">${recruit.cost} Gold</div>
         `;
-    recruitEl.addEventListener("click", () => recruitHero(recruit, recruitEl));
-    recruitEl.addEventListener("mouseenter", () =>
-      showTooltip(recruit, shopTooltip)
-    );
-    recruitEl.addEventListener("mouseleave", () => hideTooltip(shopTooltip));
-    recruitList.appendChild(recruitEl);
-  }
+        recruitEl.addEventListener('click', () => recruitHero(recruit, recruitEl));
+        recruitEl.addEventListener('mouseenter', () => showTooltip(recruit, shopTooltip));
+        recruitEl.addEventListener('mouseleave', () => hideTooltip(shopTooltip));
+        recruitList.appendChild(recruitEl);
+    }
 }
 
 function recruitHero(recruit, element) {
-  if (gameState.gold >= recruit.cost) {
-    gameState.gold -= recruit.cost;
-    addHero(recruit);
-    element.remove();
-    updateUI();
-  } else {
-    alert("Not enough gold!");
-  }
+    if (gameState.gold >= recruit.cost) {
+        gameState.gold -= recruit.cost;
+        addHero(recruit);
+        element.remove();
+        updateUI();
+    } else {
+        alert('Not enough gold!');
+    }
 }
 
 function hideShopScreen() {
-  shopScreen.style.display = "none";
-  mainScreen.style.display = "block";
-  hideTooltip(shopTooltip);
-}
-
-function updateUI() {
-    goldAmount.textContent = gameState.gold;
-    dayCount.textContent = gameState.day;
-    renderHeroRoster();
-    updateFormationGrid();
+    shopScreen.style.display = 'none';
+    mainScreen.style.display = 'block';
+    hideTooltip(shopTooltip);
 }
 
 function showTooltip(hero, tooltipElement) {
-  tooltipElement.style.display = "block";
-  tooltipElement.textContent = `
+    tooltipElement.style.display = 'block';
+    tooltipElement.textContent = `
         Name: ${hero.name}
         Class: ${capitalize(hero.class)}
         HP: ${hero.hp}/${hero.maxHp}
@@ -230,10 +249,10 @@ function showTooltip(hero, tooltipElement) {
 }
 
 function hideTooltip(tooltipElement) {
-  tooltipElement.style.display = "none";
-  tooltipElement.textContent = "Hover over a hero to see stats";
+    tooltipElement.style.display = 'none';
+    tooltipElement.textContent = 'Hover over a hero to see stats';
 }
 
 function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
