@@ -266,20 +266,25 @@ button:disabled {
     margin-bottom: 5px;
 }
 
+/* Existing styles for other log entries (unchanged) */
 .log-entry.attack {
-    color: #e74c3c;
+    color: #f86a5a; /* Red for hero attacks (unchanged for now, but repurposed) */
+}
+
+.log-entry.enemy-attack {
+    color: #770000; /* Slightly darker red for enemy attacks, or choose another color like orange (#ff8c00) for contrast */
 }
 
 .log-entry.heal {
-    color: #2ecc71;
+    color: #2ecc71; /* Green for healing (unchanged) */
 }
 
 .log-entry.special {
-    color: #3498db;
+    color: #3498db; /* Blue for special abilities (unchanged) */
 }
 
 .log-entry.system {
-    color: #f1c40f;
+    color: #f1c40f; /* Yellow for system messages (unchanged) */
 }
 
 .progress-bar {

@@ -8,13 +8,6 @@ const rewardsList = document.getElementById('rewards-list');
 const speedBtn = document.getElementById('speed-btn');
 const exitBtn = document.getElementById('exit-btn');
 
-// Define enemy stats based on dungeon difficulty
-const enemyStats = {
-    easy: { hp: 75, damage: 10 }, // For "Forest Ruins"
-    medium: { hp: 100, damage: 15 }, // For "Dark Caverns"
-    hard: { hp: 150, damage: 20 } // For "Dragon's Lair"
-};
-
 function startMission() {
     if (!gameState.selectedDungeon) return;
     mainScreen.style.display = 'none';
@@ -33,12 +26,13 @@ function simulateBattle() {
     let currentStep = 0;
     gameState.casualties = [];
     
-    // Initialize enemy groups for each step
+    // Initialize enemy groups for each step, using game.js data
     const enemyGroups = Array(totalSteps).fill(null).map((_, i) => {
         const difficulty = dungeon.difficulty.toLowerCase();
         const baseStats = enemyStats[difficulty];
+        const enemyTypes = enemyGroupsTemplate[difficulty];
         return {
-            type: i === totalSteps - 1 ? 'boss' : ['goblins', 'skeletons', 'wolves', 'cultists', 'bandits'][Math.floor(Math.random() * 5)],
+            type: i === totalSteps - 1 ? 'boss' : enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
             hp: baseStats.hp * (i + 1), // Scaling HP per step
             maxHp: baseStats.hp * (i + 1),
             damage: baseStats.damage * (i + 1) // Scaling damage per step
@@ -120,9 +114,15 @@ function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
             }
             hero.cooldown = 2;
         } else if (hero.class === 'cleric') {
-            const healTarget = formationHeroes[Math.floor(Math.random() * formationHeroes.length)];
-            healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + 15);
-            addLogEntry('heal', `${hero.name} heals ${healTarget.name} for 15 HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`);
+            // Find a random ally who is not at full health
+            const injuredAllies = formationHeroes.filter(ally => ally.hp < ally.maxHp);
+            if (injuredAllies.length > 0) {
+                const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+                healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + 15);
+                addLogEntry('heal', `${hero.name} heals ${healTarget.name} for 15 HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`);
+            } else {
+                addLogEntry('heal', `${hero.name} finds no allies needing healing!`);
+            }
         }
         
         if (hero.cooldown > 0) hero.cooldown--;
@@ -144,13 +144,13 @@ function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
             if (Math.random() < hitChance) { // Use row-specific hit chance
                 const damage = enemyGroup.damage * (index < 3 ? 1 : 0.5); // Front row takes full damage, back takes half
                 hero.hp -= damage;
-                addLogEntry('attack', `The ${enemyGroup.type} hits ${hero.name} for ${damage} damage! (${hero.name} HP: ${hero.hp}/${hero.maxHp})`);
+                addLogEntry('enemy-attack', `The ${enemyGroup.type} hits ${hero.name} for ${damage} damage! (${hero.name} HP: ${hero.hp}/${hero.maxHp})`);
                 if (hero.hp <= 0) {
                     gameState.casualties.push(hero.id);
                     addLogEntry('system', `${hero.name} falls in battle!`);
                 }
             } else {
-                addLogEntry('attack', `The ${enemyGroup.type} misses ${hero.name}!`);
+                addLogEntry('enemy-attack', `The ${enemyGroup.type} misses ${hero.name}!`);
             }
         });
     } else {
@@ -171,12 +171,17 @@ function applyPassiveEffects(hero, formationHeroes, index) {
         case 'mage':
             addLogEntry('system', `${hero.name}'s passive increases damage by 25%.`);
             break;
-        case 'cleric':
-            formationHeroes.forEach(ally => {
-                ally.hp = Math.min(ally.maxHp, ally.hp + 10);
-                addLogEntry('heal', `${hero.name}'s passive heals ${ally.name} for 10 HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`);
-            });
-            break;
+            case 'cleric':
+                formationHeroes.forEach(ally => {
+                    if (ally.hp < ally.maxHp) {
+                        ally.hp = Math.min(ally.maxHp, ally.hp + 10);
+                        addLogEntry('heal', `${hero.name}'s passive heals ${ally.name} for 10 HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`);
+                    }
+                });
+                if (formationHeroes.every(ally => ally.hp === ally.maxHp)) {
+                    addLogEntry('heal', `${hero.name}'s passive finds no allies needing healing!`);
+                }
+                break;
     }
 }
 

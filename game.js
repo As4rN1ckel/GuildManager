@@ -60,3 +60,15 @@ function isHeroInFormation(hero) {
 function checkVictory() {
     return gameState.casualties.length < gameState.formation.filter(id => id !== null).length;
 }
+
+const enemyStats = {
+    easy: { hp: 60, damage: 12 }, // For "Forest Ruins"
+    medium: { hp: 100, damage: 15 }, // For "Dark Caverns"
+    hard: { hp: 150, damage: 20 } // For "Dragon's Lair"
+};
+
+const enemyGroupsTemplate = {
+    easy: ['goblins', 'skeletons', 'wolves', 'cultists', 'bandits'],
+    medium: ['skeletons', 'wolves', 'cultists', 'bandits', 'zombies'],
+    hard: ['bandits', 'zombies', 'dragons', 'demons', 'wraiths']
+};
