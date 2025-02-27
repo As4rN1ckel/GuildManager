@@ -71,27 +71,26 @@ function initGame() {
 }
 
 function renderHeroRoster() {
-  heroRoster.innerHTML = "";
-  gameState.heroes.forEach((hero) => {
-    if (!isHeroInFormation(hero)) {
-      const heroEl = document.createElement("div");
-      heroEl.className = `hero ${hero.class}${
-        gameState.selectedHero === hero.id ? " selected" : ""
-      }`;
-      heroEl.dataset.id = hero.id;
-      heroEl.innerHTML = `
+    heroRoster.innerHTML = '';
+    gameState.heroes.forEach(hero => {
+        if (!isHeroInFormation(hero)) {
+            const heroEl = document.createElement('div');
+            heroEl.className = `hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
+            heroEl.dataset.id = hero.id;
+            heroEl.innerHTML = `
                 <div class="shape"></div>
-                <div class="hero-info">${hero.name.split(" ")[0]}</div>
+                <div class="hero-info">${hero.name.split(' ')[0]}</div>
                 <div class="level">Lv${hero.level}</div>
+                <div class="hp-bar">
+                    <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+                </div>
             `;
-      heroEl.addEventListener("click", () => selectHero(hero.id));
-      heroEl.addEventListener("mouseenter", () =>
-        showTooltip(hero, staticTooltip)
-      );
-      heroEl.addEventListener("mouseleave", () => hideTooltip(staticTooltip));
-      heroRoster.appendChild(heroEl);
-    }
-  });
+            heroEl.addEventListener('click', () => selectHero(hero.id));
+            heroEl.addEventListener('mouseenter', () => showTooltip(hero, staticTooltip));
+            heroEl.addEventListener('mouseleave', () => hideTooltip(staticTooltip));
+            heroRoster.appendChild(heroEl);
+        }
+    });
 }
 
 function selectHero(heroId) {
@@ -123,29 +122,30 @@ function handleFormationSlotClick(index) {
 }
 
 function updateFormationGrid() {
-  const slots = formationGrid.querySelectorAll(".formation-slot");
-  slots.forEach((slot, index) => {
-    const heroId = gameState.formation[index];
-    slot.innerHTML = "";
-    slot.classList.toggle("occupied", !!heroId);
-    if (heroId) {
-      const hero = gameState.heroes.find((h) => h.id === heroId);
-      if (hero) {
-        const heroEl = document.createElement("div");
-        heroEl.className = `hero ${hero.class}`;
-        heroEl.innerHTML = `
+    const slots = formationGrid.querySelectorAll('.formation-slot');
+    slots.forEach((slot, index) => {
+        const heroId = gameState.formation[index];
+        slot.innerHTML = '';
+        slot.classList.toggle('occupied', !!heroId);
+        if (heroId) {
+            const hero = gameState.heroes.find(h => h.id === heroId);
+            if (hero) {
+                const heroEl = document.createElement('div');
+                heroEl.className = `hero ${hero.class}`;
+                heroEl.innerHTML = `
                     <div class="shape"></div>
-                    <div class="hero-info">${hero.name.split(" ")[0]}</div>
+                    <div class="hero-info">${hero.name.split(' ')[0]}</div>
                     <div class="level">Lv${hero.level}</div>
+                    <div class="hp-bar">
+                        <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+                    </div>
                 `;
-        heroEl.addEventListener("mouseenter", () =>
-          showTooltip(hero, staticTooltip)
-        );
-        heroEl.addEventListener("mouseleave", () => hideTooltip(staticTooltip));
-        slot.appendChild(heroEl);
-      }
-    }
-  });
+                heroEl.addEventListener('mouseenter', () => showTooltip(hero, staticTooltip));
+                heroEl.addEventListener('mouseleave', () => hideTooltip(staticTooltip));
+                slot.appendChild(heroEl);
+            }
+        }
+    });
 }
 
 function selectDungeon(dungeon) {
@@ -211,10 +211,10 @@ function hideShopScreen() {
 }
 
 function updateUI() {
-  goldAmount.textContent = gameState.gold;
-  dayCount.textContent = gameState.day;
-  renderHeroRoster();
-  updateFormationGrid();
+    goldAmount.textContent = gameState.gold;
+    dayCount.textContent = gameState.day;
+    renderHeroRoster();
+    updateFormationGrid();
 }
 
 function showTooltip(hero, tooltipElement) {

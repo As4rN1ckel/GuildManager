@@ -282,48 +282,44 @@ function addLogEntry(type, text) {
 }
 
 function showResults() {
-  battleScreen.style.display = "none";
-  resultsScreen.style.display = "flex";
-
-  const isVictory = checkVictory();
-  resultTitle.textContent = isVictory ? "Victory!" : "Defeat!";
-  resultTitle.style.color = isVictory ? "#2ecc71" : "#e74c3c";
-
-  casualtiesList.innerHTML = "";
-  gameState.casualties.forEach((id) => {
-    const hero = gameState.heroes.find((h) => h.id === id);
-    if (hero) {
-      const heroEl = document.createElement("div");
-      heroEl.className = `hero ${hero.class}`;
-      heroEl.innerHTML = `<div class="shape"></div><div class="hero-info">${hero.name}</div>`;
-      casualtiesList.appendChild(heroEl);
-    }
-  });
-
-  rewardsList.innerHTML = "";
-  if (isVictory) {
-    const goldReward = gameState.selectedDungeon.reward;
-    gameState.gold += goldReward;
-    rewardsList.innerHTML += `<div class="reward-item">Gold: ${goldReward}</div>`;
-
-    const survivors = gameState.formation
-      .filter((id) => id && !gameState.casualties.includes(id))
-      .map((id) => gameState.heroes.find((h) => h.id === id));
-    survivors.forEach((hero) => {
-      hero.level++;
-      hero.maxHp += 10;
-      hero.hp = hero.maxHp;
-      hero.attack += 2;
+    battleScreen.style.display = 'none';
+    resultsScreen.style.display = 'flex';
+    
+    const isVictory = checkVictory();
+    resultTitle.textContent = isVictory ? 'Victory!' : 'Defeat!';
+    resultTitle.style.color = isVictory ? '#2ecc71' : '#e74c3c';
+    
+    casualtiesList.innerHTML = '';
+    gameState.casualties.forEach(id => {
+        const hero = gameState.heroes.find(h => h.id === id);
+        if (hero) {
+            const heroEl = document.createElement('div');
+            heroEl.className = `hero ${hero.class}`;
+            heroEl.innerHTML = `<div class="shape"></div><div class="hero-info">${hero.name}</div>`;
+            casualtiesList.appendChild(heroEl);
+        }
     });
-    rewardsList.innerHTML += `<div class="reward-item">Survivors leveled up!</div>`;
-  }
-
-  gameState.heroes = gameState.heroes.filter(
-    (h) => !gameState.casualties.includes(h.id)
-  );
-  gameState.formation = gameState.formation.map((id) =>
-    gameState.casualties.includes(id) ? null : id
-  );
+    
+    rewardsList.innerHTML = '';
+    if (isVictory) {
+        const goldReward = gameState.selectedDungeon.reward;
+        gameState.gold += goldReward;
+        rewardsList.innerHTML += `<div class="reward-item">Gold: ${goldReward}</div>`;
+        
+        const survivors = gameState.formation
+            .filter(id => id && !gameState.casualties.includes(id))
+            .map(id => gameState.heroes.find(h => h.id === id));
+        survivors.forEach(hero => {
+            hero.level++;
+            hero.maxHp += 10;
+            hero.hp = Math.min(hero.maxHp, hero.hp + 5); // No auto-heal after victory, just adding half maxhealth
+            hero.attack += 2;
+        });
+        rewardsList.innerHTML += `<div class="reward-item">Survivors leveled up!</div>`;
+    }
+    
+    gameState.heroes = gameState.heroes.filter(h => !gameState.casualties.includes(h.id));
+    gameState.formation = gameState.formation.map(id => gameState.casualties.includes(id) ? null : id);
 }
 
 function toggleBattleSpeed() {
