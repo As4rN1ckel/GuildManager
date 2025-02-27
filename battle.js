@@ -224,7 +224,7 @@ function applyPassiveEffects(hero, formationHeroes, index) {
         (p) => p.name === hero.passive
       );
       addLogEntry(
-        "system",
+        "special",
         `${hero.name}'s passive increases damage by ${
           (warriorPassive.value - 1) * 100
         }%.`
@@ -235,7 +235,7 @@ function applyPassiveEffects(hero, formationHeroes, index) {
         (p) => p.name === hero.passive
       );
       addLogEntry(
-        "system",
+        "special",
         `${hero.name}'s passive increases damage by ${
           (archerPassive.value - 1) * 100
         }%.`
@@ -244,7 +244,7 @@ function applyPassiveEffects(hero, formationHeroes, index) {
     case "mage":
       const magePassive = passiveAbilities.find((p) => p.name === hero.passive);
       addLogEntry(
-        "system",
+        "special",
         `${hero.name}'s passive increases damage by ${
           (magePassive.value - 1) * 100
         }%.`
