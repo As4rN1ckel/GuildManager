@@ -148,9 +148,9 @@ const dungeons = [
 ];
 
 const enemyStats = {
-  easy: { hp: 50, damage: 10 },
-  medium: { hp: 75, damage: 15 },
-  hard: { hp: 100, damage: 20 },
+  easy: { hp: 30, damage: 10 },
+  medium: { hp: 50, damage: 15 },
+  hard: { hp: 100, damage: 25 },
 };
 
 const enemyGroupsTemplate = {
