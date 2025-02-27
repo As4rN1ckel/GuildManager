@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Guild Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fantasy Guild Manager</h1>
+            <div class="resources">
+                <div class="gold">Gold: <span id="gold-amount">500</span></div>
+                <div class="day">Day: <span id="day-count">1</span></div>
+            </div>
+        </div>
+        
+        <div id="main-screen">
+            <div class="panel">
+                <h2 class="panel-title">Hero Roster</h2>
+                <div class="hero-roster" id="hero-roster"></div>
+            </div>
+            <div class="panel">
+                <h2 class="panel-title">Formation</h2>
+                <div class="formation-grid" id="formation-grid"></div>
+            </div>
+            <div class="panel">
+                <h2 class="panel-title">Available Dungeons</h2>
+                <div class="dungeon-list" id="dungeon-list"></div>
+            </div>
+            <div class="buttons">
+                <button id="recruit-btn">Recruit Heroes</button>
+                <button id="embark-btn" class="primary" disabled>Embark on Mission</button>
+            </div>
+            <div id="static-tooltip" class="tooltip">
+                Hover over a hero to see stats
+            </div>
+        </div>
+        
+        <div id="battle-screen" class="battle-screen">
+            <div class="panel">
+                <h2 class="panel-title">Battle in Progress - <span id="dungeon-name"></span></h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="battle-progress"></div>
+                    <div class="progress-text">0%</div>
+                </div>
+                <div class="battle-log" id="battle-log"></div>
+            </div>
+            <div class="buttons">
+                <button id="speed-btn">Speed Up</button>
+                <button id="exit-btn" disabled>Exit</button>
+            </div>
+        </div>
+        
+        <div id="results-screen" class="results-screen">
+            <div class="panel">
+                <h2 class="panel-title">Mission Results</h2>
+                <div class="results-title" id="result-title"></div>
+                <div>
+                    <p>Your heroes have returned from their mission.</p>
+                    <div id="casualties-container">
+                        <h3>Casualties:</h3>
+                        <div class="casualties" id="casualties-list"></div>
+                    </div>
+                    <div class="rewards">
+                        <h3>Rewards:</h3>
+                        <div id="rewards-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="buttons">
+                <button id="continue-btn" class="primary">Return to Guild</button>
+            </div>
+        </div>
+        
+        <div id="shop-screen" class="shop-screen">
+            <div class="panel">
+                <h2 class="panel-title">Recruit New Heroes</h2>
+                <div class="recruit-list" id="recruit-list"></div>
+            </div>
+            <div class="buttons">
+                <button id="back-to-guild-btn">Back to Guild</button>
+            </div>
+            <div id="shop-tooltip" class="tooltip">
+                Hover over a hero to see stats
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+    <script src="battle.js"></script>
+    <script src="ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+:root {
+    --bg-color: #111;
+    --text-color: #eee;
+    --accent-color: #7b68ee;
+    --warrior-color: #e74c3c;
+    --archer-color: #2ecc71;
+    --mage-color: #3498db;
+    --cleric-color: #f1c40f;
+    --panel-bg: #222;
+    --button-color: #444;
+    --button-hover: #555;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: monospace;
+    margin: 0;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--accent-color);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--accent-color);
+}
+
+.resources {
+    display: flex;
+    gap: 20px;
+}
+
+.panel {
+    background-color: var(--panel-bg);
+    padding: 15px;
+    border: 1px solid #444;
+}
+
+.panel-title {
+    color: var(--accent-color);
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+.hero-roster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.hero {
+    width: 60px;
+    height: 90px;
+    border: 1px solid #555;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    background-color: #333;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+.hero:hover {
+    border-color: var(--accent-color);
+    background-color: #3a3a3a;
+}
+
+.hero.selected {
+    border: 2px solid var(--accent-color);
+}
+
+.hero.warrior .shape {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 30px solid var(--warrior-color);
+}
+
+.hero.archer .shape {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--archer-color);
+}
+
+.hero.mage .shape {
+    width: 30px;
+    height: 30px;
+    background-color: var(--mage-color);
+    transform: rotate(45deg);
+}
+
+.hero.cleric .shape {
+    width: 30px;
+    height: 30px;
+    background-color: var(--cleric-color);
+}
+
+.hero-info {
+    margin-top: 5px;
+    font-size: 0.8em;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.level {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.7em;
+    background-color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.formation-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 66.67px); /* Fixed width for 3 columns */
+    grid-template-rows: repeat(3, 66.67px); /* Fixed height for 3 rows */
+    gap: 10px;
+    width: 200px; /* Fixed total width */
+    height: 200px; /* Fixed total height */
+    margin: 0 auto 20px auto;
+    position: relative;
+}
+
+.formation-slot {
+    background-color: #333;
+    border: 1px dashed #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    width: 66.67px; /* Fixed slot width */
+    height: 66.67px; /* Fixed slot height */
+    box-sizing: border-box; /* Ensure padding/border doesn’t affect size */
+}
+
+.formation-slot:hover {
+    background-color: #3a3a3a;
+}
+
+.formation-slot.occupied {
+    border: 1px solid #666;
+}
+
+.formation-slot .hero {
+    width: 100%;
+    height: 100%;
+    border: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.dungeon-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dungeon {
+    padding: 10px;
+    background-color: #333;
+    border: 1px solid #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.dungeon:hover {
+    border-color: var(--accent-color);
+    background-color: #3a3a3a;
+}
+
+.dungeon.selected {
+    border: 2px solid var(--accent-color);
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+button {
+    background-color: var(--button-color);
+    color: var(--text-color);
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+button.primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+button.primary:hover {
+    background-color: #6a5acd;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Battle screen */
+.battle-screen {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.battle-log {
+    height: 200px;
+    overflow-y: auto;
+    background-color: #1a1a1a;
+    padding: 10px;
+    border: 1px solid #444;
+    font-size: 0.9em;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+}
+
+.log-entry.attack {
+    color: #e74c3c;
+}
+
+.log-entry.heal {
+    color: #2ecc71;
+}
+
+.log-entry.special {
+    color: #3498db;
+}
+
+.log-entry.system {
+    color: #f1c40f;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #333;
+    border: 1px solid #555;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent-color);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 0;
+    line-height: 20px;
+    font-size: 0.9em;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
+}
+
+/* Results screen */
+.results-screen {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.results-title {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+.casualties {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.rewards {
+    margin: 20px 0;
+    font-size: 1.2em;
+}
+
+.reward-item {
+    margin: 5px 0;
+}
+
+/* Shop screen */
+.shop-screen {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recruit-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+.recruit-hero {
+    width: 100px;
+    height: 140px;
+    border: 1px solid #555;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #333;
+}
+
+.recruit-hero:hover {
+    border-color: var(--accent-color);
+    background-color: #3a3a3a;
+}
+
+.recruit-hero .cost {
+    margin-top: 10px;
+    font-weight: bold;
+    color: gold;
+}
+
+/* Static Tooltip */
+.tooltip {
+    position: absolute;
+    background-color: #1a1a1a;
+    border: 1px solid var(--accent-color);
+    padding: 10px;
+    font-size: 0.9em;
+    color: var(--text-color);
+    z-index: 10;
+    display: none;
+    white-space: pre-wrap;
+    min-width: 250px; /* Minimum width for better content fit */
+    max-width: 300px; /* Maximum width to prevent excessive stretching */
+    top: 50px;
+    right: 20px;
+}
