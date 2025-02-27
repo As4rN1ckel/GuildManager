@@ -26,9 +26,8 @@ const resetBtn = document.createElement('button');
 resetBtn.textContent = 'RESET';
 resetBtn.className = 'primary';
 
-const restBtn = document.createElement('button');
-restBtn.textContent = 'Rest';
-restBtn.className = 'primary';
+const restBtn = document.getElementById('rest-btn');
+const restCostAmount = document.getElementById('rest-cost-amount');
 
 function initGame() {
     for (let i = 0; i < 9; i++) {
@@ -65,8 +64,10 @@ function initGame() {
     headerButtons.appendChild(resetBtn);
     document.querySelector('.header').appendChild(headerButtons);
     
-    // Add event listener for rest button
-    restBtn.addEventListener('click', restHeroes);
+    // Ensure restBtn is interactive and add event listener
+    if (restBtn) {
+        restBtn.addEventListener('click', restHeroes);
+    }
     
     // Add event listeners for save/load/reset
     saveBtn.addEventListener('click', saveGame);
@@ -81,6 +82,11 @@ function updateUI() {
     dayCount.textContent = `${gameState.cycle === 'day' ? 'Day' : 'Night'} ${gameState.day}`;
     renderHeroRoster();
     updateFormationGrid();
+    
+    const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
+    const cost = injuredHeroes.length * 20;
+    restCostAmount.textContent = cost;
+    restBtn.disabled = injuredHeroes.length === 0 || gameState.gold < cost;
 }
 
 function returnToGuild() {
@@ -94,15 +100,21 @@ function returnToGuild() {
 }
 
 function restHeroes() {
-    gameState.heroes.forEach(hero => {
-        if (hero.hp < hero.maxHp) {
+    const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
+    const cost = injuredHeroes.length * 20;
+    
+    if (gameState.gold >= cost) {
+        gameState.gold -= cost;
+        injuredHeroes.forEach(hero => {
             const healAmount = Math.floor(hero.maxHp * 0.5);
             hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
             addLogEntry('heal', `${hero.name} rests and recovers ${healAmount} HP. (HP: ${hero.hp}/${hero.maxHp})`);
-        }
-    });
-    toggleCycle();
-    updateUI();
+        });
+        toggleCycle();
+        updateUI();
+    } else {
+        alert(`Not enough gold! Need ${cost} gold to rest (${gameState.gold} available).`);
+    }
 }
 
 function renderHeroRoster() {

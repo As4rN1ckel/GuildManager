@@ -61,6 +61,12 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
+.rest-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .resources {
     display: flex;
     gap: 20px;
@@ -70,6 +76,11 @@ body {
 }
 
 .gold, .day {
+    font-size: 1em;
+    color: var(--text-color);
+}
+
+.rest-cost {
     font-size: 1em;
     color: var(--text-color);
 }
