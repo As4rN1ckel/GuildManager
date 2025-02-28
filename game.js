@@ -49,8 +49,8 @@ const heroClasses = [
   },
 ];
 
-// XP thresholds for leveling up (e.g., 100 XP for Level 2, 200 for Level 3, etc.)
-const xpThresholds = [0, 5, 10, 15, 20, 25]; // Levels 1-6 (adjust as needed)
+// XP thresholds for leveling up 
+const xpThresholds = [0, 5, 10, 15, 20, 25];
 
 function generateHeroName(className) {
   const firstNames = [
@@ -225,7 +225,10 @@ function checkVictory() {
 function levelUpHero(hero) {
     const currentLevel = hero.level;
     const maxLevel = xpThresholds.length - 1;
-    if (currentLevel >= maxLevel) return; // Prevent leveling beyond max level
+    if (currentLevel >= maxLevel) { // Prevent leveling beyond max level
+        xp = 0;
+        return;
+    }
     
     if (hero.xp >= xpThresholds[currentLevel]) {
         hero.xp = 0;
