@@ -11,7 +11,14 @@ const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
 
 function startMission() {
-  if (!gameState.selectedDungeon) return;
+  if (!gameState.selectedDungeon) {
+    alert("No dungeon selected! Please choose a dungeon first.");
+    return;
+  }
+  if (!gameState.formation.some((id) => id !== null)) {
+    alert("No heroes in formation! Assign at least one hero before embarking.");
+    return;
+  }
   mainScreen.style.display = "none";
   battleScreen.style.display = "flex";
   dungeonName.textContent = gameState.selectedDungeon.name;
@@ -21,6 +28,34 @@ function startMission() {
   exitBtn.disabled = true;
   speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
   simulateBattle();
+}
+
+function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
+  const {
+    enemyCountOnRoom,
+    enemies,
+    enemyStats,
+    bosses,
+    bossStats,
+    bossCount,
+  } = dungeon;
+  const enemyCount = isBossRoom
+    ? Math.floor(Math.random() * (bossCount.max - bossCount.min + 1)) +
+      bossCount.min
+    : Math.floor(
+        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min + 1)
+      ) + enemyCountOnRoom.min;
+  const enemyPool = isBossRoom ? bosses : enemies;
+  const stats = isBossRoom ? bossStats : enemyStats;
+
+  return Array(enemyCount)
+    .fill(null)
+    .map(() => ({
+      type: enemyPool[Math.floor(Math.random() * enemyPool.length)],
+      hp: stats.hp,
+      maxHp: stats.hp,
+      damage: stats.damage,
+    }));
 }
 
 function updateHeroStats(formationHeroes) {
@@ -43,53 +78,64 @@ function updateHeroStats(formationHeroes) {
   });
 }
 
-function updateEnemyStats(enemyGroup, step, totalSteps) {
+function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   enemyStatsList.innerHTML = "";
-  const enemyStat = document.createElement("div");
-  enemyStat.innerHTML = `
-        <span>${step === totalSteps ? "Boss: " : ""}${enemyGroup.type}</span>
+  if (!enemyGroup || enemyGroup.length === 0) {
+    enemyStatsList.innerHTML =
+      "<span>No enemies remaining in this room.</span>";
+    return;
+  }
+
+  const isBossRoom = roomNumber === totalRooms;
+  enemyGroup.forEach((enemy) => {
+    const enemyStat = document.createElement("div");
+    enemyStat.innerHTML = `
+        <span>${isBossRoom ? "Boss: " : ""}${enemy.type}</span>
         <div class="stat-hp-bar">
-            <div class="stat-hp-fill${
-              enemyGroup.hp / enemyGroup.maxHp <= 0.3 ? " low" : ""
-            }" style="width: ${Math.floor(
-    (enemyGroup.hp / enemyGroup.maxHp) * 100
-  )}%;"></div>
+          <div class="stat-hp-fill${
+            enemy.hp / enemy.maxHp <= 0.3 ? " low" : ""
+          }" style="width: ${Math.floor(
+      (enemy.hp / enemy.maxHp) * 100
+    )}%;"></div>
         </div>
-        <span>${enemyGroup.hp}/${enemyGroup.maxHp}</span>
-    `;
-  enemyStatsList.appendChild(enemyStat);
+        <span>${enemy.hp}/${enemy.maxHp}</span>
+      `;
+    enemyStatsList.appendChild(enemyStat);
+  });
 }
 
 function simulateBattle() {
   const dungeon = gameState.selectedDungeon;
-  const totalSteps = dungeon.enemyCount;
-  let currentStep = 0;
+  const totalRooms = dungeon.roomCount;
+  let currentRoom = 0;
   gameState.casualties = [];
 
-  const enemyGroups = Array(totalSteps)
+  // Generate enemy groups for each room
+  const roomEnemies = Array(totalRooms)
     .fill(null)
     .map((_, i) => {
-      const difficulty = dungeon.difficulty.toLowerCase();
-      const baseStats = enemyStats[difficulty];
-      const enemyTypes = enemyGroupsTemplate[difficulty];
-      return {
-        type:
-          i === totalSteps - 1
-            ? bossNames[difficulty][
-                Math.floor(Math.random() * bossNames[difficulty].length)
-              ]
-            : enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
-        hp: baseStats.hp * (i + 1),
-        maxHp: baseStats.hp * (i + 1),
-        damage: baseStats.damage * (i + 1),
-      };
+      const isBossRoom = i === totalRooms - 1;
+      return generateEnemyGroup(dungeon, i, isBossRoom);
     });
 
   addLogEntry("system", `Your party enters ${dungeon.name}...`);
 
   const battleInterval = setInterval(() => {
-    currentStep++;
-    const progress = Math.floor((currentStep / totalSteps) * 100);
+    if (currentRoom >= totalRooms) {
+      clearInterval(battleInterval);
+      addLogEntry(
+        "system",
+        "All rooms cleared! The dungeon is conquered. Press Exit to review the results."
+      );
+      exitBtn.disabled = false; // Unlock Exit button, but don’t show results yet
+      return;
+    }
+
+    currentRoom++;
+    const progress = Math.min(
+      100,
+      Math.floor((currentRoom / totalRooms) * 100)
+    ); // Cap at 100%
     battleProgress.style.width = `${progress}%`;
     document.querySelector(".progress-text").textContent = `${progress}%`;
 
@@ -100,176 +146,238 @@ function simulateBattle() {
 
     if (formationHeroes.length === 0) {
       clearInterval(battleInterval);
-      addLogEntry("system", "All heroes have fallen! The battle is lost.");
-      updateHeroStats(formationHeroes); // Update even on loss
-      updateEnemyStats(enemyGroups[currentStep - 1], currentStep, totalSteps);
+      addLogEntry(
+        "system",
+        "All heroes have fallen! The battle is lost. Press Exit to review the results."
+      );
+      updateHeroStats(formationHeroes);
+      updateEnemyStats(
+        roomEnemies[currentRoom - 1] || [],
+        currentRoom,
+        totalRooms
+      );
       exitBtn.disabled = false;
       return;
     }
 
-    simulateBattleStep(
-      currentStep,
-      totalSteps,
+    const roomCleared = simulateBattleRoom(
+      currentRoom,
+      totalRooms,
       formationHeroes,
-      enemyGroups[currentStep - 1]
+      roomEnemies[currentRoom - 1]
     );
-    updateHeroStats(formationHeroes); // Update after each step
-    updateEnemyStats(enemyGroups[currentStep - 1], currentStep, totalSteps); // Update enemy stats
+    updateHeroStats(formationHeroes);
+    updateEnemyStats(roomEnemies[currentRoom - 1], currentRoom, totalRooms);
 
-    if (
-      currentStep >= totalSteps &&
-      enemyGroups.every((group) => group.hp <= 0)
-    ) {
-      clearInterval(battleInterval);
-      setTimeout(() => {
-        addLogEntry(
-          "system",
-          "All enemies defeated! The battle is won. Review the results."
-        );
-        exitBtn.disabled = false;
-      }, 1000);
-    } else if (enemyGroups[currentStep - 1].hp > 0) {
-      currentStep--;
-      battleProgress.style.width = `${Math.floor(
-        ((currentStep + 0.5) / totalSteps) * 100
-      )}%`;
-      document.querySelector(".progress-text").textContent = `${Math.floor(
-        ((currentStep + 0.5) / totalSteps) * 100
-      )}%`;
+    if (!roomCleared) {
+      currentRoom--; // Repeat room if enemies remain
+      const adjustedProgress = Math.min(
+        100,
+        Math.floor(((currentRoom + 0.5) / totalRooms) * 100)
+      );
+      battleProgress.style.width = `${adjustedProgress}%`;
+      document.querySelector(
+        ".progress-text"
+      ).textContent = `${adjustedProgress}%`;
     }
   }, 2000 / (gameState.battleSpeed || 1));
 }
 
-function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
+function simulateBattleRoom(
+  roomNumber,
+  totalRooms,
+  formationHeroes,
+  enemyGroup
+) {
   if (!enemyGroup || !formationHeroes.length) {
     addLogEntry("system", "Error: No enemies or heroes to fight!");
-    return;
+    return false;
   }
 
+  const dungeon = gameState.selectedDungeon;
+  const isBossRoom = roomNumber === totalRooms;
   addLogEntry(
     "system",
-    `Your party encounters ${step === totalSteps ? "the " : "a group of "}${
-      enemyGroup.type
-    } (${enemyGroup.hp}/${enemyGroup.maxHp} HP)!`
+    `Your party enters Room ${roomNumber} ${
+      isBossRoom ? "and faces the boss" : ""
+    }: ${enemyGroup.map((e) => e.type).join(", ")} (${enemyGroup
+      .map((e) => `${e.hp}/${e.maxHp}`)
+      .join(", ")} HP)!`
   );
 
-  // Heroes attack enemies
-  formationHeroes.forEach((hero, index) => {
-    applyPassiveEffects(hero, formationHeroes, index);
+  let allEnemiesDefeated = false;
 
-    const randomAction = Math.random();
-    if (randomAction < 0.75) {
-      // 75% chance to atk
+  // Continue battling until all enemies in the room are defeated or heroes are wiped
+  while (!allEnemiesDefeated && formationHeroes.length > 0) {
+    // Heroes attack enemies (unchanged for this update)
+    formationHeroes.forEach((hero, index) => {
+      applyPassiveEffects(hero, formationHeroes, index);
+
+      // Always attempt to attack (100% chance, 80% hit)
       let damage = hero.attack;
       if (hero.class !== "warrior") {
-        // Warriors no longer boost damage
         const passive = passiveAbilities.find((p) => p.name === hero.passive);
         if (passive) damage *= passive.value;
       }
 
-      if (Math.random() < 0.8) {
-        enemyGroup.hp = Math.max(0, enemyGroup.hp - damage);
+      const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
+      if (targetEnemy && Math.random() < 0.8) {
+        // 80% hit chance
+        targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
         addLogEntry(
           "attack",
-          `${hero.name} attacks the ${enemyGroup.type} for ${damage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+          `${hero.name} attacks ${targetEnemy.type} for ${damage} damage! (${targetEnemy.type} HP: ${targetEnemy.hp}/${targetEnemy.maxHp})`
         );
+      } else if (targetEnemy) {
+        addLogEntry("attack", `${hero.name} misses ${targetEnemy.type}!`);
       } else {
-        addLogEntry("attack", `${hero.name} misses the ${enemyGroup.type}!`);
+        addLogEntry("attack", `${hero.name} finds no enemies left to attack!`);
       }
-    } else if (randomAction < 0.85 && hero.cooldown === 0) {
-      // 25% chance to special
-      const special = specialAbilities.find((s) => s.name === hero.special);
-      let specialDamage = hero.attack * ((special && special.value) || 1.0);
-      if (hero.class !== "warrior") {
-        const passive = passiveAbilities.find((p) => p.name === hero.passive);
-        if (passive) specialDamage *= passive.value;
+      updateHeroStats(formationHeroes); // Refresh after hero action
+      updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy damage
+
+      // Separate 20% chance for special, checked after attack
+      if (Math.random() < 0.2 && hero.cooldown === 0) {
+        const special = specialAbilities.find((s) => s.name === hero.special);
+        let specialDamage = hero.attack * ((special && special.value) || 1.0);
+        if (hero.class !== "warrior") {
+          const passive = passiveAbilities.find((p) => p.name === hero.passive);
+          if (passive) specialDamage *= passive.value;
+        }
+
+        const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
+        if (specialTarget && Math.random() < 0.8) {
+          // 80% hit chance for special
+          specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
+          addLogEntry(
+            "special",
+            `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${specialTarget.type} HP: ${specialTarget.hp}/${specialTarget.maxHp})`
+          );
+        } else if (specialTarget) {
+          addLogEntry("special", `${hero.name} misses with ${hero.special}!`);
+        } else {
+          addLogEntry(
+            "special",
+            `${hero.name} finds no enemies left for ${hero.special}!`
+          );
+        }
+        hero.cooldown = 2;
+      } else if (hero.cooldown > 0) {
+        hero.cooldown--;
       }
 
-      if (Math.random() < 0.8) {
-        enemyGroup.hp = Math.max(0, enemyGroup.hp - specialDamage);
-        addLogEntry(
-          "special",
-          `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+      if (hero.class === "cleric") {
+        const injuredAllies = formationHeroes.filter(
+          (ally) => ally.hp < ally.maxHp
         );
-      } else {
-        addLogEntry("special", `${hero.name} misses with ${hero.special}!`);
+        if (injuredAllies.length > 0) {
+          const healTarget =
+            injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+          const special = specialAbilities.find((s) => s.name === hero.special);
+          const healAmount = Math.floor(
+            hero.attack * ((special && special.value) || 1.0)
+          );
+          healTarget.hp = Math.min(
+            healTarget.maxHp,
+            healTarget.hp + healAmount
+          );
+          addLogEntry(
+            "heal",
+            `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`
+          );
+        } else {
+          addLogEntry("heal", `${hero.name} finds no allies needing healing!`);
+        }
+        updateHeroStats(formationHeroes); // Refresh after heal
       }
-      hero.cooldown = 2;
-    } else if (hero.class === "cleric") {
-      const injuredAllies = formationHeroes.filter(
-        (ally) => ally.hp < ally.maxHp
-      );
-      if (injuredAllies.length > 0) {
-        const healTarget =
-          injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-        const special = specialAbilities.find((s) => s.name === hero.special);
-        const healAmount = Math.floor(
-          hero.attack * ((special && special.value) || 1.0)
-        );
-        healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
-        addLogEntry(
-          "heal",
-          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`
-        );
-      } else {
-        addLogEntry("heal", `${hero.name} finds no allies needing healing!`);
-      }
+
+      updateHeroStats(formationHeroes); // Refresh after all hero actions
+      updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy damage
+    });
+
+    // Check if all enemies in the room are defeated
+    allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
+
+    if (!allEnemiesDefeated) {
+      // Enemies attack one hero each, prioritizing front row, random within row
+      enemyGroup.forEach((enemy) => {
+        if (enemy.hp > 0) {
+          const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
+          if (livingHeroes.length === 0) return; // No living heroes to target
+
+          let targetHeroesInRow = [];
+          // Try front row first (indices 0-2)
+          targetHeroesInRow = livingHeroes.filter(
+            (h) => gameState.formation.indexOf(h.id) < 3 && h.hp > 0
+          );
+          if (targetHeroesInRow.length === 0) {
+            // Try middle row (indices 3-5)
+            targetHeroesInRow = livingHeroes.filter(
+              (h) => gameState.formation.indexOf(h.id) < 6 && h.hp > 0
+            );
+          }
+          if (targetHeroesInRow.length === 0) {
+            // Try back row (indices 6-8)
+            targetHeroesInRow = livingHeroes.filter((h) => h.hp > 0);
+          }
+
+          if (targetHeroesInRow.length > 0) {
+            const targetHero =
+              targetHeroesInRow[
+                Math.floor(Math.random() * targetHeroesInRow.length)
+              ]; // Randomly select from available heroes in the row
+            if (Math.random() < 0.8) {
+              // Uniform 80% hit chance
+              let damage = enemy.damage;
+              if (targetHero.class === "warrior") {
+                const passive = passiveAbilities.find(
+                  (p) => p.name === targetHero.passive
+                );
+                damage = Math.floor(damage * (passive ? passive.value : 1));
+              }
+              targetHero.hp = Math.max(0, targetHero.hp - damage);
+              addLogEntry(
+                "enemy-attack",
+                `The ${enemy.type} hits ${targetHero.name} for ${damage} damage! (${targetHero.name} HP: ${targetHero.hp}/${targetHero.maxHp})`
+              );
+              if (targetHero.hp <= 0) {
+                gameState.casualties.push(targetHero.id);
+                addLogEntry("system", `${targetHero.name} falls in battle!`);
+                formationHeroes = formationHeroes.filter(
+                  (h) => h.id !== targetHero.id
+                );
+              }
+            } else {
+              addLogEntry(
+                "enemy-attack",
+                `The ${enemy.type} misses ${targetHero.name}!`
+              );
+            }
+          }
+        }
+      });
+      updateHeroStats(formationHeroes); // Refresh after enemy actions
+      updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy actions
     }
 
-    if (hero.cooldown > 0) hero.cooldown--;
-  });
+    // XP and Level-Up reward for clearing the room (per enemy defeated)
+    if (allEnemiesDefeated) {
+      const xpPerEnemy = isBossRoom ? dungeon.bossXP : dungeon.enemyXp;
+      const xpGained = xpPerEnemy * enemyGroup.length;
+      addLogEntry("xp-level", `Heroes gained ${xpGained} XP.`);
+      formationHeroes.forEach((hero) => {
+        hero.xp += xpGained; // Add XP to each hero
+        levelUpHero(hero); // Check for level-up after each room
+      });
 
-  // XP and Level Up Reward after killing group of enemies
-  if (enemyGroup.hp <= 0) {
-    const xpAward = step === totalSteps ? 3 : 1;
-    formationHeroes.forEach((hero) => {
-      hero.xp += xpAward;
-      levelUpHero(hero);
-    });
-    addLogEntry(
-      "xp-level", // Changed from "system"
-      `Heroes gained ${xpAward} XP.`
-    );
+      updateHeroStats(formationHeroes); // Refresh stats to show new XP and levels
+      updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after clearing
+    }
+
+    battleLog.scrollTop = battleLog.scrollHeight;
   }
 
-  // Enemies attack heroes if still alive
-  if (enemyGroup.hp > 0) {
-    formationHeroes.forEach((hero, index) => {
-      let hitChance = index < 3 ? 0.9 : index < 6 ? 0.7 : 0.5; // Front, middle, back
-      if (Math.random() < hitChance) {
-        let damage = Math.floor(
-          enemyGroup.damage * (index < 3 ? 1 : index < 6 ? 0.8 : 0.5)
-        );
-        if (hero.class === "warrior") {
-          const passive = passiveAbilities.find((p) => p.name === hero.passive);
-          damage = Math.floor(damage * (passive ? passive.value : 1));
-        }
-        hero.hp = Math.max(0, hero.hp - damage);
-        addLogEntry(
-          "enemy-attack",
-          `The ${enemyGroup.type} hits ${hero.name} for ${damage} damage! (${hero.name} HP: ${hero.hp}/${hero.maxHp})`
-        );
-        if (hero.hp <= 0) {
-          gameState.casualties.push(hero.id);
-          addLogEntry("system", `${hero.name} falls in battle!`);
-        }
-      } else {
-        addLogEntry(
-          "enemy-attack",
-          `The ${enemyGroup.type} misses ${hero.name}!`
-        );
-      }
-    });
-  } else {
-    addLogEntry(
-      "system",
-      `The ${enemyGroup.type} ${
-        step === totalSteps ? "has been defeated" : "are defeated"
-      }!`
-    );
-  }
-
-  battleLog.scrollTop = battleLog.scrollHeight;
+  return allEnemiesDefeated;
 }
 
 function applyPassiveEffects(hero, formationHeroes, index) {
@@ -280,29 +388,31 @@ function applyPassiveEffects(hero, formationHeroes, index) {
       );
       addLogEntry(
         "special",
-        `${hero.name}'s passive reduces incoming damage by ${Math.floor(
+        `${hero.name}'s passive ${
+          warriorPassive.name
+        } reduces incoming damage by ${Math.floor(
           (1 - warriorPassive.value) * 100
         )}%.`
       );
-      break; // No attack boost anymore; effect applied later during enemy attack
+      break; // No attack boost; effect applied later during enemy attack
     case "archer":
       const archerPassive = passiveAbilities.find(
         (p) => p.name === hero.passive
       );
       addLogEntry(
         "special",
-        `${hero.name}'s passive increases damage by ${
-          (archerPassive.value - 1) * 100
-        }%.`
+        `${hero.name}'s passive ${
+          archerPassive.name
+        } increases damage by ${Math.floor((archerPassive.value - 1) * 100)}%.`
       );
       break;
     case "mage":
       const magePassive = passiveAbilities.find((p) => p.name === hero.passive);
       addLogEntry(
         "special",
-        `${hero.name}'s passive increases damage by ${
-          (magePassive.value - 1) * 100
-        }%.`
+        `${hero.name}'s passive ${
+          magePassive.name
+        } increases damage by ${Math.floor((magePassive.value - 1) * 100)}%.`
       );
       break;
     case "cleric":
@@ -315,14 +425,14 @@ function applyPassiveEffects(hero, formationHeroes, index) {
           ally.hp = Math.min(ally.maxHp, ally.hp + healAmount);
           addLogEntry(
             "heal",
-            `${hero.name}'s passive heals ${ally.name} for ${healAmount} HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`
+            `${hero.name}'s passive ${clericPassive.name} heals ${ally.name} for ${healAmount} HP. (${ally.name} HP: ${ally.hp}/${ally.maxHp})`
           );
         }
       });
       if (formationHeroes.every((ally) => ally.hp === ally.maxHp)) {
         addLogEntry(
           "heal",
-          `${hero.name}'s passive finds no allies needing healing!`
+          `${hero.name}'s passive ${clericPassive.name} finds no allies needing healing!`
         );
       }
       break;

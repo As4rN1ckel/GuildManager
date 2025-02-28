@@ -1,13 +1,13 @@
 // Game state and core logic
 const gameState = {
-    gold: 250,
-    cycle: 'day', 
-    heroes: [],
-    formation: Array(9).fill(null),
-    selectedHero: null,
-    selectedDungeon: null,
-    battleSpeed: 1,
-    casualties: []
+  gold: 250,
+  cycle: "day",
+  heroes: [],
+  formation: Array(9).fill(null),
+  selectedHero: null,
+  selectedDungeon: null,
+  battleSpeed: 1,
+  casualties: [],
 };
 
 const heroClasses = [
@@ -18,7 +18,7 @@ const heroClasses = [
     attack: 15,
     special: "Shield Bash",
     cost: 100,
-    passive: "Takes 20% less damage",
+    passive: "Ironclad Resilience", // Renamed from "Takes 20% less damage"
   },
   {
     type: "archer",
@@ -27,7 +27,7 @@ const heroClasses = [
     attack: 20,
     special: "Multi Shot",
     cost: 120,
-    passive: "Deals 20% more damage",
+    passive: "Deadly Precision", // Renamed from "Deals 20% more damage"
   },
   {
     type: "mage",
@@ -36,7 +36,7 @@ const heroClasses = [
     attack: 25,
     special: "Fireball",
     cost: 150,
-    passive: "Deals 25% more damage",
+    passive: "Arcane Potency", // Renamed from "Deals 25% more damage"
   },
   {
     type: "cleric",
@@ -45,12 +45,9 @@ const heroClasses = [
     attack: 10,
     special: "Heal",
     cost: 140,
-    passive: "Heals all allies for 50% attack per battle step",
+    passive: "Divine Restoration", // Renamed from "Heals all allies for 50% attack per battle step"
   },
 ];
-
-// XP thresholds for leveling up 
-const xpThresholds = [0, 5, 10, 15, 20, 25];
 
 function generateHeroName(className) {
   const firstNames = [
@@ -104,87 +101,99 @@ const specialAbilities = [
 ];
 
 const passiveAbilities = [
-    {
-      name: "Takes 20% less damage",
-      description: "Reduces incoming damage by 20%",
-      value: 0.8,
-    },
-    {
-      name: "Deals 20% more damage",
-      description: "Increases attack and special damage by 20%",
-      value: 1.2,
-    },
-    {
-      name: "Deals 25% more damage",
-      description: "Increases attack and special damage by 25%",
-      value: 1.25,
-    },
-    {
-      name: "Heals all allies for 50% attack per battle step",
-      description: "Heals all injured allies for 50% of attack per turn",
-      value: 0.5,
-    },
-  ];
+  {
+    name: "Ironclad Resilience",
+    description: "Reduces incoming damage by 20%",
+    value: 0.8,
+  },
+  {
+    name: "Deadly Precision",
+    description: "Increases attack and special damage by 20%",
+    value: 1.2,
+  },
+  {
+    name: "Arcane Potency",
+    description: "Increases attack and special damage by 25%",
+    value: 1.25,
+  },
+  {
+    name: "Divine Restoration",
+    description: "Heals all injured allies for 50% of attack per turn",
+    value: 0.5,
+  },
+];
+
+// XP thresholds for leveling up
+const xpThresholds = [0, 5, 12, 25, 55, 120];
+
+function levelUpHero(hero) {
+  const currentLevel = hero.level;
+  const maxLevel = xpThresholds.length - 1;
+  if (currentLevel >= maxLevel) return; // Prevent leveling beyond max level
+
+  if (hero.xp >= xpThresholds[currentLevel]) {
+    hero.xp = 0;
+    hero.level++;
+    hero.maxHp += 10;
+    hero.hp = Math.min(hero.maxHp, hero.hp + 10);
+    hero.attack += 2;
+    addLogEntry('xp-level', `${hero.name} leveled up to Level ${hero.level}!`);
+  }
+}
 
 const dungeons = [
   {
     name: "Forest Ruins",
+    description: "An abandoned ruin in the heart of the forest.",
     difficulty: "Easy",
     reward: 200,
-    enemyCount: 3,
-    description: "A ruined temple overrun by goblins.",
+    roomCount: 3,
+    enemyCountOnRoom: { min: 3, max: 5 }, // Range of enemies per room (3-5)
+    enemies: ["goblin", "kobold", "wolf"],
+    enemyStats: { hp: 40, damage: 12 }, // Stats for regular enemies
+    enemyXp: 1, // XP reward per regular enemy
+    bosses: ["Goblin Warlord", "Ancient Treant"],
+    bossStats: { hp: 120, damage: 24 }, // Stats for bosses
+    bossCount: { min: 1, max: 1 }, // Range of bosses per boss room (1 boss)
+    bossXP: 3, // XP reward per boss
   },
   {
     name: "Dark Caverns",
+    description: "Ancient caves filled with eerie undead.",
     difficulty: "Medium",
     reward: 400,
-    enemyCount: 5,
-    description: "Ancient caves filled with undead.",
+    roomCount: 5,
+    enemyCountOnRoom: { min: 4, max: 6 }, // Range of enemies per room (4-6)
+    enemies: ["skeleton", "ghoul", "shadow"],
+    enemyStats: { hp: 60, damage: 20 }, // Stats for regular enemies
+    enemyXp: 2, // XP reward per regular enemy
+    bosses: ["Skeleton King", "Ghoul Overlord"],
+    bossStats: { hp: 180, damage: 40 }, // Stats for bosses
+    bossCount: { min: 1, max: 1 }, // Range of bosses per boss room (1 boss)
+    bossXP: 4, // XP reward per boss
   },
   {
     name: "Dragon's Lair",
+    description: "A perilous lair guarded by a fearsome dragon.",
     difficulty: "Hard",
     reward: 800,
-    enemyCount: 7,
-    description: "Home to a terrible dragon.",
+    roomCount: 7,
+    enemyCountOnRoom: { min: 5, max: 7 }, // Range of enemies per room (5-7)
+    enemies: ["dragon", "wyvern", "demon"],
+    enemyStats: { hp: 100, damage: 30 }, // Stats for regular enemies
+    enemyXp: 3, // XP reward per regular enemy
+    bosses: ["Elder Dragon", "Infernal Wyrm"],
+    bossStats: { hp: 300, damage: 60 }, // Stats for bosses
+    bossCount: { min: 1, max: 2 }, // Range of bosses per boss room (1-2 bosses)
+    bossXP: 5, // XP reward per boss
   },
 ];
 
-const enemyStats = {
-  easy: { hp: 30, damage: 10 },
-  medium: { hp: 50, damage: 15 },
-  hard: { hp: 100, damage: 25 },
-};
-
-const enemyGroupsTemplate = {
-  easy: ["goblins", "kobolds", "wolves", "fairy folk", "brigands"],
-  medium: ["skeletons", "ghouls", "shadows", "zombies", "bat swarm"],
-  hard: ["dragons", "wyverns", "demons", "hydras", "liches"],
-};
-
-const bossNames = {
-  easy: [
-    "Goblin Warlord",
-    "Ancient Treant",
-    "Wolf Alpha",
-    "Fairy Sovereign",
-    "Brigand Leader",
-  ],
-  medium: [
-    "Skeleton King",
-    "Ghoul Overlord",
-    "Shadow Monarch",
-    "Zombie Patriarch",
-    "Bat Lord",
-  ],
-  hard: [
-    "Elder Dragon",
-    "Infernal Wyrm",
-    "Abyssal Demon",
-    "Hydra Tyrant",
-    "Lich Sovereign",
-  ],
-};
+function addHero(hero) {
+  gameState.heroes.push(hero);
+  renderHeroRoster();
+  updateUI();
+}
 
 function generateHero() {
   const classIndex = Math.floor(Math.random() * heroClasses.length);
@@ -201,14 +210,8 @@ function generateHero() {
     cost: heroClass.cost,
     passive: heroClass.passive,
     cooldown: 0,
-    xp: 0
+    xp: 0,
   };
-}
-
-function addHero(hero) {
-  gameState.heroes.push(hero);
-  renderHeroRoster();
-  updateUI();
 }
 
 function isHeroInFormation(hero) {
@@ -222,24 +225,6 @@ function checkVictory() {
   );
 }
 
-function levelUpHero(hero) {
-    const currentLevel = hero.level;
-    const maxLevel = xpThresholds.length - 1;
-    if (currentLevel >= maxLevel) { // Prevent leveling beyond max level
-        xp = 0;
-        return;
-    }
-    
-    if (hero.xp >= xpThresholds[currentLevel]) {
-        hero.xp = 0;
-        hero.level++;
-        hero.maxHp += 10;
-        hero.hp = Math.min(hero.maxHp, hero.hp + 10);
-        hero.attack += 2;
-        addLogEntry('xp-level', `${hero.name} leveled up to Level ${hero.level}!`);
-    }
-}
-
 function saveGame() {
   try {
     localStorage.setItem("gameState", JSON.stringify(gameState));
@@ -251,26 +236,26 @@ function saveGame() {
 }
 
 function loadGame() {
-    try {
-        const savedState = localStorage.getItem("gameState");
-        if (savedState) {
-            const parsedState = JSON.parse(savedState);
-            if (!parsedState.heroes || !Array.isArray(parsedState.formation)) {
-                throw new Error("Invalid save data structure");
-            }
-            Object.assign(gameState, parsedState);
-            updateUI();
-            speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
-            alert("Game loaded successfully!");
-        } else {
-            resetGame();
-            alert("No saved game found. Starting fresh.");
-        }
-    } catch (error) {
-        console.error("Failed to load game:", error);
-        resetGame();
-        alert("Error loading game. Resetting to default state.");
+  try {
+    const savedState = localStorage.getItem("gameState");
+    if (savedState) {
+      const parsedState = JSON.parse(savedState);
+      if (!parsedState.heroes || !Array.isArray(parsedState.formation)) {
+        throw new Error("Invalid save data structure");
+      }
+      Object.assign(gameState, parsedState);
+      updateUI();
+      speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
+      alert("Game loaded successfully!");
+    } else {
+      resetGame();
+      alert("No saved game found. Starting fresh.");
     }
+  } catch (error) {
+    console.error("Failed to load game:", error);
+    resetGame();
+    alert("Error loading game. Resetting to default state.");
+  }
 }
 
 function resetGame() {
@@ -289,10 +274,10 @@ function resetGame() {
 }
 
 function toggleCycle() {
-    gameState.cycle = gameState.cycle === 'day' ? 'night' : 'day';
-    if (gameState.cycle === 'day') {
-        gameState.day++;
-    }
+  gameState.cycle = gameState.cycle === "day" ? "night" : "day";
+  if (gameState.cycle === "day") {
+    gameState.day++;
+  }
 }
 
 if (typeof window !== "undefined") {

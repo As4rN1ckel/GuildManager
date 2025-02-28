@@ -702,3 +702,11 @@ button:disabled {
 .stat-hp-fill.low {
     background-color: #e74c3c;
 }
+
+/* Ensure enemy-stats-list can stack multiple enemies vertically */
+#enemy-stats-list {
+    display: flex;
+    flex-direction: column; /* Already set, but confirming */
+    gap: 5px; /* Add spacing between enemy entries */
+    font-size: 0.9em;
+}
