@@ -205,14 +205,20 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
       applyPassiveEffects(hero, formationHeroes, formationHeroes.indexOf(hero));
 
       // Always attempt to attack (100% chance, 80% hit)
+      let effectiveHitChance = hero.hitChance;
+      if (hero.class === "archer") {
+        const passive = passiveAbilities.find((p) => p.name === hero.passive);
+        if (passive) effectiveHitChance = Math.min(1.0, effectiveHitChance + passive.value);
+      }
+
       let damage = hero.attack;
       if (hero.class !== "warrior") {
         const passive = passiveAbilities.find((p) => p.name === hero.passive);
-        if (passive) damage *= passive.value;
+        if (passive && hero.class !== "archer") damage *= passive.value;
       }
 
       const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
-      if (targetEnemy && Math.random() < hero.hitChance) {
+      if (targetEnemy && Math.random() < effectiveHitChance) {
         targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
         addLogEntry(
           "attack",
@@ -232,11 +238,11 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
         let specialDamage = hero.attack * ((special && special.value) || 1.0);
         if (hero.class !== "warrior") {
           const passive = passiveAbilities.find((p) => p.name === hero.passive);
-          if (passive) specialDamage *= passive.value;
+          if (passive && hero.class !== "archer") specialDamage *= passive.value;
         }
 
         const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
-        if (specialTarget && Math.random() < hero.hitChance) {
+        if (specialTarget && Math.random() < effectiveHitChance) {
           specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
           addLogEntry(
             "special",
@@ -396,7 +402,9 @@ function applyPassiveEffects(hero, formationHeroes, index) {
         "special",
         `${hero.name}'s passive ${
           archerPassive.name
-        } increases damage by ${Math.floor((archerPassive.value - 1) * 100)}%.`
+        } increases hit chance by ${Math.floor(
+          archerPassive.value * 100
+        )}%.`
       );
       break;
     case "mage":

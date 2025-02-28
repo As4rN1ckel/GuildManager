@@ -116,13 +116,13 @@ const passiveAbilities = [
   },
   {
     name: "Deadly Precision",
-    description: "Increases attack and special damage by 20%",
-    value: 1.2,
+    description: "Increases the hit chance by 10%",
+    value: 0.1,
   },
   {
     name: "Arcane Potency",
     description: "Increases attack and special damage by 25%",
-    value: 1.25,
+    value: 1.15,
   },
   {
     name: "Divine Restoration",
