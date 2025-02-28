@@ -24,12 +24,29 @@ class BattleManager {
       this.updateProgress(currentRoom, totalRooms);
       const formationHeroes = this.getFormationHeroes();
       if (!formationHeroes.length) {
-        this.handleDefeat(formationHeroes, roomEnemies, currentRoom, totalRooms, dungeon);
+        this.handleDefeat(
+          formationHeroes,
+          roomEnemies,
+          currentRoom,
+          totalRooms,
+          dungeon
+        );
         return;
       }
 
-      const roomCleared = await this.simulateRoom(currentRoom, totalRooms, formationHeroes, roomEnemies[currentRoom - 1], dungeon);
-      this.updateStats(formationHeroes, roomEnemies[currentRoom - 1], currentRoom, totalRooms);
+      const roomCleared = await this.simulateRoom(
+        currentRoom,
+        totalRooms,
+        formationHeroes,
+        roomEnemies[currentRoom - 1],
+        dungeon
+      );
+      this.updateStats(
+        formationHeroes,
+        roomEnemies[currentRoom - 1],
+        currentRoom,
+        totalRooms
+      );
 
       if (!roomCleared) {
         currentRoom--; // Repeat room if enemies remain
@@ -37,7 +54,10 @@ class BattleManager {
       }
     }
 
-    this.logEntry("system", "All rooms cleared! The dungeon is conquered. Press Exit to review the results.");
+    this.logEntry(
+      "system",
+      "All rooms cleared! The dungeon is conquered. Press Exit to review the results."
+    );
     exitBtn.disabled = false;
   }
 
@@ -57,7 +77,13 @@ class BattleManager {
       .filter((hero) => hero && !gameState.casualties.includes(hero.id));
   }
 
-  static async simulateRoom(roomNumber, totalRooms, formationHeroes, enemyGroup, dungeon) {
+  static async simulateRoom(
+    roomNumber,
+    totalRooms,
+    formationHeroes,
+    enemyGroup,
+    dungeon
+  ) {
     if (!enemyGroup || !formationHeroes.length) {
       this.logEntry("system", "Error: No enemies or heroes to fight!");
       return false;
@@ -73,27 +99,86 @@ class BattleManager {
         .join(", ")} HP)!`
     );
 
-    return await this.runBattleLoop(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+    return await this.runBattleLoop(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms,
+      isBossRoom,
+      dungeon
+    );
   }
 
-  static async runBattleLoop(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
+  static async runBattleLoop(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    isBossRoom,
+    dungeon
+  ) {
     let allEnemiesDefeated = false;
+
     while (!allEnemiesDefeated && formationHeroes.length > 0) {
-      await HeroActions.performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms);
+      // Perform hero turns
+      await HeroActions.performTurns(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
+
+      // Refresh formationHeroes to exclude fallen heroes
+      formationHeroes = this.getFormationHeroes(); // Re-fetch to exclude casualties
       allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
-      if (!allEnemiesDefeated) {
-        await EnemyActions.performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms);
-        allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
-      }
+
       if (allEnemiesDefeated) {
-        this.handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+        this.handleRoomClear(
+          formationHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms,
+          isBossRoom,
+          dungeon
+        );
         return true;
       }
+
+      // Perform enemy turns
+      await EnemyActions.performTurns(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
+
+      // Refresh formationHeroes again after enemy turns
+      formationHeroes = this.getFormationHeroes();
+      allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
+    }
+
+    if (allEnemiesDefeated) {
+      this.handleRoomClear(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms,
+        isBossRoom,
+        dungeon
+      );
+      return true;
     }
     return false;
   }
 
-  static handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
+  static handleRoomClear(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    isBossRoom,
+    dungeon
+  ) {
     const xpPerEnemy = isBossRoom ? dungeon.bossXP : dungeon.enemyXp;
     const xpGained = Math.round(xpPerEnemy * enemyGroup.length); // Round XP to nearest whole number
     this.logEntry("xp-level", `Heroes gained ${xpGained} XP.`);
@@ -103,7 +188,13 @@ class BattleManager {
     });
   }
 
-  static handleDefeat(formationHeroes, enemyGroup, roomNumber, totalRooms, dungeon) {
+  static handleDefeat(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    dungeon
+  ) {
     this.logEntry(
       "system",
       "All heroes have fallen! The battle is lost. Press Exit to review the results."
@@ -140,7 +231,12 @@ class HeroActions {
     roomNumber,
     totalRooms
   ) {
-    for (const hero of formationHeroes) {
+    // Work with a copy to avoid modifying during iteration
+    const activeHeroes = [...formationHeroes];
+    for (let i = 0; i < activeHeroes.length; i++) {
+      const hero = activeHeroes[i];
+      if (hero.hp <= 0) continue; // Skip if already fallen
+
       await new Promise((resolve) =>
         setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
       );
@@ -151,6 +247,12 @@ class HeroActions {
         roomNumber,
         totalRooms
       );
+
+      // If hero falls during their turn (e.g., due to a counterattack mechanic), update immediately
+      if (hero.hp <= 0) {
+        gameState.casualties.push(hero.id);
+        BattleManager.logEntry("system", `${hero.name} falls in battle!`);
+      }
     }
   }
 
@@ -189,7 +291,9 @@ class HeroActions {
       targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
       BattleManager.logEntry(
         "attack",
-        `${hero.name} attacks ${targetEnemy.type} for ${damage} damage! (${targetEnemy.type} HP: ${Math.round(targetEnemy.hp)}/${targetEnemy.maxHp})`
+        `${hero.name} attacks ${targetEnemy.type} for ${damage} damage! (${
+          targetEnemy.type
+        } HP: ${Math.round(targetEnemy.hp)}/${targetEnemy.maxHp})`
       );
     } else if (targetEnemy) {
       BattleManager.logEntry(
@@ -213,7 +317,9 @@ class HeroActions {
     if (Math.random() < 0.2 && hero.cooldown === 0) {
       // Special chance remains hardcoded for now
       const skill = heroSkills.find((s) => s.name === hero.special);
-      let specialDamage = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Round special damage base
+      let specialDamage = Math.round(
+        hero.attack * ((skill && skill.value) || 1.0)
+      ); // Round special damage base
       if (hero.class !== "warrior") {
         const passive = heroPassives.find((p) => p.name === hero.passive);
         if (
@@ -228,11 +334,15 @@ class HeroActions {
       const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
       if (specialTarget && Math.random() < effectiveHitChance) {
         if (skill.type === "damage") {
-          specialDamage = Math.round(skill.apply(hero, specialTarget, specialDamage)); // Round skill damage
+          specialDamage = Math.round(
+            skill.apply(hero, specialTarget, specialDamage)
+          ); // Round skill damage
           specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
           BattleManager.logEntry(
             "special",
-            `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${specialTarget.type} HP: ${Math.round(specialTarget.hp)}/${specialTarget.maxHp})`
+            `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${
+              specialTarget.type
+            } HP: ${Math.round(specialTarget.hp)}/${specialTarget.maxHp})`
           );
         } else if (skill.type === "heal") {
           skill.apply(hero, formationHeroes);
@@ -269,10 +379,15 @@ class HeroActions {
         const healAmount = Math.round(
           hero.attack * ((skill && skill.value) || 1.0)
         ); // Round heal amount
-        healTarget.hp = Math.min(healTarget.maxHp, Math.round(healTarget.hp + healAmount)); // Round HP
+        healTarget.hp = Math.min(
+          healTarget.maxHp,
+          Math.round(healTarget.hp + healAmount)
+        ); // Round HP
         BattleManager.logEntry(
           "heal",
-          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${Math.round(healTarget.hp)}/${healTarget.maxHp})`
+          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${
+            healTarget.name
+          } HP: ${Math.round(healTarget.hp)}/${healTarget.maxHp})`
         );
       } else {
         BattleManager.logEntry(
@@ -334,36 +449,38 @@ class EnemyActions {
     let targetHeroesInRow = [];
     // Try front row first (indices 0-2)
     targetHeroesInRow = livingHeroes.filter(
-      (h) => gameState.formation.indexOf(h.id) < 3 && h.hp > 0
+      (h) => gameState.formation.indexOf(h.id) < 3
     );
     if (!targetHeroesInRow.length) {
       // Try middle row (indices 3-5)
       targetHeroesInRow = livingHeroes.filter(
-        (h) => gameState.formation.indexOf(h.id) < 6 && h.hp > 0
+        (h) => gameState.formation.indexOf(h.id) < 6
       );
     }
     if (!targetHeroesInRow.length) {
       // Try back row (indices 6-8)
-      targetHeroesInRow = livingHeroes.filter((h) => h.hp > 0);
+      targetHeroesInRow = livingHeroes;
     }
 
     if (targetHeroesInRow.length > 0) {
       const targetHero =
         targetHeroesInRow[Math.floor(Math.random() * targetHeroesInRow.length)];
       if (Math.random() < enemy.hitChance) {
-        let damage = Math.round(enemy.damage); // Round enemy damage
+        let damage = Math.round(enemy.damage);
         if (targetHero.class === "warrior") {
           const passive = heroPassives.find(
             (p) => p.name === targetHero.passive
           );
           if (passive && passive.type === "damageReduction") {
-            damage = Math.round(passive.apply(targetHero, null, damage)); // Round after reduction
+            damage = Math.round(passive.apply(targetHero, null, damage));
           }
         }
-        targetHero.hp = Math.max(0, Math.round(targetHero.hp - damage)); // Round HP after damage
+        targetHero.hp = Math.max(0, Math.round(targetHero.hp - damage));
         BattleManager.logEntry(
           "enemy-attack",
-          `The ${enemy.type} hits ${targetHero.name} for ${damage} damage! (${targetHero.name} HP: ${Math.round(targetHero.hp)}/${targetHero.maxHp})`
+          `The ${enemy.type} hits ${targetHero.name} for ${damage} damage! (${
+            targetHero.name
+          } HP: ${Math.round(targetHero.hp)}/${targetHero.maxHp})`
         );
         if (targetHero.hp <= 0) {
           gameState.casualties.push(targetHero.id);
@@ -371,9 +488,7 @@ class EnemyActions {
             "system",
             `${targetHero.name} falls in battle!`
           );
-          formationHeroes = formationHeroes.filter(
-            (h) => h.id !== targetHero.id
-          );
+          // No need to filter here; runBattleLoop will handle it
         }
       } else {
         BattleManager.logEntry(
