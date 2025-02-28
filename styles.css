@@ -637,3 +637,68 @@ button:disabled {
 .hero .hp-fill.low, .recruit-hero .hp-fill.low {
     background-color: #e74c3c;
 }
+
+/* Hero Stats */
+.hero-stats {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+}
+
+.hero-stats h3 {
+    color: var(--accent-color);
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+#hero-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hero-stat {
+    font-size: 0.9em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Enemy Stats */
+.enemy-stats {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+}
+
+.enemy-stats h3 {
+    color: var(--accent-color);
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+#enemy-stats-list {
+    font-size: 0.9em;
+}
+
+/* HP Bar Styling (Reused from hero roster) */
+.stat-hp-bar {
+    width: 100px;
+    height: 5px;
+    background-color: #444;
+    border-radius: 3px;
+    margin-left: 10px;
+}
+
+.stat-hp-fill {
+    height: 100%;
+    background-color: #2ecc71;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.stat-hp-fill.low {
+    background-color: #e74c3c;
+}

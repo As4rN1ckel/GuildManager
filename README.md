@@ -250,20 +250,7 @@ Polish/Necessity: 5/10 - Useful for player control.
 Implementation: Add "Retreat" button, end battle with penalty.
 
 Missing Implementations
-1. Dynamic Enemy Stats Display
-Description: Show enemy HP/damage in battle UI, not just logs.
-
-Current Issue: Enemy stats are hidden outside logs, reducing transparency.
-
-Ease: 6/10 - Add DOM elements and update in simulateBattleStep.
-
-Interest: 5/10 - Informative but not thrilling.
-
-Polish/Necessity: 7/10 - Improves clarity significantly.
-
-Implementation: Add <div> in battle-screen, update with enemy data.
-
-2. Cooldown UI Feedback
+1. Cooldown UI Feedback
 Description: Display hero cooldowns in formation grid during battle.
 
 Current Issue: Players can’t see cooldown status visually.
@@ -276,7 +263,7 @@ Polish/Necessity: 6/10 - Enhances tactical awareness.
 
 Implementation: Add <span> in hero elements showing hero.cooldown.
 
-3. Victory/Defeat Animations
+2. Victory/Defeat Animations
 Description: Animate the results screen (e.g., fade-in victory text).
 
 Current Issue: Results transition is static.
@@ -289,7 +276,7 @@ Polish/Necessity: 3/10 - Purely cosmetic.
 
 Implementation: Add transition: opacity 0.5s in CSS, fade in.
 
-4. Battle Log Persistence
+3. Battle Log Persistence
 Description: Save battle log to review post-mission.
 
 Current Issue: Log clears on exit, losing battle history.
