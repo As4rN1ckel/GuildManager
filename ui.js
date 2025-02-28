@@ -30,6 +30,8 @@ const restBtn = document.getElementById('rest-btn');
 const restCostAmount = document.getElementById('rest-cost-amount');
 
 function initGame() {
+    speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
+
     for (let i = 0; i < 9; i++) {
         const slot = document.createElement('div');
         slot.className = 'formation-slot';

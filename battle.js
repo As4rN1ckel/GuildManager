@@ -17,6 +17,7 @@ function startMission() {
   battleProgress.style.width = "0%";
   document.querySelector(".progress-text").textContent = "0%";
   exitBtn.disabled = true;
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
   simulateBattle();
 }
 

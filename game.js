@@ -248,25 +248,26 @@ function saveGame() {
 }
 
 function loadGame() {
-  try {
-    const savedState = localStorage.getItem("gameState");
-    if (savedState) {
-      const parsedState = JSON.parse(savedState);
-      if (!parsedState.heroes || !Array.isArray(parsedState.formation)) {
-        throw new Error("Invalid save data structure");
-      }
-      Object.assign(gameState, parsedState);
-      updateUI();
-      alert("Game loaded successfully!");
-    } else {
-      resetGame();
-      alert("No saved game found. Starting fresh.");
+    try {
+        const savedState = localStorage.getItem("gameState");
+        if (savedState) {
+            const parsedState = JSON.parse(savedState);
+            if (!parsedState.heroes || !Array.isArray(parsedState.formation)) {
+                throw new Error("Invalid save data structure");
+            }
+            Object.assign(gameState, parsedState);
+            updateUI();
+            speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
+            alert("Game loaded successfully!");
+        } else {
+            resetGame();
+            alert("No saved game found. Starting fresh.");
+        }
+    } catch (error) {
+        console.error("Failed to load game:", error);
+        resetGame();
+        alert("Error loading game. Resetting to default state.");
     }
-  } catch (error) {
-    console.error("Failed to load game:", error);
-    resetGame();
-    alert("Error loading game. Resetting to default state.");
-  }
 }
 
 function resetGame() {
