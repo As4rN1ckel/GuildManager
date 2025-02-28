@@ -124,7 +124,7 @@ const passiveAbilities = [
 ];
 
 // XP thresholds for leveling up
-const xpThresholds = [0, 5, 12, 25, 55, 120];
+const xpThresholds = [0, 10, 25, 60, 120, 250];
 
 function levelUpHero(hero) {
   const currentLevel = hero.level;

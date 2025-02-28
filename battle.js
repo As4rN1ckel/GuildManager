@@ -104,7 +104,7 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   });
 }
 
-function simulateBattle() {
+async function simulateBattle() {
   const dungeon = gameState.selectedDungeon;
   const totalRooms = dungeon.roomCount;
   let currentRoom = 0;
@@ -120,17 +120,7 @@ function simulateBattle() {
 
   addLogEntry("system", `Your party enters ${dungeon.name}...`);
 
-  const battleInterval = setInterval(() => {
-    if (currentRoom >= totalRooms) {
-      clearInterval(battleInterval);
-      addLogEntry(
-        "system",
-        "All rooms cleared! The dungeon is conquered. Press Exit to review the results."
-      );
-      exitBtn.disabled = false; // Unlock Exit button, but don’t show results yet
-      return;
-    }
-
+  while (currentRoom < totalRooms) {
     currentRoom++;
     const progress = Math.min(
       100,
@@ -145,7 +135,6 @@ function simulateBattle() {
       .filter((hero) => hero && !gameState.casualties.includes(hero.id));
 
     if (formationHeroes.length === 0) {
-      clearInterval(battleInterval);
       addLogEntry(
         "system",
         "All heroes have fallen! The battle is lost. Press Exit to review the results."
@@ -160,7 +149,7 @@ function simulateBattle() {
       return;
     }
 
-    const roomCleared = simulateBattleRoom(
+    const roomCleared = await simulateBattleRoom(
       currentRoom,
       totalRooms,
       formationHeroes,
@@ -180,15 +169,16 @@ function simulateBattle() {
         ".progress-text"
       ).textContent = `${adjustedProgress}%`;
     }
-  }, 2000 / (gameState.battleSpeed || 1));
+  }
+
+  addLogEntry(
+    "system",
+    "All rooms cleared! The dungeon is conquered. Press Exit to review the results."
+  );
+  exitBtn.disabled = false; // Unlock Exit button, but don’t show results yet
 }
 
-function simulateBattleRoom(
-  roomNumber,
-  totalRooms,
-  formationHeroes,
-  enemyGroup
-) {
+async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemyGroup) {
   if (!enemyGroup || !formationHeroes.length) {
     addLogEntry("system", "Error: No enemies or heroes to fight!");
     return false;
@@ -207,11 +197,11 @@ function simulateBattleRoom(
 
   let allEnemiesDefeated = false;
 
-  // Continue battling until all enemies in the room are defeated or heroes are wiped
   while (!allEnemiesDefeated && formationHeroes.length > 0) {
-    // Heroes attack enemies (unchanged for this update)
-    formationHeroes.forEach((hero, index) => {
-      applyPassiveEffects(hero, formationHeroes, index);
+    // Hero turns (real-time)
+    for (const hero of formationHeroes) {
+      await new Promise(resolve => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
+      applyPassiveEffects(hero, formationHeroes, formationHeroes.indexOf(hero));
 
       // Always attempt to attack (100% chance, 80% hit)
       let damage = hero.attack;
@@ -222,7 +212,6 @@ function simulateBattleRoom(
 
       const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
       if (targetEnemy && Math.random() < 0.8) {
-        // 80% hit chance
         targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
         addLogEntry(
           "attack",
@@ -247,7 +236,6 @@ function simulateBattleRoom(
 
         const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
         if (specialTarget && Math.random() < 0.8) {
-          // 80% hit chance for special
           specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
           addLogEntry(
             "special",
@@ -293,17 +281,19 @@ function simulateBattleRoom(
 
       updateHeroStats(formationHeroes); // Refresh after all hero actions
       updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy damage
-    });
 
-    // Check if all enemies in the room are defeated
-    allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
+      // Check if all enemies are defeated after each hero turn
+      allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
+      if (allEnemiesDefeated) break;
+    }
 
+    // Enemy turns (real-time)
     if (!allEnemiesDefeated) {
-      // Enemies attack one hero each, prioritizing front row, random within row
-      enemyGroup.forEach((enemy) => {
+      for (const enemy of enemyGroup) {
         if (enemy.hp > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
           const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
-          if (livingHeroes.length === 0) return; // No living heroes to target
+          if (livingHeroes.length === 0) continue;
 
           let targetHeroesInRow = [];
           // Try front row first (indices 0-2)
@@ -327,7 +317,6 @@ function simulateBattleRoom(
                 Math.floor(Math.random() * targetHeroesInRow.length)
               ]; // Randomly select from available heroes in the row
             if (Math.random() < 0.8) {
-              // Uniform 80% hit chance
               let damage = enemy.damage;
               if (targetHero.class === "warrior") {
                 const passive = passiveAbilities.find(
@@ -355,9 +344,13 @@ function simulateBattleRoom(
             }
           }
         }
-      });
-      updateHeroStats(formationHeroes); // Refresh after enemy actions
-      updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy actions
+        updateHeroStats(formationHeroes); // Refresh after enemy actions
+        updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after enemy actions
+
+        // Check if all enemies are defeated after each enemy turn
+        allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
+        if (allEnemiesDefeated) break;
+      }
     }
 
     // XP and Level-Up reward for clearing the room (per enemy defeated)
@@ -372,9 +365,8 @@ function simulateBattleRoom(
 
       updateHeroStats(formationHeroes); // Refresh stats to show new XP and levels
       updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh after clearing
+      return true; // Room cleared, exit function
     }
-
-    battleLog.scrollTop = battleLog.scrollHeight;
   }
 
   return allEnemiesDefeated;
@@ -444,6 +436,7 @@ function addLogEntry(type, text) {
   entry.className = `log-entry ${type}`;
   entry.textContent = text;
   battleLog.appendChild(entry);
+  battleLog.scrollTop = battleLog.scrollHeight;
 }
 
 function showResults() {
@@ -486,7 +479,9 @@ function showResults() {
 }
 
 function toggleBattleSpeed() {
-  gameState.battleSpeed = gameState.battleSpeed === 1 ? 2 : 1;
+  const speeds = [0.5, 1, 2, 4];
+  const currentIndex = speeds.indexOf(gameState.battleSpeed);
+  gameState.battleSpeed = speeds[(currentIndex + 1) % speeds.length];
   speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 }
 
