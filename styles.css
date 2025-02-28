@@ -565,21 +565,17 @@ button:disabled {
     border-color: var(--accent-color);
 }
 
-.tooltip {
+.hero-stats-panel {
     position: absolute;
-    background-color: #1a1a1a;
-    border: 1px solid var(--accent-color);
+    top: 20%;
+    right: 10px;
+    width: 250px;
+    background: #333;
+    color: white;
     padding: 10px;
-    font-size: 0.9em;
-    color: var(--text-color);
-    z-index: 10;
-    display: none;
-    white-space: pre-wrap;
-    min-width: 250px;
-    max-width: 300px;
-    top: 50px;
-    right: 20px;
-}
+    border: 1px solid #555;
+    border-radius: 5px;
+  }
 
 .hp-bar {
     width: 100%;
@@ -710,3 +706,10 @@ button:disabled {
     gap: 5px; /* Add spacing between enemy entries */
     font-size: 0.9em;
 }
+  .hero.dragging {
+    opacity: 0.4;
+  }
+
+  #hero-roster.dragover {
+    background: rgba(255, 255, 255, 0.1); /* Light highlight */
+  }

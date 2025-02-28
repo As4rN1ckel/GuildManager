@@ -10,6 +10,7 @@
  - Random Dungeons
  - Quest Board
  - Campaign
+ - Hero Salary System?
  - Hero Retirement/Veteran System
  - Retreat System
 

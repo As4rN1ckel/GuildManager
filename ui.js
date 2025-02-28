@@ -11,8 +11,8 @@ const mainScreen = document.getElementById('main-screen');
 const battleScreen = document.getElementById('battle-screen');
 const resultsScreen = document.getElementById('results-screen');
 const shopScreen = document.getElementById('shop-screen');
-const staticTooltip = document.getElementById('static-tooltip');
-const shopTooltip = document.getElementById('shop-tooltip');
+const heroStatsPanel = document.getElementById('hero-stats-panel');
+const heroStatsContent = document.getElementById('hero-stats-content');
 
 const saveBtn = document.createElement('button');
 saveBtn.textContent = 'SAVE';
@@ -31,33 +31,37 @@ const restCostAmount = document.getElementById('rest-cost-amount');
 
 function initGame() {
     speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
-
+  
     for (let i = 0; i < 9; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'formation-slot';
-        slot.dataset.index = i;
-        slot.addEventListener('click', () => handleFormationSlotClick(i));
-        formationGrid.appendChild(slot);
+      const slot = document.createElement('div');
+      slot.className = 'formation-slot';
+      slot.dataset.index = i;
+      slot.addEventListener('dragover', (e) => e.preventDefault());
+      slot.addEventListener('drop', (e) => handleDrop(e, i));
+      formationGrid.appendChild(slot);
     }
-    
+  
+    // Make heroRoster a drop zone
+    heroRoster.addEventListener('dragover', (e) => e.preventDefault());
+    heroRoster.addEventListener('drop', (e) => handleDrop(e, null));
+  
     dungeons.forEach(dungeon => {
-        const dungeonEl = document.createElement('div');
-        dungeonEl.className = 'dungeon';
-        dungeonEl.innerHTML = `
-            <div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div>
-            <div>Reward: ${dungeon.reward} Gold</div>
-        `;
-        dungeonEl.addEventListener('click', () => selectDungeon(dungeon));
-        dungeonList.appendChild(dungeonEl);
+      const dungeonEl = document.createElement('div');
+      dungeonEl.className = 'dungeon';
+      dungeonEl.innerHTML = `
+        <div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div>
+        <div>Reward: ${dungeon.reward} Gold</div>
+      `;
+      dungeonEl.addEventListener('click', () => selectDungeon(dungeon));
+      dungeonList.appendChild(dungeonEl);
     });
-    
+  
     recruitBtn.addEventListener('click', showShopScreen);
     embarkBtn.addEventListener('click', startMission);
     speedBtn.addEventListener('click', toggleBattleSpeed);
     continueBtn.addEventListener('click', returnToGuild);
     backToGuildBtn.addEventListener('click', hideShopScreen);
-    
-    // Add save/load/reset buttons to the header
+  
     const headerButtons = document.createElement('div');
     headerButtons.style.display = 'flex';
     headerButtons.style.gap = '10px';
@@ -65,19 +69,21 @@ function initGame() {
     headerButtons.appendChild(loadBtn);
     headerButtons.appendChild(resetBtn);
     document.querySelector('.header').appendChild(headerButtons);
-    
-    // Ensure restBtn is interactive and add event listener
+  
     if (restBtn) {
-        restBtn.addEventListener('click', restHeroes);
+      restBtn.addEventListener('click', restHeroes);
     }
-    
-    // Add event listeners for save/load/reset
+  
     saveBtn.addEventListener('click', saveGame);
     loadBtn.addEventListener('click', loadGame);
     resetBtn.addEventListener('click', resetGame);
-    
+
+    heroRoster.addEventListener('dragover', () => heroRoster.classList.add('dragover'));
+    heroRoster.addEventListener('dragleave', () => heroRoster.classList.remove('dragover'));
+    heroRoster.addEventListener('drop', () => heroRoster.classList.remove('dragover'));
+  
     updateUI();
-}
+  }
 
 function updateUI() {
     goldAmount.textContent = gameState.gold;
@@ -122,26 +128,27 @@ function restHeroes() {
 function renderHeroRoster() {
     heroRoster.innerHTML = '';
     gameState.heroes.forEach(hero => {
-        if (!isHeroInFormation(hero)) {
-            const heroEl = document.createElement('div');
-            heroEl.className = `hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
-            heroEl.dataset.id = hero.id;
-            heroEl.innerHTML = `
-                <div class="shape"></div>
-                <div class="hero-info">${hero.name.split(' ')[0]}</div>
-                <div class="level">Lv${hero.level}</div>
-                <div class="hp-bar">
-                    <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
-                </div>
-                <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
-            `;
-            heroEl.addEventListener('click', () => selectHero(hero.id));
-            heroEl.addEventListener('mouseenter', () => showTooltip(hero, staticTooltip));
-            heroEl.addEventListener('mouseleave', () => hideTooltip(staticTooltip));
-            heroRoster.appendChild(heroEl);
-        }
+      if (!isHeroInFormation(hero)) {
+        const heroEl = document.createElement('div');
+        heroEl.className = `hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
+        heroEl.dataset.id = hero.id;
+        heroEl.draggable = true;
+        heroEl.innerHTML = `
+          <div class="shape"></div>
+          <div class="hero-info">${hero.name.split(' ')[0]}</div>
+          <div class="level">Lv${hero.level}</div>
+          <div class="hp-bar">
+            <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+          </div>
+          <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
+        `;
+        heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
+        heroEl.addEventListener('click', () => selectHero(hero.id));
+        heroRoster.appendChild(heroEl);
+      }
     });
-}
+  }
+  
 
 function selectHero(heroId) {
     gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
@@ -171,29 +178,68 @@ function handleFormationSlotClick(index) {
 function updateFormationGrid() {
     const slots = formationGrid.querySelectorAll('.formation-slot');
     slots.forEach((slot, index) => {
-        const heroId = gameState.formation[index];
-        slot.innerHTML = '';
-        slot.classList.toggle('occupied', !!heroId);
-        if (heroId) {
-            const hero = gameState.heroes.find(h => h.id === heroId);
-            if (hero) {
-                const heroEl = document.createElement('div');
-                heroEl.className = `hero ${hero.class}`;
-                heroEl.innerHTML = `
-                    <div class="shape"></div>
-                    <div class="hero-info">${hero.name.split(' ')[0]}</div>
-                    <div class="level">Lv${hero.level}</div>
-                    <div class="hp-bar">
-                        <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
-                    </div>
-                `;
-                heroEl.addEventListener('mouseenter', () => showTooltip(hero, staticTooltip));
-                heroEl.addEventListener('mouseleave', () => hideTooltip(staticTooltip));
-                slot.appendChild(heroEl);
-            }
+      const heroId = gameState.formation[index];
+      slot.innerHTML = '';
+      slot.classList.toggle('occupied', !!heroId);
+      if (heroId) {
+        const hero = gameState.heroes.find(h => h.id === heroId);
+        if (hero) {
+          const heroEl = document.createElement('div');
+          heroEl.className = `hero ${hero.class}`;
+          heroEl.dataset.id = hero.id;
+          heroEl.draggable = true;
+          heroEl.innerHTML = `
+            <div class="shape"></div>
+            <div class="hero-info">${hero.name.split(' ')[0]}</div>
+            <div class="level">Lv${hero.level}</div>
+            <div class="hp-bar">
+              <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+            </div>
+          `;
+          heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
+          heroEl.addEventListener('click', () => selectHero(hero.id));
+          slot.appendChild(heroEl);
         }
+      }
     });
-}
+  }
+
+  function handleDrop(e, targetIndex) {
+    e.preventDefault();
+    const heroId = e.dataTransfer.getData('text/plain');
+    const hero = gameState.heroes.find(h => h.id === heroId);
+    if (!hero) return;
+  
+    const sourceIndex = gameState.formation.indexOf(heroId);
+    const targetHeroId = targetIndex !== null ? gameState.formation[targetIndex] : null;
+  
+    if (targetIndex === null) {
+      // Dropped on heroRoster: Remove from formation
+      if (sourceIndex !== -1) {
+        gameState.formation[sourceIndex] = null;
+      }
+      // Do nothing if dragged from roster to roster
+    } else if (sourceIndex === -1 && !targetHeroId) {
+      // Dragging from roster to empty slot
+      gameState.formation[targetIndex] = heroId;
+    } else if (sourceIndex !== -1 && !targetHeroId) {
+      // Dragging from grid to empty slot
+      gameState.formation[sourceIndex] = null;
+      gameState.formation[targetIndex] = heroId;
+    } else if (sourceIndex !== -1 && targetHeroId) {
+      // Swapping within grid
+      gameState.formation[sourceIndex] = targetHeroId;
+      gameState.formation[targetIndex] = heroId;
+    } else if (sourceIndex === -1 && targetHeroId) {
+      // Dragging from roster to occupied slot (swap with roster)
+      gameState.formation[targetIndex] = heroId;
+    }
+  
+    gameState.selectedHero = null; // Clear selection after drop
+    renderHeroRoster();
+    updateFormationGrid();
+    checkEmbarkButton();
+  }
 
 function selectDungeon(dungeon) {
     gameState.selectedDungeon = dungeon;
@@ -227,8 +273,6 @@ function renderShop() {
             <div class="cost">${recruit.cost} Gold</div>
         `;
         recruitEl.addEventListener('click', () => recruitHero(recruit, recruitEl));
-        recruitEl.addEventListener('mouseenter', () => showTooltip(recruit, shopTooltip));
-        recruitEl.addEventListener('mouseleave', () => hideTooltip(shopTooltip));
         recruitList.appendChild(recruitEl);
     }
 }
@@ -247,28 +291,37 @@ function recruitHero(recruit, element) {
 function hideShopScreen() {
     shopScreen.style.display = 'none';
     mainScreen.style.display = 'block';
-    hideTooltip(shopTooltip);
-}
-
-function showTooltip(hero, tooltipElement) {
-    tooltipElement.style.display = 'block';
-    tooltipElement.textContent = `
-        Name: ${hero.name}
-        Class: ${capitalize(hero.class)}
-        HP: ${hero.hp}/${hero.maxHp}
-        Attack: ${hero.attack}
-        XP: ${hero.xp}/${xpThresholds[hero.level]}
-        Special: ${hero.special}
-        Passive: ${hero.passive}
-        Level: ${hero.level}
-    `;
-}
-
-function hideTooltip(tooltipElement) {
-    tooltipElement.style.display = 'none';
-    tooltipElement.textContent = 'Hover over a hero to see stats';
 }
 
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+function selectHero(heroId) {
+    gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
+    renderHeroRoster();
+    updateFormationGrid();
+    updateHeroStatsPanel(); // Update stats panel
+    checkEmbarkButton();
+  }
+  
+  function updateHeroStatsPanel() {
+    if (!gameState.selectedHero) {
+      heroStatsPanel.style.display = 'none';
+      return;
+    }
+    const hero = gameState.heroes.find(h => h.id === gameState.selectedHero);
+    if (hero) {
+      heroStatsPanel.style.display = 'block';
+      heroStatsContent.innerHTML = `
+        <p><strong>Name:</strong> ${hero.name}</p>
+        <p><strong>Class:</strong> ${capitalize(hero.class)}</p>
+        <p><strong>HP:</strong> ${hero.hp}/${hero.maxHp}</p>
+        <p><strong>Attack:</strong> ${hero.attack}</p>
+        <p><strong>XP:</strong> ${hero.xp}/${xpThresholds[hero.level]}</p>
+        <p><strong>Special:</strong> ${hero.special}</p>
+        <p><strong>Passive:</strong> ${hero.passive}</p>
+        <p><strong>Level:</strong> ${hero.level}</p>
+      `;
+    }
+  }
