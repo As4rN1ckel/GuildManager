@@ -128,26 +128,26 @@ function restHeroes() {
 function renderHeroRoster() {
     heroRoster.innerHTML = '';
     gameState.heroes.forEach(hero => {
-      if (!isHeroInFormation(hero)) {
-        const heroEl = document.createElement('div');
-        heroEl.className = `hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
-        heroEl.dataset.id = hero.id;
-        heroEl.draggable = true;
-        heroEl.innerHTML = `
-          <div class="shape"></div>
-          <div class="hero-info">${hero.name.split(' ')[0]}</div>
-          <div class="level">Lv${hero.level}</div>
-          <div class="hp-bar">
-            <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
-          </div>
-          <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
-        `;
-        heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
-        heroEl.addEventListener('click', () => selectHero(hero.id));
-        heroRoster.appendChild(heroEl);
-      }
+        if (!isHeroInFormation(hero)) {
+            const heroEl = document.createElement('div');
+            heroEl.className = `hero-base hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
+            heroEl.dataset.id = hero.id;
+            heroEl.draggable = true;
+            heroEl.innerHTML = `
+                <div class="shape"></div>
+                <div class="hero-info">${hero.name.split(' ')[0]}</div>
+                <div class="level">Lv${hero.level}</div>
+                <div class="hp-bar">
+                    <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+                </div>
+                <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
+            `;
+            heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
+            heroEl.addEventListener('click', () => selectHero(hero.id));
+            heroRoster.appendChild(heroEl);
+        }
     });
-  }
+}
   
 
 function selectHero(heroId) {
@@ -264,7 +264,7 @@ function renderShop() {
     for (let i = 0; i < 4; i++) {
         const recruit = generateHero();
         const recruitEl = document.createElement('div');
-        recruitEl.className = `recruit-hero ${recruit.class}`;
+        recruitEl.className = `hero-base recruit-hero ${recruit.class}`;
         recruitEl.innerHTML = `
             <div class="shape"></div>
             <div class="hero-info">${recruit.name}</div>
