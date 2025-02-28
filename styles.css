@@ -335,6 +335,7 @@ button:disabled {
     font-size: 0.9em;
 }
 
+/* Existing log entry styles */
 .log-entry {
     margin-bottom: 5px;
 }
@@ -357,6 +358,10 @@ button:disabled {
 
 .log-entry.system {
     color: #f1c40f;
+}
+
+.log-entry.xp-level {
+    color: #9b59b6; /* Purple for XP and level-ups */
 }
 
 .progress-bar {

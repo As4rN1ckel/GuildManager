@@ -99,127 +99,121 @@ function simulateBattle() {
 }
 
 function simulateBattleStep(step, totalSteps, formationHeroes, enemyGroup) {
-  addLogEntry(
-    "system",
-    `Your party encounters ${step === totalSteps ? "the " : "a group of "}${
-      enemyGroup.type
-    } (${enemyGroup.hp}/${enemyGroup.maxHp} HP)!`
-  );
-
-  // Heroes attack enemies
-  formationHeroes.forEach((hero, index) => {
-    applyPassiveEffects(hero, formationHeroes, index);
-
-    const randomAction = Math.random();
-    // Inside formationHeroes.forEach in simulateBattleStep, replace the attack and special logic with:
-    if (randomAction < 0.75) {
-      // 75% chance to act (25% not fight)
-      let damage = hero.attack;
-      const passive = passiveAbilities.find((p) => p.name === hero.passive);
-      if (passive) damage *= passive.value;
-
-      // 80% chance to hit (20% miss chance)
-      if (Math.random() < 0.8) {
-        enemyGroup.hp -= damage;
-        addLogEntry(
-          "attack",
-          `${hero.name} attacks the ${enemyGroup.type} for ${damage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
-        );
-      } else {
-        addLogEntry("attack", `${hero.name} misses the ${enemyGroup.type}!`);
-      }
-    } else if (randomAction < 0.85 && hero.cooldown === 0) {
-      const special = specialAbilities.find((s) => s.name === hero.special);
-      let specialDamage = hero.attack * ((special && special.value) || 1.0);
-      const passive = passiveAbilities.find((p) => p.name === hero.passive);
-      if (passive) specialDamage *= passive.value;
-
-      if (Math.random() < 0.8) {
-        enemyGroup.hp -= specialDamage;
-        addLogEntry(
-          "special",
-          `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
-        );
-      } else {
-        addLogEntry("special", `${hero.name} misses with ${hero.special}!`);
-      }
-      hero.cooldown = 2;
-    } else if (hero.class === "cleric") {
-      // Find a random ally who is not at full health
-      const injuredAllies = formationHeroes.filter(
-        (ally) => ally.hp < ally.maxHp
-      );
-      if (injuredAllies.length > 0) {
-        const healTarget =
-          injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-        const special = specialAbilities.find((s) => s.name === hero.special);
-        const healAmount = Math.floor(
-          hero.attack * ((special && special.value) || 1.0)
-        );
-        healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
-        addLogEntry(
-          "heal",
-          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`
-        );
-      } else {
-        addLogEntry("heal", `${hero.name} finds no allies needing healing!`);
-      }
+    if (!enemyGroup || !formationHeroes.length) {
+      addLogEntry("system", "Error: No enemies or heroes to fight!");
+      return;
     }
-
-    if (hero.cooldown > 0) hero.cooldown--;
-  });
-
-  // XP and Level Up Reward after killing group of enemies
-  if (enemyGroup.hp <= 0) {
-    const xpAward = step === totalSteps ? 3 : 1;
-    formationHeroes.forEach((hero) => {
-      hero.xp += xpAward;
-      levelUpHero(hero);
-      addLogEntry(
-        "system",
-        `${hero.name} gained ${xpAward} XP. (Total: ${hero.xp} XP)`
-      );
-    });
-  }
-
-  // Enemies attack heroes if still alive
-  if (enemyGroup.hp > 0) {
-    formationHeroes.forEach((hero, index) => {
-      let hitChance = 0;
-      if (index < 3) hitChance = 0.9; // Front row
-      else if (index < 6) hitChance = 0.7; // Middle row
-      else hitChance = 0.5; // Back row
-
-      if (Math.random() < hitChance) {
-        const damage =
-          enemyGroup.damage * (index < 3 ? 1 : index < 6 ? 0.8 : 0.5);
-        hero.hp -= damage;
-        addLogEntry(
-          "enemy-attack",
-          `The ${enemyGroup.type} hits ${hero.name} for ${damage} damage! (${hero.name} HP: ${hero.hp}/${hero.maxHp})`
-        );
-        if (hero.hp <= 0) {
-          gameState.casualties.push(hero.id);
-          addLogEntry("system", `${hero.name} falls in battle!`);
-        }
-      } else {
-        addLogEntry(
-          "enemy-attack",
-          `The ${enemyGroup.type} misses ${hero.name}!`
-        );
-      }
-    });
-  } else {
+  
     addLogEntry(
       "system",
-      `The ${enemyGroup.type} ${
-        step === totalSteps ? "has been defeated" : "are defeated"
-      }!`
+      `Your party encounters ${step === totalSteps ? "the " : "a group of "}${
+        enemyGroup.type
+      } (${enemyGroup.hp}/${enemyGroup.maxHp} HP)!`
     );
+  
+    // Heroes attack enemies
+    formationHeroes.forEach((hero, index) => {
+      applyPassiveEffects(hero, formationHeroes, index);
+  
+      const randomAction = Math.random();
+      if (randomAction < 0.75) { // 75% chance to atk
+        let damage = hero.attack;
+        if (hero.class !== "warrior") { // Warriors no longer boost damage
+          const passive = passiveAbilities.find((p) => p.name === hero.passive);
+          if (passive) damage *= passive.value;
+        }
+  
+        if (Math.random() < 0.8) {
+          enemyGroup.hp = Math.max(0, enemyGroup.hp - damage);
+          addLogEntry(
+            "attack",
+            `${hero.name} attacks the ${enemyGroup.type} for ${damage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+          );
+        } else {
+          addLogEntry("attack", `${hero.name} misses the ${enemyGroup.type}!`);
+        }
+      } else if (randomAction < 0.85 && hero.cooldown === 0) { // 25% chance to special
+        const special = specialAbilities.find((s) => s.name === hero.special);
+        let specialDamage = hero.attack * ((special && special.value) || 1.0);
+        if (hero.class !== "warrior") { 
+          const passive = passiveAbilities.find((p) => p.name === hero.passive);
+          if (passive) specialDamage *= passive.value;
+        }
+  
+        if (Math.random() < 0.8) {
+          enemyGroup.hp = Math.max(0, enemyGroup.hp - specialDamage);
+          addLogEntry(
+            "special",
+            `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${enemyGroup.type} HP: ${enemyGroup.hp}/${enemyGroup.maxHp})`
+          );
+        } else {
+          addLogEntry("special", `${hero.name} misses with ${hero.special}!`);
+        }
+        hero.cooldown = 2;
+      } else if (hero.class === "cleric") {
+        const injuredAllies = formationHeroes.filter(ally => ally.hp < ally.maxHp);
+        if (injuredAllies.length > 0) {
+          const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+          const special = specialAbilities.find((s) => s.name === hero.special);
+          const healAmount = Math.floor(hero.attack * ((special && special.value) || 1.0));
+          healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
+          addLogEntry(
+            "heal",
+            `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${healTarget.name} HP: ${healTarget.hp}/${healTarget.maxHp})`
+          );
+        } else {
+          addLogEntry("heal", `${hero.name} finds no allies needing healing!`);
+        }
+      }
+  
+      if (hero.cooldown > 0) hero.cooldown--;
+    });
+  
+    // XP and Level Up Reward after killing group of enemies
+    if (enemyGroup.hp <= 0) {
+      const xpAward = step === totalSteps ? 3 : 1;
+      formationHeroes.forEach((hero) => {
+        hero.xp += xpAward;
+        levelUpHero(hero);
+      });
+      addLogEntry(
+        "xp-level", // Changed from "system"
+        `Heroes gained ${xpAward} XP.`
+      );
+    }
+  
+    // Enemies attack heroes if still alive
+    if (enemyGroup.hp > 0) {
+      formationHeroes.forEach((hero, index) => {
+        let hitChance = index < 3 ? 0.9 : index < 6 ? 0.7 : 0.5; // Front, middle, back
+        if (Math.random() < hitChance) {
+          let damage = Math.floor(enemyGroup.damage * (index < 3 ? 1 : index < 6 ? 0.8 : 0.5));
+          if (hero.class === "warrior") {
+            const passive = passiveAbilities.find((p) => p.name === hero.passive);
+            damage = Math.floor(damage * (passive ? passive.value : 1));
+          }
+          hero.hp = Math.max(0, hero.hp - damage);
+          addLogEntry(
+            "enemy-attack",
+            `The ${enemyGroup.type} hits ${hero.name} for ${damage} damage! (${hero.name} HP: ${hero.hp}/${hero.maxHp})`
+          );
+          if (hero.hp <= 0) {
+            gameState.casualties.push(hero.id);
+            addLogEntry("system", `${hero.name} falls in battle!`);
+          }
+        } else {
+          addLogEntry("enemy-attack", `The ${enemyGroup.type} misses ${hero.name}!`);
+        }
+      });
+    } else {
+      addLogEntry(
+        "system",
+        `The ${enemyGroup.type} ${step === totalSteps ? "has been defeated" : "are defeated"}!`
+      );
+    }
+  
+    battleLog.scrollTop = battleLog.scrollHeight;
   }
-
-  battleLog.scrollTop = battleLog.scrollHeight;
-}
 
 function applyPassiveEffects(hero, formationHeroes, index) {
   switch (hero.class) {
@@ -229,11 +223,11 @@ function applyPassiveEffects(hero, formationHeroes, index) {
       );
       addLogEntry(
         "special",
-        `${hero.name}'s passive increases damage by ${
-          (warriorPassive.value - 1) * 100
-        }%.`
+        `${hero.name}'s passive reduces incoming damage by ${Math.floor(
+          (1 - warriorPassive.value) * 100
+        )}%.`
       );
-      break;
+      break; // No attack boost anymore; effect applied later during enemy attack
     case "archer":
       const archerPassive = passiveAbilities.find(
         (p) => p.name === hero.passive

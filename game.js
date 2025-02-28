@@ -18,7 +18,7 @@ const heroClasses = [
     attack: 15,
     special: "Shield Bash",
     cost: 100,
-    passive: "Deals 10% more damage",
+    passive: "Takes 20% less damage",
   },
   {
     type: "archer",
@@ -104,27 +104,27 @@ const specialAbilities = [
 ];
 
 const passiveAbilities = [
-  {
-    name: "Deals 10% more damage",
-    description: "Increases attack and special damage by 10%",
-    value: 1.1,
-  },
-  {
-    name: "Deals 20% more damage",
-    description: "Increases attack and special damage by 20%",
-    value: 1.2,
-  },
-  {
-    name: "Deals 25% more damage",
-    description: "Increases attack and special damage by 25%",
-    value: 1.25,
-  },
-  {
-    name: "Heals all allies for 50% attack per battle step",
-    description: "Heals all injured allies for 50% of attack per turn",
-    value: 0.5,
-  },
-];
+    {
+      name: "Takes 20% less damage",
+      description: "Reduces incoming damage by 20%",
+      value: 0.8,
+    },
+    {
+      name: "Deals 20% more damage",
+      description: "Increases attack and special damage by 20%",
+      value: 1.2,
+    },
+    {
+      name: "Deals 25% more damage",
+      description: "Increases attack and special damage by 25%",
+      value: 1.25,
+    },
+    {
+      name: "Heals all allies for 50% attack per battle step",
+      description: "Heals all injured allies for 50% of attack per turn",
+      value: 0.5,
+    },
+  ];
 
 const dungeons = [
   {
@@ -233,28 +233,46 @@ function levelUpHero(hero) {
         hero.maxHp += 10;
         hero.hp = Math.min(hero.maxHp, hero.hp + 10);
         hero.attack += 2;
-        addLogEntry('system', `${hero.name} leveled up to Level ${hero.level}!`);
+        addLogEntry('xp-level', `${hero.name} leveled up to Level ${hero.level}!`);
     }
 }
 
 function saveGame() {
-  localStorage.setItem("gameState", JSON.stringify(gameState));
+  try {
+    localStorage.setItem("gameState", JSON.stringify(gameState));
+    alert("Game saved successfully!");
+  } catch (error) {
+    console.error("Failed to save game:", error);
+    alert("Error saving game. Check console for details.");
+  }
 }
 
 function loadGame() {
-  const savedState = localStorage.getItem("gameState");
-  if (savedState) {
-    Object.assign(gameState, JSON.parse(savedState));
-    updateUI();
-  } else {
+  try {
+    const savedState = localStorage.getItem("gameState");
+    if (savedState) {
+      const parsedState = JSON.parse(savedState);
+      if (!parsedState.heroes || !Array.isArray(parsedState.formation)) {
+        throw new Error("Invalid save data structure");
+      }
+      Object.assign(gameState, parsedState);
+      updateUI();
+      alert("Game loaded successfully!");
+    } else {
+      resetGame();
+      alert("No saved game found. Starting fresh.");
+    }
+  } catch (error) {
+    console.error("Failed to load game:", error);
     resetGame();
+    alert("Error loading game. Resetting to default state.");
   }
 }
 
 function resetGame() {
   gameState.gold = 250;
-  gameState.day = 1;
-  gameState.cycle = 'day';
+  gameState.day = 1; // Ensure day is initialized
+  gameState.cycle = "day";
   gameState.heroes = [];
   gameState.formation = Array(9).fill(null);
   gameState.selectedHero = null;
