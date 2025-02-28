@@ -55,6 +55,7 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
       hp: stats.hp,
       maxHp: stats.hp,
       damage: stats.damage,
+      hitChance: stats.hitChance,
     }));
 }
 
@@ -211,7 +212,7 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
       }
 
       const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
-      if (targetEnemy && Math.random() < 0.8) {
+      if (targetEnemy && Math.random() < hero.hitChance) {
         targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
         addLogEntry(
           "attack",
@@ -235,7 +236,7 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
         }
 
         const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
-        if (specialTarget && Math.random() < 0.8) {
+        if (specialTarget && Math.random() < hero.hitChance) {
           specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
           addLogEntry(
             "special",
@@ -249,7 +250,7 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
             `${hero.name} finds no enemies left for ${hero.special}!`
           );
         }
-        hero.cooldown = 2;
+        hero.cooldown = special.cooldown;
       } else if (hero.cooldown > 0) {
         hero.cooldown--;
       }
@@ -316,7 +317,7 @@ async function simulateBattleRoom(roomNumber, totalRooms, formationHeroes, enemy
               targetHeroesInRow[
                 Math.floor(Math.random() * targetHeroesInRow.length)
               ]; // Randomly select from available heroes in the row
-            if (Math.random() < 0.8) {
+              if (Math.random() < enemy.hitChance) {
               let damage = enemy.damage;
               if (targetHero.class === "warrior") {
                 const passive = passiveAbilities.find(

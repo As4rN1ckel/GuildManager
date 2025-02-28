@@ -18,7 +18,8 @@ const heroClasses = [
     attack: 15,
     special: "Shield Bash",
     cost: 100,
-    passive: "Ironclad Resilience", // Renamed from "Takes 20% less damage"
+    passive: "Ironclad Resilience",
+    hitChance: 0.8,
   },
   {
     type: "archer",
@@ -27,7 +28,8 @@ const heroClasses = [
     attack: 20,
     special: "Multi Shot",
     cost: 120,
-    passive: "Deadly Precision", // Renamed from "Deals 20% more damage"
+    passive: "Deadly Precision",
+    hitChance: 0.8,
   },
   {
     type: "mage",
@@ -36,7 +38,8 @@ const heroClasses = [
     attack: 25,
     special: "Fireball",
     cost: 150,
-    passive: "Arcane Potency", // Renamed from "Deals 25% more damage"
+    passive: "Arcane Potency",
+    hitChance: 0.8,
   },
   {
     type: "cleric",
@@ -45,7 +48,8 @@ const heroClasses = [
     attack: 10,
     special: "Heal",
     cost: 140,
-    passive: "Divine Restoration", // Renamed from "Heals all allies for 50% attack per battle step"
+    passive: "Divine Restoration",
+    hitChance: 0.8,
   },
 ];
 
@@ -82,21 +86,25 @@ const specialAbilities = [
     name: "Shield Bash",
     description: "Deals 25% more damage than base attack",
     value: 1.25,
+    cooldown: 2,
   },
   {
     name: "Multi Shot",
     description: "Deals 40% more damage than base attack",
     value: 1.4,
+    cooldown: 2,
   },
   {
     name: "Fireball",
     description: "Deals 50% more damage than base attack",
     value: 1.5,
+    cooldown: 2,
   },
   {
     name: "Heal",
     description: "Heals a random injured ally for 100% of attack",
     value: 1.0,
+    cooldown: 2,
   },
 ];
 
@@ -150,10 +158,10 @@ const dungeons = [
     roomCount: 3,
     enemyCountOnRoom: { min: 3, max: 5 }, // Range of enemies per room (3-5)
     enemies: ["goblin", "kobold", "wolf"],
-    enemyStats: { hp: 40, damage: 12 }, // Stats for regular enemies
+    enemyStats: { hp: 40, damage: 12, hitChance: 0.8 }, // Stats for regular enemies
     enemyXp: 1, // XP reward per regular enemy
     bosses: ["Goblin Warlord", "Ancient Treant"],
-    bossStats: { hp: 120, damage: 24 }, // Stats for bosses
+    bossStats: { hp: 120, damage: 24, hitChance: 0.8 }, // Stats for bosses
     bossCount: { min: 1, max: 1 }, // Range of bosses per boss room (1 boss)
     bossXP: 3, // XP reward per boss
   },
@@ -163,14 +171,14 @@ const dungeons = [
     difficulty: "Medium",
     reward: 400,
     roomCount: 5,
-    enemyCountOnRoom: { min: 4, max: 6 }, // Range of enemies per room (4-6)
+    enemyCountOnRoom: { min: 4, max: 6 },
     enemies: ["skeleton", "ghoul", "shadow"],
-    enemyStats: { hp: 60, damage: 20 }, // Stats for regular enemies
-    enemyXp: 2, // XP reward per regular enemy
+    enemyStats: { hp: 60, damage: 20, hitChance: 0.8 }, 
+    enemyXp: 2,
     bosses: ["Skeleton King", "Ghoul Overlord"],
-    bossStats: { hp: 180, damage: 40 }, // Stats for bosses
-    bossCount: { min: 1, max: 1 }, // Range of bosses per boss room (1 boss)
-    bossXP: 4, // XP reward per boss
+    bossStats: { hp: 180, damage: 40, hitChance: 0.8 },
+    bossCount: { min: 1, max: 1 }, 
+    bossXP: 4,
   },
   {
     name: "Dragon's Lair",
@@ -178,14 +186,14 @@ const dungeons = [
     difficulty: "Hard",
     reward: 800,
     roomCount: 7,
-    enemyCountOnRoom: { min: 5, max: 7 }, // Range of enemies per room (5-7)
+    enemyCountOnRoom: { min: 5, max: 7 }, 
     enemies: ["dragon", "wyvern", "demon"],
-    enemyStats: { hp: 100, damage: 30 }, // Stats for regular enemies
-    enemyXp: 3, // XP reward per regular enemy
+    enemyStats: { hp: 100, damage: 30, hitChance: 0.8 },
+    enemyXp: 3, 
     bosses: ["Elder Dragon", "Infernal Wyrm"],
-    bossStats: { hp: 300, damage: 60 }, // Stats for bosses
-    bossCount: { min: 1, max: 2 }, // Range of bosses per boss room (1-2 bosses)
-    bossXP: 5, // XP reward per boss
+    bossStats: { hp: 300, damage: 60, hitChance: 0.8 },
+    bossCount: { min: 1, max: 2 },
+    bossXP: 5,
   },
 ];
 
@@ -211,6 +219,7 @@ function generateHero() {
     passive: heroClass.passive,
     cooldown: 0,
     xp: 0,
+    hitChance: heroClass.hitChance,
   };
 }
 
