@@ -15,7 +15,7 @@ const heroClasses = [
     type: "warrior",
     name: "Warrior",
     hp: 100,
-    attack: 15,
+    attack: 20,
     special: "Shield Bash",
     cost: 100,
     passive: "Ironclad Resilience",
@@ -81,53 +81,94 @@ function generateHeroName(className) {
   }`;
 }
 
-const specialAbilities = [
-  {
-    name: "Shield Bash",
-    description: "Deals 25% more damage than base attack",
-    value: 1.25,
-    cooldown: 2,
-  },
-  {
-    name: "Multi Shot",
-    description: "Deals 40% more damage than base attack",
-    value: 1.4,
-    cooldown: 2,
-  },
-  {
-    name: "Fireball",
-    description: "Deals 50% more damage than base attack",
-    value: 1.5,
-    cooldown: 2,
-  },
-  {
-    name: "Heal",
-    description: "Heals a random injured ally for 100% of attack",
-    value: 1.0,
-    cooldown: 2,
-  },
-];
-
-const passiveAbilities = [
+const heroPassives = [
   {
     name: "Ironclad Resilience",
-    description: "Reduces incoming damage by 20%",
-    value: 0.8,
+    description: "Reduces incoming damage by 15%",
+    type: "damageReduction",
+    value: 0.85, // Multiplier for damage reduction
+    appliesTo: ["warrior"],
+    apply: (hero, target, damage) => Math.round(damage * this.value), // Example function for damage reduction
   },
   {
     name: "Deadly Precision",
-    description: "Increases the hit chance by 10%",
-    value: 0.1,
+    description: "Increases hit chance by 10%",
+    type: "hitChanceBoost",
+    value: 0.1, // Additive increase to hit chance
+    appliesTo: ["archer"],
+    apply: (hero) => Math.min(1.0, hero.hitChance + this.value), // Increases hit chance, capped at 100%
   },
   {
     name: "Arcane Potency",
-    description: "Increases attack and special damage by 25%",
-    value: 1.15,
+    description: "Increases attack and special damage by 15%",
+    type: "damageBoost",
+    value: 1.15, // Multiplier for damage
+    appliesTo: ["mage"],
+    apply: (hero, damage) => damage * this.value, // Increases damage
   },
   {
     name: "Divine Restoration",
     description: "Heals all injured allies for 50% of attack per turn",
-    value: 0.5,
+    type: "heal",
+    value: 0.5, // Fraction of attack for healing
+    appliesTo: ["cleric"],
+    apply: (hero, formationHeroes) => {
+      formationHeroes.forEach((ally) => {
+        if (ally.hp < ally.maxHp) {
+          const healAmount = Math.floor(hero.attack * this.value);
+          ally.hp = Math.min(ally.maxHp, ally.hp + healAmount);
+        }
+      });
+    },
+  },
+];
+
+const heroSkills = [
+  {
+    name: "Shield Bash",
+    description: "Deals 25% more damage than base attack",
+    type: "damage",
+    value: 1.25, // Damage multiplier
+    cooldown: 2,
+    appliesTo: ["warrior"],
+    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+  },
+  {
+    name: "Multi Shot",
+    description: "Deals 40% more damage than base attack",
+    type: "damage",
+    value: 1.4, // Damage multiplier
+    cooldown: 2,
+    appliesTo: ["archer"],
+    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+  },
+  {
+    name: "Fireball",
+    description: "Deals 50% more damage than base attack",
+    type: "damage",
+    value: 1.5, // Damage multiplier
+    cooldown: 2,
+    appliesTo: ["mage"],
+    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+  },
+  {
+    name: "Heal",
+    description: "Heals a random injured ally for 100% of attack",
+    type: "heal",
+    value: 1.0, // Healing multiplier
+    cooldown: 2,
+    appliesTo: ["cleric"],
+    apply: (hero, formationHeroes) => {
+      const injuredAllies = formationHeroes.filter(
+        (ally) => ally.hp < ally.maxHp
+      );
+      if (injuredAllies.length > 0) {
+        const healTarget =
+          injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+        const healAmount = Math.floor(hero.attack * this.value);
+        healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
+      }
+    },
   },
 ];
 
@@ -145,7 +186,7 @@ function levelUpHero(hero) {
     hero.maxHp += 10;
     hero.hp = Math.min(hero.maxHp, hero.hp + 10);
     hero.attack += 2;
-    addLogEntry('xp-level', `${hero.name} leveled up to Level ${hero.level}!`);
+    addLogEntry("xp-level", `${hero.name} leveled up to Level ${hero.level}!`);
   }
 }
 
@@ -173,11 +214,11 @@ const dungeons = [
     roomCount: 5,
     enemyCountOnRoom: { min: 4, max: 6 },
     enemies: ["skeleton", "ghoul", "shadow"],
-    enemyStats: { hp: 60, damage: 20, hitChance: 0.8 }, 
+    enemyStats: { hp: 60, damage: 20, hitChance: 0.8 },
     enemyXp: 2,
     bosses: ["Skeleton King", "Ghoul Overlord"],
     bossStats: { hp: 180, damage: 40, hitChance: 0.8 },
-    bossCount: { min: 1, max: 1 }, 
+    bossCount: { min: 1, max: 1 },
     bossXP: 4,
   },
   {
@@ -186,15 +227,32 @@ const dungeons = [
     difficulty: "Hard",
     reward: 800,
     roomCount: 7,
-    enemyCountOnRoom: { min: 5, max: 7 }, 
+    enemyCountOnRoom: { min: 5, max: 7 },
     enemies: ["dragon", "wyvern", "demon"],
     enemyStats: { hp: 100, damage: 30, hitChance: 0.8 },
-    enemyXp: 3, 
+    enemyXp: 3,
     bosses: ["Elder Dragon", "Infernal Wyrm"],
     bossStats: { hp: 300, damage: 60, hitChance: 0.8 },
     bossCount: { min: 1, max: 2 },
     bossXP: 5,
   },
+];
+
+const enemyAbilities = [
+  {
+    name: "Enrage",
+    description: "Increases damage by 50% for 1 turn, 20% chance",
+    type: "damageBoost",
+    value: 1.5, // Damage multiplier
+    chance: 0.2, // Activation chance
+    appliesTo: ["goblin", "skeleton", "dragon"], // Example enemies
+    apply: (enemy, target) => {
+      enemy.damage *= 1.5; // Increase damage for 1 turn
+      enemy.enraged = true; // Track state for 1 turn
+    },
+    duration: 1, // Duration in turns
+  },
+  // Add more enemy abilities as needed
 ];
 
 function addHero(hero) {
