@@ -116,7 +116,7 @@ const heroPassives = [
     name: "Divine Restoration",
     description: "Heals all injured allies for 50% of attack per turn",
     type: "heal",
-    value: 0.5, // Fraction of attack for healing
+    value: 0.4,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       formationHeroes.forEach((ally) => {

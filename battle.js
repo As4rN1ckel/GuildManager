@@ -542,7 +542,21 @@ class PassiveEffects {
         );
         break;
       case "heal":
-        passive.apply(hero, formationHeroes);
+        const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
+        if (healedAllies.length > 0) {
+          passive.apply(hero, formationHeroes);
+          const healAmount = Math.round(hero.attack * passive.value);
+          BattleManager.logEntry(
+            "heal",
+            `${hero.name}'s passive ${passive.name} heals all injured allies for ${healAmount} HP!`
+          );
+          healedAllies.forEach((ally) => {
+            BattleManager.logEntry(
+              "heal",
+              `${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp}`
+            );
+          });
+        }
         break;
       default:
         break;
