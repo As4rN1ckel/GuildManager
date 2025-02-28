@@ -1,327 +1,430 @@
-const heroRoster = document.getElementById('hero-roster');
-const formationGrid = document.getElementById('formation-grid');
-const dungeonList = document.getElementById('dungeon-list');
-const recruitBtn = document.getElementById('recruit-btn');
-const embarkBtn = document.getElementById('embark-btn');
-const continueBtn = document.getElementById('continue-btn');
-const backToGuildBtn = document.getElementById('back-to-guild-btn');
-const goldAmount = document.getElementById('gold-amount');
-const dayCount = document.getElementById('day-count');
-const mainScreen = document.getElementById('main-screen');
-const battleScreen = document.getElementById('battle-screen');
-const resultsScreen = document.getElementById('results-screen');
-const shopScreen = document.getElementById('shop-screen');
-const heroStatsPanel = document.getElementById('hero-stats-panel');
-const heroStatsContent = document.getElementById('hero-stats-content');
+// User Interface management for the Fantasy Guild Manager game
+// Handles DOM interactions, event listeners, and UI updates for game screens and components.
 
+// DOM elements for key UI components
+const heroRoster = document.getElementById('hero-roster');        // Container for displaying available heroes
+const formationGrid = document.getElementById('formation-grid');  // 3x3 grid for hero formation
+const dungeonList = document.getElementById('dungeon-list');      // List of available dungeons
+const recruitBtn = document.getElementById('recruit-btn');        // Button to open the hero recruitment shop
+const embarkBtn = document.getElementById('embark-btn');          // Button to start a dungeon mission
+const continueBtn = document.getElementById('continue-btn');      // Button to return to the guild after results
+const backToGuildBtn = document.getElementById('back-to-guild-btn'); // Button to return from shop to guild
+const goldAmount = document.getElementById('gold-amount');        // Display for current gold amount
+const dayCount = document.getElementById('day-count');           // Display for current day/night cycle
+const mainScreen = document.getElementById('main-screen');       // Main game screen
+const battleScreen = document.getElementById('battle-screen');   // Battle screen during missions
+const resultsScreen = document.getElementById('results-screen'); // Results screen after missions
+const shopScreen = document.getElementById('shop-screen');       // Shop screen for recruiting heroes
+const heroStatsPanel = document.getElementById('hero-stats-panel'); // Panel for detailed hero stats
+const heroStatsContent = document.getElementById('hero-stats-content'); // Content area for hero stats
+
+// Dynamically created buttons for game management
 const saveBtn = document.createElement('button');
 saveBtn.textContent = 'SAVE';
-saveBtn.className = 'primary';
+saveBtn.className = 'primary'; // Apply primary button styling
 
 const loadBtn = document.createElement('button');
 loadBtn.textContent = 'LOAD';
-loadBtn.className = 'primary';
+loadBtn.className = 'primary'; // Apply primary button styling
 
 const resetBtn = document.createElement('button');
 resetBtn.textContent = 'RESET';
-resetBtn.className = 'primary';
+resetBtn.className = 'primary'; // Apply primary button styling
 
-const restBtn = document.getElementById('rest-btn');
-const restCostAmount = document.getElementById('rest-cost-amount');
+const restBtn = document.getElementById('rest-btn');            // Button to rest and heal heroes
+const restCostAmount = document.getElementById('rest-cost-amount'); // Display for rest action cost
 
+/**
+ * Initializes the game UI, setting up event listeners and rendering initial content.
+ */
 function initGame() {
-    speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
-  
-    for (let i = 0; i < 9; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'formation-slot';
-      slot.dataset.index = i;
-      slot.addEventListener('dragover', (e) => e.preventDefault());
-      slot.addEventListener('drop', (e) => handleDrop(e, i));
-      formationGrid.appendChild(slot);
-    }
-  
-    // Make heroRoster a drop zone
-    heroRoster.addEventListener('dragover', (e) => e.preventDefault());
-    heroRoster.addEventListener('drop', (e) => handleDrop(e, null));
-  
-    dungeons.forEach(dungeon => {
-      const dungeonEl = document.createElement('div');
-      dungeonEl.className = 'dungeon';
-      dungeonEl.innerHTML = `
-        <div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div>
-        <div>Reward: ${dungeon.reward} Gold</div>
-      `;
-      dungeonEl.addEventListener('click', () => selectDungeon(dungeon));
-      dungeonList.appendChild(dungeonEl);
-    });
-  
-    recruitBtn.addEventListener('click', showShopScreen);
-    embarkBtn.addEventListener('click', startMission);
-    speedBtn.addEventListener('click', toggleBattleSpeed);
-    continueBtn.addEventListener('click', returnToGuild);
-    backToGuildBtn.addEventListener('click', hideShopScreen);
-  
-    const headerButtons = document.createElement('div');
-    headerButtons.style.display = 'flex';
-    headerButtons.style.gap = '10px';
-    headerButtons.appendChild(saveBtn);
-    headerButtons.appendChild(loadBtn);
-    headerButtons.appendChild(resetBtn);
-    document.querySelector('.header').appendChild(headerButtons);
-  
-    if (restBtn) {
-      restBtn.addEventListener('click', restHeroes);
-    }
-  
-    saveBtn.addEventListener('click', saveGame);
-    loadBtn.addEventListener('click', loadGame);
-    resetBtn.addEventListener('click', resetGame);
+  // Set initial battle speed display
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 
-    heroRoster.addEventListener('dragover', () => heroRoster.classList.add('dragover'));
-    heroRoster.addEventListener('dragleave', () => heroRoster.classList.remove('dragover'));
-    heroRoster.addEventListener('drop', () => heroRoster.classList.remove('dragover'));
-  
-    updateUI();
+  // Create and configure formation grid slots
+  for (let i = 0; i < 9; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'formation-slot'; // Apply formation slot styling
+    slot.dataset.index = i; // Store slot index for drag-and-drop
+    slot.addEventListener('dragover', (e) => e.preventDefault()); // Allow drop by preventing default
+    slot.addEventListener('drop', (e) => handleDrop(e, i)); // Handle dropping heroes into slots
+    formationGrid.appendChild(slot);
   }
 
+  // Enable heroRoster as a drop zone for returning heroes
+  heroRoster.addEventListener('dragover', (e) => e.preventDefault()); // Allow drop
+  heroRoster.addEventListener('drop', (e) => handleDrop(e, null)); // Handle dropping back to roster
+
+  // Populate dungeon list with clickable dungeon entries
+  dungeons.forEach(dungeon => {
+    const dungeonEl = document.createElement('div');
+    dungeonEl.className = 'dungeon'; // Apply dungeon styling
+    dungeonEl.innerHTML = `
+      <div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div>
+      <div>Reward: ${dungeon.reward} Gold</div>
+    `;
+    dungeonEl.addEventListener('click', () => selectDungeon(dungeon)); // Select dungeon on click
+    dungeonList.appendChild(dungeonEl);
+  });
+
+  // Attach event listeners to action buttons
+  recruitBtn.addEventListener('click', showShopScreen); // Open hero recruitment shop
+  embarkBtn.addEventListener('click', startMission); // Start a dungeon mission
+  speedBtn.addEventListener('click', toggleBattleSpeed); // Toggle battle speed
+  continueBtn.addEventListener('click', returnToGuild); // Return to guild after results
+  backToGuildBtn.addEventListener('click', hideShopScreen); // Return from shop to guild
+
+  // Create and add header buttons for game management
+  const headerButtons = document.createElement('div');
+  headerButtons.style.display = 'flex'; // Use flexbox for layout
+  headerButtons.style.gap = '10px'; // Space between buttons
+  headerButtons.appendChild(saveBtn); // Add save button
+  headerButtons.appendChild(loadBtn); // Add load button
+  headerButtons.appendChild(resetBtn); // Add reset button
+  document.querySelector('.header').appendChild(headerButtons); // Append to header
+
+  // Attach event listener for resting heroes, if the button exists
+  if (restBtn) {
+    restBtn.addEventListener('click', restHeroes); // Heal injured heroes
+  }
+
+  // Attach event listeners for game state management
+  saveBtn.addEventListener('click', saveGame); // Save current game state
+  loadBtn.addEventListener('click', loadGame); // Load saved game state
+  resetBtn.addEventListener('click', resetGame); // Reset game to initial state
+
+  // Add drag-over effects to hero roster for visual feedback
+  heroRoster.addEventListener('dragover', () => heroRoster.classList.add('dragover'));
+  heroRoster.addEventListener('dragleave', () => heroRoster.classList.remove('dragover'));
+  heroRoster.addEventListener('drop', () => heroRoster.classList.remove('dragover'));
+
+  // Initialize UI with current game state
+  updateUI();
+}
+
+/**
+ * Updates the UI to reflect the current game state.
+ */
 function updateUI() {
-    goldAmount.textContent = gameState.gold;
-    dayCount.textContent = `${gameState.cycle === 'day' ? 'Day' : 'Night'} ${gameState.day}`;
-    renderHeroRoster();
-    updateFormationGrid();
-    
-    const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
-    const cost = injuredHeroes.length * 20;
-    restCostAmount.textContent = cost;
-    restBtn.disabled = injuredHeroes.length === 0 || gameState.gold < cost;
+  // Update gold and day/night cycle displays
+  goldAmount.textContent = gameState.gold;
+  dayCount.textContent = `${gameState.cycle === 'day' ? 'Day' : 'Night'} ${gameState.day}`;
+  renderHeroRoster(); // Refresh hero roster display
+  updateFormationGrid(); // Refresh formation grid display
+
+  // Calculate and display the cost to rest injured heroes
+  const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
+  const cost = injuredHeroes.length * 20;
+  restCostAmount.textContent = cost;
+  restBtn.disabled = injuredHeroes.length === 0 || gameState.gold < cost; // Disable if no cost or no gold
 }
 
+/**
+ * Returns the player to the main guild screen after viewing mission results.
+ */
 function returnToGuild() {
-    resultsScreen.style.display = 'none';
-    mainScreen.style.display = 'block';
-    toggleCycle();
-    gameState.selectedDungeon = null;
-    updateFormationGrid();
-    renderHeroRoster();
-    updateUI();
+  // Hide results screen and show main screen
+  resultsScreen.style.display = 'none';
+  mainScreen.style.display = 'block';
+  toggleCycle(); // Switch day/night cycle
+  gameState.selectedDungeon = null; // Clear selected dungeon
+  updateFormationGrid(); // Refresh formation UI
+  renderHeroRoster(); // Refresh hero roster UI
+  updateUI(); // Update all UI elements
 }
 
+/**
+ * Allows the player to rest and heal injured heroes, deducting gold as needed.
+ */
 function restHeroes() {
-    const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
-    const cost = injuredHeroes.length * 20;
-    
-    if (gameState.gold >= cost) {
-        gameState.gold -= cost;
-        injuredHeroes.forEach(hero => {
-            const healAmount = Math.floor(hero.maxHp * 0.5);
-            hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
-            addLogEntry('heal', `${hero.name} rests and recovers ${healAmount} HP. (HP: ${hero.hp}/${hero.maxHp})`);
-        });
-        toggleCycle();
-        updateUI();
-    } else {
-        alert(`Not enough gold! Need ${cost} gold to rest (${gameState.gold} available).`);
-    }
+  // Identify heroes needing healing
+  const injuredHeroes = gameState.heroes.filter(hero => hero.hp < hero.maxHp);
+  const cost = injuredHeroes.length * 20; // Calculate cost (20 gold per hero)
+
+  if (gameState.gold >= cost) {
+    // Deduct gold and heal each injured hero
+    gameState.gold -= cost;
+    injuredHeroes.forEach(hero => {
+      const healAmount = Math.floor(hero.maxHp * 0.5); // Heal 50% of max HP
+      hero.hp = Math.min(hero.maxHp, hero.hp + healAmount); // Cap at max HP
+      addLogEntry('heal', `${hero.name} rests and recovers ${healAmount} HP. (HP: ${hero.hp}/${hero.maxHp})`);
+    });
+    toggleCycle(); // Switch day/night cycle after resting
+    updateUI(); // Refresh UI to reflect changes
+  } else {
+    // Notify player if they lack sufficient gold
+    alert(`Not enough gold! Need ${cost} gold to rest (${gameState.gold} available).`);
+  }
 }
 
+/**
+ * Renders the hero roster, displaying available heroes not in the formation.
+ */
 function renderHeroRoster() {
-    heroRoster.innerHTML = '';
-    gameState.heroes.forEach(hero => {
-        if (!isHeroInFormation(hero)) {
-            const heroEl = document.createElement('div');
-            heroEl.className = `hero-base hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
-            heroEl.dataset.id = hero.id;
-            heroEl.draggable = true;
-            heroEl.innerHTML = `
-                <div class="shape"></div>
-                <div class="hero-info">${hero.name.split(' ')[0]}</div>
-                <div class="level">Lv${hero.level}</div>
-                <div class="hp-bar">
-                    <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
-                </div>
-                <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
-            `;
-            heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
-            heroEl.addEventListener('click', () => selectHero(hero.id));
-            heroRoster.appendChild(heroEl);
-        }
-    });
-}
-  
-
-function selectHero(heroId) {
-    gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
-    renderHeroRoster();
-    updateFormationGrid();
-    checkEmbarkButton();
-}
-
-function handleFormationSlotClick(index) {
-    const currentHeroId = gameState.formation[index];
-    if (currentHeroId && !gameState.selectedHero) {
-        gameState.formation[index] = null;
-    } else if (gameState.selectedHero && !currentHeroId) {
-        gameState.formation[index] = gameState.selectedHero;
-        gameState.selectedHero = null;
-    } else if (gameState.selectedHero && currentHeroId) {
-        const slotWithSelected = gameState.formation.findIndex(id => id === gameState.selectedHero);
-        if (slotWithSelected !== -1) gameState.formation[slotWithSelected] = currentHeroId;
-        gameState.formation[index] = gameState.selectedHero;
-        gameState.selectedHero = null;
-    }
-    renderHeroRoster();
-    updateFormationGrid();
-    checkEmbarkButton();
-}
-
-function updateFormationGrid() {
-    const slots = formationGrid.querySelectorAll('.formation-slot');
-    slots.forEach((slot, index) => {
-      const heroId = gameState.formation[index];
-      slot.innerHTML = '';
-      slot.classList.toggle('occupied', !!heroId);
-      if (heroId) {
-        const hero = gameState.heroes.find(h => h.id === heroId);
-        if (hero) {
-          const heroEl = document.createElement('div');
-          heroEl.className = `hero ${hero.class}`;
-          heroEl.dataset.id = hero.id;
-          heroEl.draggable = true;
-          heroEl.innerHTML = `
-            <div class="shape"></div>
-            <div class="hero-info">${hero.name.split(' ')[0]}</div>
-            <div class="level">Lv${hero.level}</div>
-            <div class="hp-bar">
-              <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
-            </div>
-          `;
-          heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id));
-          heroEl.addEventListener('click', () => selectHero(hero.id));
-          slot.appendChild(heroEl);
-        }
-      }
-    });
-  }
-
-  function handleDrop(e, targetIndex) {
-    e.preventDefault();
-    const heroId = e.dataTransfer.getData('text/plain');
-    const hero = gameState.heroes.find(h => h.id === heroId);
-    if (!hero) return;
-  
-    const sourceIndex = gameState.formation.indexOf(heroId);
-    const targetHeroId = targetIndex !== null ? gameState.formation[targetIndex] : null;
-  
-    if (targetIndex === null) {
-      // Dropped on heroRoster: Remove from formation
-      if (sourceIndex !== -1) {
-        gameState.formation[sourceIndex] = null;
-      }
-      // Do nothing if dragged from roster to roster
-    } else if (sourceIndex === -1 && !targetHeroId) {
-      // Dragging from roster to empty slot
-      gameState.formation[targetIndex] = heroId;
-    } else if (sourceIndex !== -1 && !targetHeroId) {
-      // Dragging from grid to empty slot
-      gameState.formation[sourceIndex] = null;
-      gameState.formation[targetIndex] = heroId;
-    } else if (sourceIndex !== -1 && targetHeroId) {
-      // Swapping within grid
-      gameState.formation[sourceIndex] = targetHeroId;
-      gameState.formation[targetIndex] = heroId;
-    } else if (sourceIndex === -1 && targetHeroId) {
-      // Dragging from roster to occupied slot (swap with roster)
-      gameState.formation[targetIndex] = heroId;
-    }
-  
-    gameState.selectedHero = null; // Clear selection after drop
-    renderHeroRoster();
-    updateFormationGrid();
-    checkEmbarkButton();
-  }
-
-function selectDungeon(dungeon) {
-    gameState.selectedDungeon = dungeon;
-    dungeonList.querySelectorAll('.dungeon').forEach(el => el.classList.remove('selected'));
-    dungeonList.children[dungeons.indexOf(dungeon)].classList.add('selected');
-    checkEmbarkButton();
-}
-
-function checkEmbarkButton() {
-    embarkBtn.disabled = !(gameState.formation.some(slot => slot !== null) && gameState.selectedDungeon);
-}
-
-function showShopScreen() {
-    mainScreen.style.display = 'none';
-    shopScreen.style.display = 'flex';
-    renderShop();
-}
-
-function renderShop() {
-    const recruitList = document.getElementById('recruit-list');
-    recruitList.innerHTML = '';
-    for (let i = 0; i < 4; i++) {
-        const recruit = generateHero();
-        const recruitEl = document.createElement('div');
-        recruitEl.className = `hero-base recruit-hero ${recruit.class}`;
-        recruitEl.innerHTML = `
-            <div class="shape"></div>
-            <div class="hero-info">${recruit.name}</div>
-            <div class="class-info">Class: ${capitalize(recruit.class)}</div>
-            <div class="stats">HP: ${recruit.hp} | ATK: ${recruit.attack}</div>
-            <div class="cost">${recruit.cost} Gold</div>
-        `;
-        recruitEl.addEventListener('click', () => recruitHero(recruit, recruitEl));
-        recruitList.appendChild(recruitEl);
-    }
-}
-
-function recruitHero(recruit, element) {
-    if (gameState.gold >= recruit.cost) {
-        gameState.gold -= recruit.cost;
-        addHero(recruit);
-        element.remove();
-        updateUI();
-    } else {
-        alert('Not enough gold!');
-    }
-}
-
-function hideShopScreen() {
-    shopScreen.style.display = 'none';
-    mainScreen.style.display = 'block';
-}
-
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function selectHero(heroId) {
-    gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
-    renderHeroRoster();
-    updateFormationGrid();
-    updateHeroStatsPanel(); // Update stats panel
-    checkEmbarkButton();
-  }
-  
-  function updateHeroStatsPanel() {
-    if (!gameState.selectedHero) {
-      heroStatsPanel.style.display = 'none';
-      return;
-    }
-    const hero = gameState.heroes.find(h => h.id === gameState.selectedHero);
-    if (hero) {
-      heroStatsPanel.style.display = 'block';
-      heroStatsContent.innerHTML = `
-        <p><strong>Name:</strong> ${hero.name}</p>
-        <p><strong>Class:</strong> ${capitalize(hero.class)}</p>
-        <p><strong>HP:</strong> ${hero.hp}/${hero.maxHp}</p>
-        <p><strong>Attack:</strong> ${hero.attack}</p>
-        <p><strong>XP:</strong> ${hero.xp}/${xpThresholds[hero.level]}</p>
-        <p><strong>Special:</strong> ${hero.special}</p>
-        <p><strong>Passive:</strong> ${hero.passive}</p>
-        <p><strong>Level:</strong> ${hero.level}</p>
+  // Clear existing hero roster content
+  heroRoster.innerHTML = '';
+  gameState.heroes.forEach(hero => {
+    if (!isHeroInFormation(hero)) { // Only show heroes not in formation
+      const heroEl = document.createElement('div');
+      heroEl.className = `hero-base hero ${hero.class}${gameState.selectedHero === hero.id ? ' selected' : ''}`;
+      heroEl.dataset.id = hero.id; // Store hero ID for drag-and-drop
+      heroEl.draggable = true; // Enable dragging for hero movement
+      heroEl.innerHTML = `
+        <div class="shape"></div>
+        <div class="hero-info">${hero.name.split(' ')[0]}</div>
+        <div class="level">Lv${hero.level}</div>
+        <div class="hp-bar">
+          <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+        </div>
+        <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
       `;
+      heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id)); // Set drag data
+      heroEl.addEventListener('click', () => selectHero(hero.id)); // Select hero on click
+      heroRoster.appendChild(heroEl);
     }
+  });
+}
+
+/**
+ * Selects or deselects a hero for actions like moving to the formation.
+ * @param {string} heroId - The ID of the hero to select or deselect.
+ */
+function selectHero(heroId) {
+  // Toggle selection: null if already selected, otherwise set to the hero ID
+  gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
+  renderHeroRoster(); // Refresh hero roster to reflect selection
+  updateFormationGrid(); // Refresh formation grid to show potential placement
+  checkEmbarkButton(); // Update embark button state
+}
+
+/**
+ * Handles clicks on formation slots, managing hero placement or removal.
+ * @param {number} index - The index of the formation slot clicked.
+ */
+function handleFormationSlotClick(index) {
+  const currentHeroId = gameState.formation[index]; // Get current hero in slot, if any
+  if (currentHeroId && !gameState.selectedHero) {
+    // Remove hero from slot if no hero is selected
+    gameState.formation[index] = null;
+  } else if (gameState.selectedHero && !currentHeroId) {
+    // Place selected hero in empty slot
+    gameState.formation[index] = gameState.selectedHero;
+    gameState.selectedHero = null; // Clear selection after placement
+  } else if (gameState.selectedHero && currentHeroId) {
+    // Swap selected hero with hero in slot
+    const slotWithSelected = gameState.formation.findIndex(id => id === gameState.selectedHero);
+    if (slotWithSelected !== -1) gameState.formation[slotWithSelected] = currentHeroId;
+    gameState.formation[index] = gameState.selectedHero;
+    gameState.selectedHero = null; // Clear selection after swap
   }
+  renderHeroRoster(); // Refresh hero roster after changes
+  updateFormationGrid(); // Refresh formation grid after changes
+  checkEmbarkButton(); // Update embark button state
+}
+
+/**
+ * Updates the formation grid UI to reflect current hero placements.
+ */
+function updateFormationGrid() {
+  // Get all formation slots and update each one
+  const slots = formationGrid.querySelectorAll('.formation-slot');
+  slots.forEach((slot, index) => {
+    const heroId = gameState.formation[index]; // Get hero ID in this slot, if any
+    slot.innerHTML = ''; // Clear existing content
+    slot.classList.toggle('occupied', !!heroId); // Toggle occupied class based on presence
+    if (heroId) {
+      const hero = gameState.heroes.find(h => h.id === heroId); // Find the corresponding hero
+      if (hero) {
+        const heroEl = document.createElement('div');
+        heroEl.className = `hero-base hero ${hero.class}`; // Apply hero and class styling
+        heroEl.dataset.id = hero.id; // Store hero ID for drag-and-drop
+        heroEl.draggable = true; // Enable dragging for movement
+        heroEl.innerHTML = `
+          <div class="shape"></div>
+          <div class="hero-info">${hero.name.split(' ')[0]}</div>
+          <div class="level">Lv${hero.level}</div>
+          <div class="hp-bar">
+            <div class="hp-fill${hero.hp / hero.maxHp <= 0.3 ? ' low' : ''}" style="width: ${Math.floor((hero.hp / hero.maxHp) * 100)}%;"></div>
+          </div>
+        `;
+        heroEl.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', hero.id)); // Set drag data
+        heroEl.addEventListener('click', () => selectHero(hero.id)); // Select hero on click
+        slot.appendChild(heroEl);
+      }
+    }
+  });
+}
+
+/**
+ * Handles drag-and-drop events for moving heroes between roster and formation.
+ * @param {DragEvent} e - The drag event object.
+ * @param {number|null} targetIndex - The target formation slot index or null for roster.
+ */
+function handleDrop(e, targetIndex) {
+  e.preventDefault(); // Prevent default behavior to allow drop
+  const heroId = e.dataTransfer.getData('text/plain'); // Get the dragged hero’s ID
+  const hero = gameState.heroes.find(h => h.id === heroId); // Find the corresponding hero
+  if (!hero) return; // Exit if no hero is found
+
+  const sourceIndex = gameState.formation.indexOf(heroId); // Find source slot in formation
+  const targetHeroId = targetIndex !== null ? gameState.formation[targetIndex] : null; // Get target slot hero, if any
+
+  if (targetIndex === null) {
+    // Dropped on heroRoster: Remove hero from formation
+    if (sourceIndex !== -1) {
+      gameState.formation[sourceIndex] = null; // Clear the slot
+    }
+    // Do nothing if dragged from roster to roster (no action needed)
+  } else if (sourceIndex === -1 && !targetHeroId) {
+    // Dragging from roster to empty formation slot
+    gameState.formation[targetIndex] = heroId; // Place hero in slot
+  } else if (sourceIndex !== -1 && !targetHeroId) {
+    // Dragging from formation to empty slot
+    gameState.formation[sourceIndex] = null; // Clear source slot
+    gameState.formation[targetIndex] = heroId; // Place in target slot
+  } else if (sourceIndex !== -1 && targetHeroId) {
+    // Swapping heroes within the formation grid
+    gameState.formation[sourceIndex] = targetHeroId; // Move target to source
+    gameState.formation[targetIndex] = heroId; // Move hero to target
+  } else if (sourceIndex === -1 && targetHeroId) {
+    // Dragging from roster to occupied slot (swap with roster)
+    gameState.formation[targetIndex] = heroId; // Replace slot with new hero
+  }
+
+  gameState.selectedHero = null; // Clear any active hero selection
+  renderHeroRoster(); // Refresh hero roster after drop
+  updateFormationGrid(); // Refresh formation grid after drop
+  checkEmbarkButton(); // Update embark button state
+}
+
+/**
+ * Selects a dungeon for the player to embark on.
+ * @param {Object} dungeon - The dungeon object to select.
+ */
+function selectDungeon(dungeon) {
+  // Set the selected dungeon in game state
+  gameState.selectedDungeon = dungeon;
+  // Remove 'selected' class from all dungeons
+  dungeonList.querySelectorAll('.dungeon').forEach(el => el.classList.remove('selected'));
+  // Add 'selected' class to the chosen dungeon
+  dungeonList.children[dungeons.indexOf(dungeon)].classList.add('selected');
+  checkEmbarkButton(); // Update embark button state
+}
+
+/**
+ * Checks and updates the state of the embark button based on formation and dungeon selection.
+ */
+function checkEmbarkButton() {
+  // Disable embark button if no heroes are in formation or no dungeon is selected
+  embarkBtn.disabled = !(gameState.formation.some(slot => slot !== null) && gameState.selectedDungeon);
+}
+
+/**
+ * Shows the shop screen for recruiting new heroes.
+ */
+function showShopScreen() {
+  // Hide main screen and show shop screen
+  mainScreen.style.display = 'none';
+  shopScreen.style.display = 'flex';
+  renderShop(); // Populate shop with recruitable heroes
+}
+
+/**
+ * Renders the shop screen with available heroes for recruitment.
+ */
+function renderShop() {
+  // Get the recruit list container and clear existing content
+  const recruitList = document.getElementById('recruit-list');
+  recruitList.innerHTML = '';
+  // Generate and display four random heroes for recruitment
+  for (let i = 0; i < 4; i++) {
+    const recruit = generateHero(); // Generate a new hero
+    const recruitEl = document.createElement('div');
+    recruitEl.className = `hero-base recruit-hero ${recruit.class}`; // Apply hero and class styling
+    recruitEl.innerHTML = `
+      <div class="shape"></div>
+      <div class="hero-info">${recruit.name}</div>
+      <div class="class-info">Class: ${capitalize(recruit.class)}</div>
+      <div class="stats">HP: ${recruit.hp} | ATK: ${recruit.attack}</div>
+      <div class="cost">${recruit.cost} Gold</div>
+    `;
+    recruitEl.addEventListener('click', () => recruitHero(recruit, recruitEl)); // Recruit hero on click
+    recruitList.appendChild(recruitEl);
+  }
+}
+
+/**
+ * Recruits a hero if the player has sufficient gold, removing the hero from the shop.
+ * @param {Object} recruit - The hero object to recruit.
+ * @param {HTMLElement} element - The DOM element representing the hero in the shop.
+ */
+function recruitHero(recruit, element) {
+  // Check if player has enough gold to recruit
+  if (gameState.gold >= recruit.cost) {
+    gameState.gold -= recruit.cost; // Deduct gold
+    addHero(recruit); // Add hero to game state and UI
+    element.remove(); // Remove hero from shop display
+    updateUI(); // Refresh UI to reflect gold and roster changes
+  } else {
+    // Notify player if they lack sufficient gold
+    alert('Not enough gold!');
+  }
+}
+
+/**
+ * Hides the shop screen and returns to the main guild screen.
+ */
+function hideShopScreen() {
+  // Hide shop screen and show main screen
+  shopScreen.style.display = 'none';
+  mainScreen.style.display = 'block';
+}
+
+/**
+ * Capitalizes the first letter of a string.
+ * @param {string} str - The input string to capitalize.
+ * @returns {string} The capitalized string.
+ */
+function capitalize(str) {
+  // Return the string with the first character uppercase and the rest unchanged
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Selects or deselects a hero and updates the hero stats panel.
+ * @param {string} heroId - The ID of the hero to select or deselect.
+ */
+function selectHero(heroId) {
+  // Toggle hero selection: null if already selected, otherwise set to the hero ID
+  gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
+  renderHeroRoster(); // Refresh hero roster to reflect selection
+  updateFormationGrid(); // Refresh formation grid to show potential placement
+  updateHeroStatsPanel(); // Update detailed hero stats panel
+  checkEmbarkButton(); // Update embark button state
+}
+
+/**
+ * Updates the hero stats panel with details of the selected hero.
+ */
+function updateHeroStatsPanel() {
+  // Hide panel if no hero is selected
+  if (!gameState.selectedHero) {
+    heroStatsPanel.style.display = 'none';
+    return;
+  }
+  // Find and display stats for the selected hero
+  const hero = gameState.heroes.find(h => h.id === gameState.selectedHero);
+  if (hero) {
+    heroStatsPanel.style.display = 'block'; // Show panel
+    heroStatsContent.innerHTML = `
+      <p><strong>Name:</strong> ${hero.name}</p>
+      <p><strong>Class:</strong> ${capitalize(hero.class)}</p>
+      <p><strong>HP:</strong> ${hero.hp}/${hero.maxHp}</p>
+      <p><strong>Attack:</strong> ${hero.attack}</p>
+      <p><strong>XP:</strong> ${hero.xp}/${xpThresholds[hero.level]}</p>
+      <p><strong>Special:</strong> ${hero.special}</p>
+      <p><strong>Passive:</strong> ${hero.passive}</p>
+      <p><strong>Level:</strong> ${hero.level}</p>
+    `;
+  }
+}
