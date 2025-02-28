@@ -88,7 +88,9 @@ const heroPassives = [
     type: "damageReduction",
     value: 0.85, // Multiplier for damage reduction
     appliesTo: ["warrior"],
-    apply: (hero, target, damage) => Math.round(damage * this.value), // Example function for damage reduction
+    apply: function (hero, target, damage) {
+      return Math.round(damage * this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Deadly Precision",
@@ -96,7 +98,9 @@ const heroPassives = [
     type: "hitChanceBoost",
     value: 0.1, // Additive increase to hit chance
     appliesTo: ["archer"],
-    apply: (hero) => Math.min(1.0, hero.hitChance + this.value), // Increases hit chance, capped at 100%
+    apply: function (hero) {
+      return Math.min(1.0, hero.hitChance + this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Arcane Potency",
@@ -104,7 +108,9 @@ const heroPassives = [
     type: "damageBoost",
     value: 1.15, // Multiplier for damage
     appliesTo: ["mage"],
-    apply: (hero, damage) => damage * this.value, // Increases damage
+    apply: function (hero, damage) {
+      return Math.round(damage * this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Divine Restoration",
@@ -112,11 +118,11 @@ const heroPassives = [
     type: "heal",
     value: 0.5, // Fraction of attack for healing
     appliesTo: ["cleric"],
-    apply: (hero, formationHeroes) => {
+    apply: function (hero, formationHeroes) {
       formationHeroes.forEach((ally) => {
         if (ally.hp < ally.maxHp) {
-          const healAmount = Math.floor(hero.attack * this.value);
-          ally.hp = Math.min(ally.maxHp, ally.hp + healAmount);
+          const healAmount = Math.round(hero.attack * this.value);
+          ally.hp = Math.min(ally.maxHp, Math.round(ally.hp + healAmount));
         }
       });
     },
@@ -131,7 +137,9 @@ const heroSkills = [
     value: 1.25, // Damage multiplier
     cooldown: 2,
     appliesTo: ["warrior"],
-    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+    apply: function (hero, target, baseDamage) {
+      return Math.round(baseDamage * this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Multi Shot",
@@ -140,7 +148,9 @@ const heroSkills = [
     value: 1.4, // Damage multiplier
     cooldown: 2,
     appliesTo: ["archer"],
-    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+    apply: function (hero, target, baseDamage) {
+      return Math.round(baseDamage * this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Fireball",
@@ -149,7 +159,9 @@ const heroSkills = [
     value: 1.5, // Damage multiplier
     cooldown: 2,
     appliesTo: ["mage"],
-    apply: (hero, target, baseDamage) => (baseDamage * this.value),
+    apply: function (hero, target, baseDamage) {
+      return Math.round(baseDamage * this.value); // Use function() for proper this binding
+    },
   },
   {
     name: "Heal",
@@ -158,15 +170,15 @@ const heroSkills = [
     value: 1.0, // Healing multiplier
     cooldown: 2,
     appliesTo: ["cleric"],
-    apply: (hero, formationHeroes) => {
+    apply: function (hero, formationHeroes) {
       const injuredAllies = formationHeroes.filter(
         (ally) => ally.hp < ally.maxHp
       );
       if (injuredAllies.length > 0) {
         const healTarget =
           injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-        const healAmount = Math.floor(hero.attack * this.value);
-        healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmount);
+        const healAmount = Math.round(hero.attack * this.value);
+        healTarget.hp = Math.min(healTarget.maxHp, Math.round(healTarget.hp + healAmount));
       }
     },
   },
@@ -236,23 +248,6 @@ const dungeons = [
     bossCount: { min: 1, max: 2 },
     bossXP: 5,
   },
-];
-
-const enemyAbilities = [
-  {
-    name: "Enrage",
-    description: "Increases damage by 50% for 1 turn, 20% chance",
-    type: "damageBoost",
-    value: 1.5, // Damage multiplier
-    chance: 0.2, // Activation chance
-    appliesTo: ["goblin", "skeleton", "dragon"], // Example enemies
-    apply: (enemy, target) => {
-      enemy.damage *= 1.5; // Increase damage for 1 turn
-      enemy.enraged = true; // Track state for 1 turn
-    },
-    duration: 1, // Duration in turns
-  },
-  // Add more enemy abilities as needed
 ];
 
 function addHero(hero) {
