@@ -374,6 +374,8 @@ function toggleCycle() {
 
 // Expose globals for ui.js and battle.js
 if (typeof window !== "undefined") {
+  window.addEventListener("load", loadGame);
+
   window.gameState = gameState;
   window.heroClasses = heroClasses;
   window.heroPassives = heroPassives;
