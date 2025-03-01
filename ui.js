@@ -412,19 +412,28 @@ function updateHeroStatsPanel() {
     heroStatsPanel.style.display = 'none';
     return;
   }
-  // Find and display stats for the selected hero
+  // Find the selected hero in the game state
   const hero = gameState.heroes.find(h => h.id === gameState.selectedHero);
   if (hero) {
     heroStatsPanel.style.display = 'block'; // Show panel
+
+    // Find the hero’s class, passive, and skill details
+    const heroClass = heroClasses.find(hc => hc.type === hero.class);
+    const passive = heroPassives.find(p => p.name === hero.passive);
+    const skill = heroSkills.find(s => s.name === hero.special);
+
+    // Build HTML for detailed hero stats, including hit chance, skill description, cooldown, and passive description
     heroStatsContent.innerHTML = `
       <p><strong>Name:</strong> ${hero.name}</p>
       <p><strong>Class:</strong> ${capitalize(hero.class)}</p>
+      <p><strong>Level:</strong> ${hero.level}</p>
+      <p><strong>XP:</strong> ${hero.xp}/${xpThresholds[hero.level]}</p>
       <p><strong>HP:</strong> ${hero.hp}/${hero.maxHp}</p>
       <p><strong>Attack:</strong> ${hero.attack}</p>
-      <p><strong>XP:</strong> ${hero.xp}/${xpThresholds[hero.level]}</p>
-      <p><strong>Special:</strong> ${hero.special}</p>
-      <p><strong>Passive:</strong> ${hero.passive}</p>
-      <p><strong>Level:</strong> ${hero.level}</p>
+      <p><strong>Hit Chance:</strong> ${Math.floor(hero.hitChance * 100)}%</p>
+      <p><strong>Special:</strong> ${hero.special} - ${skill ? skill.description : 'No description'}</p>
+      <p><strong>Special Cooldown:</strong> ${skill ? skill.cooldown : 0} turns</p>
+      <p><strong>Passive:</strong> ${hero.passive} - ${passive ? passive.description : 'No description'}</p>
     `;
   }
 }
