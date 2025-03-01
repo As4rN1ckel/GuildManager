@@ -14,7 +14,6 @@
  - Retreat System
 
  - Critical Hits
- - Formation Bonus
  - Sounds
  - Enemy Specials
  - Visual Feedback

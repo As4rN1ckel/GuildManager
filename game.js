@@ -65,53 +65,81 @@ const xpThresholds = [0, 10, 25, 60, 120, 250];
 
 /**
  * Defines passive abilities for each hero class, including their effects and applicability.
+ * Adjusted for balance and class fantasy: Warriors gain durability, Archers gain accuracy,
+ * Mages boost damage, and Clerics provide sustain. Values align with lower base stats
+ * for strategic gameplay. Passives now apply only in specific formation positions (front row for Warriors,
+ * middle/back row for Archers, back row for Mages).
  * @type {Array<Object>}
  */
 const heroPassives = [
   {
     name: "Ironclad Resilience",     // Passive ability name
-    description: "Reduces incoming damage by 20%", // Description for UI
+    description: "Reduces incoming damage by 20% when in the front row", // UI description
     type: "damageReduction",         // Type of effect
-    value: 0.8,                     // Multiplier for damage reduction
+    value: 0.8,                      // Multiplier for 20% damage reduction (1 - 0.8 = 0.2 reduction)
     appliesTo: ["warrior"],          // Classes this passive applies to
     apply: function (hero, target, damage) {
-      // Apply damage reduction and round to the nearest whole number
-      return Math.round(damage * this.value); // Ensure integer damage for consistency
+      // Check if the hero is in the front row (formation indices 0–2)
+      const heroPosition = gameState.formation.indexOf(hero.id);
+      if (heroPosition >= 0 && heroPosition <= 2) { // Front row: indices 0, 1, 2
+        // Apply damage reduction and round to the nearest whole number
+        return Math.round(damage * this.value); // Ensure integer damage for consistency (20% reduction)
+      }
+      return Math.round(damage); // No reduction if not in front row
     },
   },
   {
     name: "Deadly Precision",
-    description: "Increases hit chance by 10%",
+    description: "Increases hit chance by 15% when in middle or back row", // UI description
     type: "hitChanceBoost",
-    value: 0.1,                     // Additive increase to hit chance
+    value: 0.15,                     // Additive increase to hit chance (15%)
     appliesTo: ["archer"],
     apply: function (hero) {
-      // Cap hit chance at 100% and return the boosted value
-      return Math.min(1.0, hero.hitChance + this.value);
+      // Check if the hero is in the middle or back row (formation indices 3–8)
+      const heroPosition = gameState.formation.indexOf(hero.id);
+      if (heroPosition >= 3) { // Middle row: 3–5, Back row: 6–8
+        // Cap hit chance at 100% and return the boosted value
+        return Math.min(1.0, hero.hitChance + this.value);
+      }
+      return hero.hitChance; // No boost if in front row
     },
   },
   {
     name: "Arcane Potency",
-    description: "Increases attack and special damage by 20%",
+    description: "Increases attack and special damage by 20% when in the back row", // UI description
     type: "damageBoost",
-    value: 1.2,                    // Multiplier for damage increase
+    value: 1.2,                      // Multiplier for 20% damage increase (1.2 = 20% more)
     appliesTo: ["mage"],
     apply: function (hero, damage) {
-      // Apply damage boost and round to the nearest whole number
-      return Math.round(damage * this.value);
+      // Check if the hero is in the back row (formation indices 6–8)
+      const heroPosition = gameState.formation.indexOf(hero.id);
+      if (heroPosition >= 6 && heroPosition <= 8) { // Back row: indices 6, 7, 8
+        // Apply damage boost and round to the nearest whole number
+        return Math.round(damage * this.value);
+      }
+      return Math.round(damage); // No boost if not in back row
     },
   },
   {
     name: "Divine Restoration",
-    description: "Heals all injured allies for 50% of attack per turn",
+    description: "Heals all injured allies for 40% of attack per turn when in the front or middle row, and heals by 80% when in the back row.", // Unchanged as requested
     type: "heal",
-    value: 0.5,                     // Healing multiplier
+    value: 0.4, // Base healing multiplier (40% of attack for front/middle, overridden for back)
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
-      // Heal all injured allies by 50% of the hero's attack, rounding values
+      // Determine the Cleric’s position in the formation
+      const heroPosition = gameState.formation.indexOf(hero.id);
+  
+      // Set the healing multiplier based on position
+      let healingMultiplier = this.value; // Default to 0.4 (40%) for front/middle
+      if (heroPosition >= 6 && heroPosition <= 8) { // Back row: indices 6–8
+        healingMultiplier = 0.8; // 80% of attack for back row
+      }
+  
+      // Heal all injured allies by the adjusted percentage of the hero's attack, rounding values
       formationHeroes.forEach((ally) => {
         if (ally.hp < ally.maxHp) {
-          const healAmount = Math.round(hero.attack * this.value);
+          const healAmount = Math.round(hero.attack * healingMultiplier);
           ally.hp = Math.min(ally.maxHp, Math.round(ally.hp + healAmount)); // Cap at max HP
         }
       });

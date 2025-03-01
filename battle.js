@@ -530,58 +530,69 @@ class PassiveEffects {
    * Applies the hero's passive ability, if applicable, before their turn.
    * @param {Object} hero - The hero object with a passive ability.
    * @param {Array<Object>} formationHeroes - Array of all hero objects in the formation.
+   * @param {Array<string|null>} formation - The current formation array from gameState.formation (indices 0–8).
    */
-  static applyPassive(hero, formationHeroes) {
+  static applyPassive(hero, formationHeroes, formation = gameState.formation) {
     // Find the passive ability matching the hero's class and name
     const passive = heroPassives.find(
       (p) => p.name === hero.passive && p.appliesTo.includes(hero.class)
     );
-    if (!passive) return;
+    if (!passive) return; // Exit if no matching passive is found
 
     switch (passive.type) {
       case "damageReduction":
-        // Log damage reduction effect for the hero
-        BattleManager.logEntry(
-          "special",
-          `${hero.name}'s passive ${passive.name} reduces incoming damage by ${Math.floor(
-            (1 - passive.value) * 100
-          )}%.`
-        );
+        // Apply damage reduction via the passive's apply function and log if applied
+        const reducedDamage = passive.apply(hero, null, 100); // Use a dummy damage value (100) for logging
+        if (reducedDamage < 100) { // If damage was reduced (position check passed in apply)
+          BattleManager.logEntry(
+            "special",
+            `${hero.name}'s passive ${passive.name} reduces incoming damage by ${Math.floor(
+              (1 - (reducedDamage / 100)) * 100
+            )}%.`
+          );
+        }
         break;
       case "hitChanceBoost":
-        // Log hit chance boost for the hero
-        BattleManager.logEntry(
-          "special",
-          `${hero.name}'s passive ${passive.name} increases hit chance by ${Math.floor(
-            passive.value * 100
-          )}%.`
-        );
+        // Apply hit chance boost via the passive's apply function and log if applied
+        const boostedHitChance = passive.apply(hero);
+        if (boostedHitChance > hero.hitChance) { // If hit chance was boosted (position check passed in apply)
+          BattleManager.logEntry(
+            "special",
+            `${hero.name}'s passive ${passive.name} increases hit chance by ${Math.floor(
+              (boostedHitChance - hero.hitChance) * 100
+            )}%.`
+          );
+        }
         break;
       case "damageBoost":
-        // Log damage boost for the hero
-        BattleManager.logEntry(
-          "special",
-          `${hero.name}'s passive ${passive.name} increases damage by ${Math.floor(
-            (passive.value - 1) * 100
-          )}%.`
-        );
+        // Apply damage boost via the passive's apply function and log if applied
+        const boostedDamage = passive.apply(hero, 100); // Use a dummy damage value (100) for logging
+        if (boostedDamage > 100) { // If damage was boosted (position check passed in apply)
+          BattleManager.logEntry(
+            "special",
+            `${hero.name}'s passive ${passive.name} increases damage by ${Math.floor(
+              ((boostedDamage / 100) - 1) * 100
+            )}%.`
+          );
+        }
         break;
         case "heal":
-          // Apply healing to injured allies if any exist
-          const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-          if (healedAllies.length > 0) {
-            passive.apply(hero, formationHeroes);
-            const healAmount = Math.round(hero.attack * passive.value);
-            healedAllies.forEach((ally) => {
-              BattleManager.logEntry(
-                "heal",
-                `${hero.name} heals ${ally.name} for ${healAmount} HP via ${passive.name}! (${
-                  ally.name
-                } HP: ${Math.round(ally.hp)}/${ally.maxHp})`
-              );
-            });
-          }
-          break;
+        // Apply healing to injured allies if any exist, letting the passive's apply function handle position-based multipliers
+        const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
+        if (healedAllies.length > 0) {
+          passive.apply(hero, formationHeroes); // Apply the healing passive, which handles position-based healing
+          // Log healing for each ally, using the amount calculated by the passive's apply function
+          healedAllies.forEach((ally) => {
+            const healAmount = Math.round(ally.hp - (ally.hp - (hero.attack * (formation.indexOf(hero.id) >= 6 && formation.indexOf(hero.id) <= 8 ? 0.8 : 0.4)))); // Calculate heal amount based on new HP
+            BattleManager.logEntry(
+              "heal",
+              `${hero.name} heals ${ally.name} for ${healAmount} HP via ${passive.name}! (${
+                ally.name
+              } HP: ${Math.round(ally.hp)}/${ally.maxHp})`
+            );
+          });
+        }
+        break;
       default:
         break;
     }
