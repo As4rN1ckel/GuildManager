@@ -3,7 +3,7 @@
 
 // Global game state object, storing key game data
 const gameState = {
-  gold: 250,              // Initial gold amount for the player
+  gold: 200,              // Initial gold amount for the player
   cycle: "day",          // Current time cycle (day or night)
   heroes: [],            // Array of hero objects in the guild
   formation: Array(9).fill(null), // 3x3 grid for hero positioning, initially empty
@@ -21,40 +21,40 @@ const heroClasses = [
   {
     type: "warrior",         // Hero class identifier
     name: "Warrior",         // Display name
-    hp: 100,                 // Base hit points
-    attack: 20,              // Base attack damage
-    special: "Shield Bash",  // Unique special ability
-    cost: 100,               // Gold cost to recruit
-    passive: "Ironclad Resilience", // Passive ability name
-    hitChance: 0.8,          // Probability of landing an attack (80%)
+    hp: 60,                  // Reduced from 100: Durable but not invincible, fits tank role
+    attack: 12,              // Reduced from 20: Moderate damage, focuses on durability
+    special: "Shield Bash",  // Unique special ability (deals 25% more damage, 2-turn cooldown)
+    cost: 80,                // Reduced from 100: Lower cost for a tank with lower damage
+    passive: "Ironclad Resilience", // Passive ability name (reduces damage by 15%)
+    hitChance: 0.8,          // Probability of landing an attack (80%), standard for all
   },
   {
     type: "archer",
     name: "Archer",
-    hp: 80,
-    attack: 20,
-    special: "Multi Shot",
-    cost: 120,
-    passive: "Deadly Precision",
-    hitChance: 0.8,
+    hp: 50,           
+    attack: 10,           
+    special: "Multi Shot", 
+    cost: 100,             
+    passive: "Deadly Precision", 
+    hitChance: 0.8,      
   },
   {
     type: "mage",
     name: "Mage",
-    hp: 50,
-    attack: 25,
-    special: "Fireball",
-    cost: 150,
-    passive: "Arcane Potency",
-    hitChance: 0.8,
+    hp: 30,           
+    attack: 15,         
+    special: "Fireball",   
+    cost: 120,         
+    passive: "Arcane Potency", 
+    hitChance: 0.7,  
   },
   {
     type: "cleric",
     name: "Cleric",
-    hp: 60,
-    attack: 10,
-    special: "Heal",
-    cost: 140,
+    hp: 40,                
+    attack: 5,              
+    special: "Heal", 
+    cost: 110, 
     passive: "Divine Restoration",
     hitChance: 0.8,
   },
@@ -86,9 +86,9 @@ function generateHeroName(className) {
 const heroPassives = [
   {
     name: "Ironclad Resilience",     // Passive ability name
-    description: "Reduces incoming damage by 15%", // Description for UI
+    description: "Reduces incoming damage by 20%", // Description for UI
     type: "damageReduction",         // Type of effect
-    value: 0.85,                     // Multiplier for damage reduction (15% less damage)
+    value: 0.8,                     // Multiplier for damage reduction
     appliesTo: ["warrior"],          // Classes this passive applies to
     apply: function (hero, target, damage) {
       // Apply damage reduction and round to the nearest whole number
@@ -99,7 +99,7 @@ const heroPassives = [
     name: "Deadly Precision",
     description: "Increases hit chance by 10%",
     type: "hitChanceBoost",
-    value: 0.1,                     // Additive increase to hit chance (10%)
+    value: 0.1,                     // Additive increase to hit chance
     appliesTo: ["archer"],
     apply: function (hero) {
       // Cap hit chance at 100% and return the boosted value
@@ -108,9 +108,9 @@ const heroPassives = [
   },
   {
     name: "Arcane Potency",
-    description: "Increases attack and special damage by 15%",
+    description: "Increases attack and special damage by 20%",
     type: "damageBoost",
-    value: 1.15,                    // Multiplier for damage increase (15% more)
+    value: 1.2,                    // Multiplier for damage increase
     appliesTo: ["mage"],
     apply: function (hero, damage) {
       // Apply damage boost and round to the nearest whole number
@@ -121,7 +121,7 @@ const heroPassives = [
     name: "Divine Restoration",
     description: "Heals all injured allies for 50% of attack per turn",
     type: "heal",
-    value: 0.4,                     // Healing multiplier (50% of attack)
+    value: 0.4,                     // Healing multiplier
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       // Heal all injured allies by 50% of the hero's attack, rounding values
@@ -142,10 +142,10 @@ const heroPassives = [
 const heroSkills = [
   {
     name: "Shield Bash",
-    description: "Deals 25% more damage than base attack",
+    description: "Deals 30% more damage than base attack",
     type: "damage",
-    value: 1.25,                    // Damage multiplier (25% more)
-    cooldown: 2,                    // Turns before the skill can be used again
+    value: 1.3,           
+    cooldown: 3,             
     appliesTo: ["warrior"],
     apply: function (hero, target, baseDamage) {
       // Apply damage boost and round to the nearest whole number
@@ -154,22 +154,24 @@ const heroSkills = [
   },
   {
     name: "Multi Shot",
-    description: "Deals 40% more damage than base attack",
+    description: "Deals 15% more damage than base attack to up to 3 targets with a 3-turn cooldown",
     type: "damage",
-    value: 1.4,                     // Damage multiplier (40% more)
-    cooldown: 2,
+    value: 1.15,    
+    cooldown: 3,                
     appliesTo: ["archer"],
-    apply: function (hero, target, baseDamage) {
-      // Apply damage boost and round to the nearest whole number
-      return Math.round(baseDamage * this.value);
+    apply: function (hero, targets, baseDamage) {
+      // Apply damage boost to each target and round to the nearest whole number
+      // If targets is a single target (for compatibility), treat it as an array of one
+      const targetArray = Array.isArray(targets) ? targets : [targets];
+      return targetArray.map(target => Math.round(baseDamage * this.value));
     },
   },
   {
     name: "Fireball",
     description: "Deals 50% more damage than base attack",
     type: "damage",
-    value: 1.5,                     // Damage multiplier (50% more)
-    cooldown: 2,
+    value: 1.50,                
+    cooldown: 3,
     appliesTo: ["mage"],
     apply: function (hero, target, baseDamage) {
       // Apply damage boost and round to the nearest whole number
@@ -180,8 +182,8 @@ const heroSkills = [
     name: "Heal",
     description: "Heals a random injured ally for 100% of attack",
     type: "heal",
-    value: 1.0,                     // Healing multiplier (100% of attack)
-    cooldown: 2,
+    value: 1.5,               
+    cooldown: 3,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       // Find injured allies and heal a random one with 100% of attack, rounding values
@@ -231,10 +233,10 @@ const dungeons = [
     roomCount: 3,                  // Number of rooms in the dungeon
     enemyCountOnRoom: { min: 3, max: 5 }, // Range of enemies per room
     enemies: ["goblin", "kobold", "wolf"], // Regular enemy types
-    enemyStats: { hp: 40, damage: 12, hitChance: 0.8 }, // Stats for regular enemies
+    enemyStats: { hp: 40, damage: 10, hitChance: 0.8 }, // Stats for regular enemies
     enemyXp: 1,                    // XP reward per regular enemy
     bosses: ["Goblin Warlord", "Ancient Treant"], // Boss enemy types
-    bossStats: { hp: 200, damage: 30, hitChance: 0.8 }, // Stats for bosses
+    bossStats: { hp: 200, damage: 25, hitChance: 0.8 }, // Stats for bosses
     bossCount: { min: 1, max: 1 }, // Range of bosses in the boss room
     bossXP: 3,                     // XP reward per boss
   },
@@ -246,10 +248,10 @@ const dungeons = [
     roomCount: 5,
     enemyCountOnRoom: { min: 4, max: 6 },
     enemies: ["skeleton", "ghoul", "shadow"],
-    enemyStats: { hp: 60, damage: 20, hitChance: 0.8 },
+    enemyStats: { hp: 60, damage: 18, hitChance: 0.8 },
     enemyXp: 2,
     bosses: ["Skeleton King", "Ghoul Overlord"],
-    bossStats: { hp: 300, damage: 50, hitChance: 0.8 },
+    bossStats: { hp: 300, damage: 45, hitChance: 0.8 },
     bossCount: { min: 1, max: 1 },
     bossXP: 4,
   },
@@ -261,10 +263,10 @@ const dungeons = [
     roomCount: 7,
     enemyCountOnRoom: { min: 5, max: 7 },
     enemies: ["dragon", "wyvern", "demon"],
-    enemyStats: { hp: 100, damage: 30, hitChance: 0.8 },
+    enemyStats: { hp: 100, damage: 28, hitChance: 0.8 },
     enemyXp: 3,
     bosses: ["Elder Dragon", "Infernal Wyrm"],
-    bossStats: { hp: 500, damage: 75, hitChance: 0.8 },
+    bossStats: { hp: 500, damage: 70, hitChance: 0.8 },
     bossCount: { min: 1, max: 2 },
     bossXP: 5,
   },
@@ -379,7 +381,7 @@ function loadGame() {
  */
 function resetGame() {
   // Restore initial game state values
-  gameState.gold = 250;              // Reset gold
+  gameState.gold = 200;              // Reset gold
   gameState.day = 1;                 // Initialize day count
   gameState.cycle = "day";           // Set to day cycle
   gameState.heroes = [];             // Clear hero roster

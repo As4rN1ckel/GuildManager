@@ -640,17 +640,89 @@ button:disabled:hover {
     padding: var(--spacing-small) 1.5625rem; /* 10px 25px */
 }
 
-/* === Hero Stats Panel === */
+/* === Hero Stats Panel and Modal === */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black overlay */
+    height: 100vh;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    z-index: 1000; /* Above other content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+    will-change: opacity;
+}
+
 .hero-stats-panel {
-    background: #333;
-    border: 1px solid #555;
-    border-radius: 0.3125rem; /* 5px */
+    background: linear-gradient(to bottom, #333, #2a2a2a); /* Gradient for depth */
+    border: 2px solid #555;
+    border-radius: 0.625rem; /* 10px for a more modern look */
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3); /* Enhanced shadow for depth */
     color: white;
-    padding: var(--spacing-small);
-    position: absolute;
-    right: var(--spacing-small);
-    top: 20%;
-    width: 15.625rem; /* 250px */
+    padding: var(--spacing-large);
+    position: fixed; /* Changed from absolute for modal centering */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the panel */
+    width: 20rem; /* 320px, slightly wider for better readability */
+    max-height: 80vh; /* Prevent overflow off-screen */
+    overflow-y: auto; /* Scroll if content is too long */
+    z-index: 1001; /* Above overlay */
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    will-change: transform, opacity;
+    opacity: 0; /* Start hidden for animation */
+}
+
+.hero-stats-panel.visible {
+    opacity: 1; /* Show when visible */
+    transform: translate(-50%, -50%) scale(1); /* Scale up for entry */
+}
+
+.hero-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-small);
+}
+
+.hero-stats-header h3 {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.25rem;
+    transition: color 0.2s ease-in-out;
+    will-change: color;
+}
+
+.close-btn:hover {
+    color: #ff5555; /* Red for hover feedback */
+}
+
+.close-btn:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.hero-stat-item {
+    margin: 0.5rem 0; /* Consistent spacing between items */
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.hero-stat-item strong {
+    color: var(--accent-color); /* Highlight field names */
 }
 
 /* === Responsive Design === */

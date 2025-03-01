@@ -355,7 +355,7 @@ class HeroActions {
       }
     }
 
-    // Target the first living enemy
+    // Target the first living enemy for basic attack
     const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
     if (targetEnemy && Math.random() < effectiveHitChance) {
       // Successful hit: reduce enemy HP and log the attack
@@ -376,7 +376,7 @@ class HeroActions {
     BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
 
     // Attempt to use a special ability if conditions are met
-    if (Math.random() < 0.2 && hero.cooldown === 0) { // 20% chance to use special, no cooldown active
+    if (Math.random() < 0.25 && hero.cooldown === 0) { // 25% chance to use special, no cooldown active
       const skill = heroSkills.find((s) => s.name === hero.special);
       let specialDamage = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Base special damage
       if (hero.class !== "warrior") {
@@ -387,24 +387,44 @@ class HeroActions {
         }
       }
 
-      const specialTarget = enemyGroup.find((e) => e.hp > 0) || null;
-      if (specialTarget && Math.random() < effectiveHitChance) {
+      const specialTargets = enemyGroup.filter((e) => e.hp > 0); // Get all living enemies
+      if (specialTargets.length > 0 && Math.random() < effectiveHitChance) {
         if (skill.type === "damage") {
-          // Apply damage-based special (e.g., Fireball, Shield Bash)
-          specialDamage = Math.round(skill.apply(hero, specialTarget, specialDamage));
-          specialTarget.hp = Math.max(0, specialTarget.hp - specialDamage);
-          BattleManager.logEntry(
-            "special",
-            `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${
-              specialTarget.type
-            } HP: ${Math.round(specialTarget.hp)}/${specialTarget.maxHp})`
-          );
+          // Handle multi-target for Multi Shot (up to 3 targets) or single-target for other damage skills
+          let targets = specialTargets;
+          if (skill.name === "Multi Shot") {
+            // Limit to 3 targets or fewer if less than 3 enemies are alive
+            targets = specialTargets.slice(0, Math.min(3, specialTargets.length));
+            // Apply damage to each target using the modular apply function
+            const damages = skill.apply(hero, targets, specialDamage);
+            targets.forEach((target, index) => {
+              const damage = damages[index] || 0; // Ensure damage exists for each target
+              target.hp = Math.max(0, target.hp - damage);
+              BattleManager.logEntry(
+                "special",
+                `${hero.name} uses ${hero.special} for ${damage} damage! (${
+                  target.type
+                } HP: ${Math.round(target.hp)}/${target.maxHp})`
+              );
+            });
+          } else {
+            // Single-target damage for other skills (e.g., Shield Bash, Fireball)
+            const singleTarget = specialTargets[0]; // Default to first target
+            specialDamage = Math.round(skill.apply(hero, singleTarget, specialDamage));
+            singleTarget.hp = Math.max(0, singleTarget.hp - specialDamage);
+            BattleManager.logEntry(
+              "special",
+              `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${
+                singleTarget.type
+              } HP: ${Math.round(singleTarget.hp)}/${singleTarget.maxHp})`
+            );
+          }
         } else if (skill.type === "heal") {
           // Apply healing-based special (e.g., Heal)
           skill.apply(hero, formationHeroes);
           BattleManager.logEntry("heal", `${hero.name} uses ${hero.special} to heal allies!`);
         }
-      } else if (specialTarget) {
+      } else if (specialTargets.length > 0) {
         // Missed special ability
         BattleManager.logEntry("special", `${hero.name} misses with ${hero.special}!`);
       } else {
