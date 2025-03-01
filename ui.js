@@ -202,9 +202,7 @@ function renderHeroRoster() {
           hero.hp / hero.maxHp <= 0.3 ? " low" : ""
         }" style="width: ${Math.floor(
         (hero.hp / hero.maxHp) * 100
-      )}%;"></div></div>
-        <div class="xp-info">XP: ${hero.xp}/${xpThresholds[hero.level]}</div>
-      `;
+      )}`;
       el.addEventListener("dragstart", (e) =>
         e.dataTransfer.setData("text/plain", hero.id)
       );
