@@ -1,4 +1,4 @@
-// User Interface management for the Fantasy Guild Manager game
+// User Interface management
 // Handles DOM interactions, event listeners, and UI updates for game screens and components.
 
 // DOM elements for key UI components

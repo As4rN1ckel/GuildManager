@@ -1,4 +1,4 @@
-// Core game state and logic for the Fantasy Guild Manager game
+// Core game state and logic
 // Manages player resources, heroes, dungeons, and progression mechanics.
 
 // Global game state object, storing key game data

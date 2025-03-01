@@ -1,4 +1,4 @@
-// Battle simulation logic for the Fantasy Guild Manager game
+// Battle simulation logic
 // Handles combat mechanics, UI updates, and game state management during dungeon missions.
 
 // DOM elements for battle-related UI components
