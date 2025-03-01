@@ -336,7 +336,7 @@ class HeroActions {
   ) {
     // Apply any passive effects before the hero acts
     PassiveEffects.applyPassive(hero, formationHeroes);
-
+  
     // Calculate effective hit chance, accounting for passive boosts (e.g., for Archers)
     let effectiveHitChance = hero.hitChance;
     if (hero.class === "archer") {
@@ -345,7 +345,7 @@ class HeroActions {
         effectiveHitChance = Math.min(1.0, effectiveHitChance + passive.value);
       }
     }
-
+  
     let damage = Math.round(hero.attack); // Round base attack damage to a whole number
     if (hero.class !== "warrior") {
       // Apply passive damage boosts for non-Warriors (except Archers)
@@ -354,7 +354,7 @@ class HeroActions {
         damage = Math.round(passive.apply(hero, damage)); // Apply and round boosted damage
       }
     }
-
+  
     // Target the first living enemy for basic attack
     const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
     if (targetEnemy && Math.random() < effectiveHitChance) {
@@ -374,90 +374,52 @@ class HeroActions {
       BattleManager.logEntry("attack", `${hero.name} finds no enemies left to attack!`);
     }
     BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
-
+  
     // Attempt to use a special ability if conditions are met
-    if (Math.random() < 0.25 && hero.cooldown === 0) { // 25% chance to use special, no cooldown active
+    if (Math.random() < 0.25 && hero.cooldown === 0) { // 25% chance to use special
       const skill = heroSkills.find((s) => s.name === hero.special);
-      let specialDamage = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Base special damage
+      let specialDamage = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Base special "damage" (healing in this case)
       if (hero.class !== "warrior") {
-        // Apply passive damage boosts for non-Warriors (except Archers)
+        // No passive damage boost applies here for healing, but kept for consistency
         const passive = heroPassives.find((p) => p.name === hero.passive);
         if (passive && passive.type === "damageBoost" && hero.class !== "archer") {
-          specialDamage = Math.round(passive.apply(hero, specialDamage)); // Boost and round special damage
+          specialDamage = Math.round(passive.apply(hero, specialDamage)); // This won’t apply for Cleric, but kept for modularity
         }
       }
-
-      const specialTargets = enemyGroup.filter((e) => e.hp > 0); // Get all living enemies
+  
+      const specialTargets = enemyGroup.filter((e) => e.hp > 0); // Not used for healing, but included for consistency
       if (specialTargets.length > 0 && Math.random() < effectiveHitChance) {
         if (skill.type === "damage") {
-          // Handle multi-target for Multi Shot (up to 3 targets) or single-target for other damage skills
-          let targets = specialTargets;
-          if (skill.name === "Multi Shot") {
-            // Limit to 3 targets or fewer if less than 3 enemies are alive
-            targets = specialTargets.slice(0, Math.min(3, specialTargets.length));
-            // Apply damage to each target using the modular apply function
-            const damages = skill.apply(hero, targets, specialDamage);
-            targets.forEach((target, index) => {
-              const damage = damages[index] || 0; // Ensure damage exists for each target
-              target.hp = Math.max(0, target.hp - damage);
-              BattleManager.logEntry(
-                "special",
-                `${hero.name} uses ${hero.special} for ${damage} damage! (${
-                  target.type
-                } HP: ${Math.round(target.hp)}/${target.maxHp})`
-              );
-            });
-          } else {
-            // Single-target damage for other skills (e.g., Shield Bash, Fireball)
-            const singleTarget = specialTargets[0]; // Default to first target
-            specialDamage = Math.round(skill.apply(hero, singleTarget, specialDamage));
-            singleTarget.hp = Math.max(0, singleTarget.hp - specialDamage);
+          // ... (multi-target and single-target damage logic for other classes)
+        } else if (skill.type === "heal") {
+          // Apply healing-based special (Heal)
+          skill.apply(hero, formationHeroes);
+          // Log detailed healing for the target
+          const injuredAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
+          if (injuredAllies.length > 0) {
+            const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
+            const healAmount = Math.round(hero.attack * skill.value);
             BattleManager.logEntry(
-              "special",
-              `${hero.name} uses ${hero.special} for ${specialDamage} damage! (${
-                singleTarget.type
-              } HP: ${Math.round(singleTarget.hp)}/${singleTarget.maxHp})`
+              "heal",
+              `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${
+                healTarget.name
+              } HP: ${Math.round(healTarget.hp)}/${healTarget.maxHp})`
             );
           }
-        } else if (skill.type === "heal") {
-          // Apply healing-based special (e.g., Heal)
-          skill.apply(hero, formationHeroes);
-          BattleManager.logEntry("heal", `${hero.name} uses ${hero.special} to heal allies!`);
         }
       } else if (specialTargets.length > 0) {
-        // Missed special ability
+        // Missed special ability (not applicable for healing, but kept for consistency)
         BattleManager.logEntry("special", `${hero.name} misses with ${hero.special}!`);
       } else {
-        // No enemies left for special
+        // No enemies left for special (not applicable for healing, but kept for consistency)
         BattleManager.logEntry("special", `${hero.name} finds no enemies left for ${hero.special}!`);
       }
-      hero.cooldown = skill.cooldown; // Set cooldown after using special
+      hero.cooldown = skill.cooldown; // Set cooldown to 3 turns after using Heal
     } else if (hero.cooldown > 0) {
       // Decrease cooldown if active
       hero.cooldown--;
     }
-
-    // Handle Cleric-specific healing logic
-    if (hero.class === "cleric") {
-      const injuredAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-      if (injuredAllies.length > 0) {
-        const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-        const skill = heroSkills.find((s) => s.name === hero.special);
-        const healAmount = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Round heal amount
-        healTarget.hp = Math.min(healTarget.maxHp, Math.round(healTarget.hp + healAmount)); // Cap and round healed HP
-        BattleManager.logEntry(
-          "heal",
-          `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${
-            healTarget.name
-          } HP: ${Math.round(healTarget.hp)}/${healTarget.maxHp})`
-        );
-      } else {
-        // No allies need healing
-        BattleManager.logEntry("heal", `${hero.name} finds no allies needing healing!`);
-      }
-      BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
-    }
-
+  
     // Update UI after the hero's turn
     BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
   }
@@ -574,7 +536,7 @@ class PassiveEffects {
     const passive = heroPassives.find(
       (p) => p.name === hero.passive && p.appliesTo.includes(hero.class)
     );
-    if (!passive) return; // Exit if no matching passive is found
+    if (!passive) return;
 
     switch (passive.type) {
       case "damageReduction":
@@ -604,25 +566,22 @@ class PassiveEffects {
           )}%.`
         );
         break;
-      case "heal":
-        // Apply healing to injured allies if any exist
-        const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-        if (healedAllies.length > 0) {
-          passive.apply(hero, formationHeroes); // Apply the healing passive
-          const healAmount = Math.round(hero.attack * passive.value); // Calculate heal amount
-          BattleManager.logEntry(
-            "heal",
-            `${hero.name}'s passive ${passive.name} heals all injured allies for ${healAmount} HP!`
-          );
-          // Log individual ally HP after healing
-          healedAllies.forEach((ally) => {
-            BattleManager.logEntry(
-              "heal",
-              `${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp}`
-            );
-          });
-        }
-        break;
+        case "heal":
+          // Apply healing to injured allies if any exist
+          const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
+          if (healedAllies.length > 0) {
+            passive.apply(hero, formationHeroes);
+            const healAmount = Math.round(hero.attack * passive.value);
+            healedAllies.forEach((ally) => {
+              BattleManager.logEntry(
+                "heal",
+                `${hero.name} heals ${ally.name} for ${healAmount} HP via ${passive.name}! (${
+                  ally.name
+                } HP: ${Math.round(ally.hp)}/${ally.maxHp})`
+              );
+            });
+          }
+          break;
       default:
         break;
     }

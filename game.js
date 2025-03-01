@@ -121,7 +121,7 @@ const heroPassives = [
     name: "Divine Restoration",
     description: "Heals all injured allies for 50% of attack per turn",
     type: "heal",
-    value: 0.4,                     // Healing multiplier
+    value: 0.5,                     // Healing multiplier
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       // Heal all injured allies by 50% of the hero's attack, rounding values
@@ -168,9 +168,9 @@ const heroSkills = [
   },
   {
     name: "Fireball",
-    description: "Deals 50% more damage than base attack",
+    description: "Deals 40% more damage than base attack",
     type: "damage",
-    value: 1.50,                
+    value: 1.40,                
     cooldown: 3,
     appliesTo: ["mage"],
     apply: function (hero, target, baseDamage) {
@@ -180,7 +180,7 @@ const heroSkills = [
   },
   {
     name: "Heal",
-    description: "Heals a random injured ally for 100% of attack",
+    description: "Heals a random injured ally for 150% of attack",
     type: "heal",
     value: 1.5,               
     cooldown: 3,

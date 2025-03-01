@@ -1,7 +1,6 @@
 # GuildManager
  
  --- ROADMAP ---
- - Skills and Passive Description on tooltip, improved tooltip or new interface. (With all the Stats)
  - Loot/Items/Equipment/Inventory System
  - Hero Skills/Upgrades
  - Multiplayer?
