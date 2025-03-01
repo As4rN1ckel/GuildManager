@@ -1,51 +1,50 @@
 // Battle simulation logic
-// Handles combat mechanics, UI updates, and game state management during dungeon missions.
 
-// DOM elements for battle-related UI components
-const battleLog = document.getElementById("battle-log");          // Log container for battle messages
-const battleProgress = document.getElementById("battle-progress"); // Progress bar for dungeon room completion
-const dungeonName = document.getElementById("dungeon-name");      // Displays the current dungeon name
-const resultTitle = document.getElementById("result-title");      // Shows mission outcome (Victory/Defeat)
-const casualtiesList = document.getElementById("casualties-list"); // Lists heroes lost in battle
-const rewardsList = document.getElementById("rewards-list");      // Displays mission rewards
-const speedBtn = document.getElementById("speed-btn");            // Button to adjust battle speed
-const exitBtn = document.getElementById("exit-btn");              // Button to exit battle and view results
-const heroStatsList = document.getElementById("hero-stats-list"); // Container for hero stats during battle
-const enemyStatsList = document.getElementById("enemy-stats-list"); // Container for enemy stats during battle
+// DOM elements for battle UI
+const battleLog = document.getElementById("battle-log"); // Battle log container
+const battleProgress = document.getElementById("battle-progress"); // Progress bar
+const dungeonName = document.getElementById("dungeon-name"); // Current dungeon name
+const resultTitle = document.getElementById("result-title"); // Mission outcome
+const casualtiesList = document.getElementById("casualties-list"); // Fallen heroes list
+const rewardsList = document.getElementById("rewards-list"); // Mission rewards
+const speedBtn = document.getElementById("speed-btn"); // Battle speed button
+const exitBtn = document.getElementById("exit-btn"); // Exit battle button
+const heroStatsList = document.getElementById("hero-stats-list"); // Hero stats display
+const enemyStatsList = document.getElementById("enemy-stats-list"); // Enemy stats display
 
 /**
- * BattleManager - Manages the overall battle flow, including dungeon room progression and combat outcomes.
+ * Manages battle flow, dungeon progression, and combat outcomes.
  * @class
  */
 class BattleManager {
   /**
-   * Initiates a dungeon mission with the specified dungeon and number of rooms.
-   * @param {Object} dungeon - The dungeon object containing name, enemies, and rewards.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @returns {Promise<void>} Resolves when the battle concludes or fails.
+   * Starts a dungeon mission.
+   * @param {Object} dungeon - Dungeon data.
+   * @param {number} totalRooms - Total dungeon rooms.
    */
   static async start(dungeon, totalRooms) {
-    let currentRoom = 0; // Tracks the current room in the dungeon
-    gameState.casualties = []; // Reset casualties for the new mission
+    let currentRoom = 0; // Current room counter
+    gameState.casualties = []; // Reset casualties
 
-    // Generate enemy groups for each room in the dungeon
     const roomEnemies = this.generateRooms(dungeon, totalRooms);
     this.logEntry("system", `Your party enters ${dungeon.name}...`);
 
-    // Continue battling through rooms until completion or defeat
     while (currentRoom < totalRooms) {
-      currentRoom++; // Move to the next room
-      this.updateProgress(currentRoom, totalRooms); // Update the progress bar
+      currentRoom++; // Advance to next room
+      this.updateProgress(currentRoom, totalRooms);
 
-      // Get the current formation of living heroes
       const formationHeroes = this.getFormationHeroes();
       if (!formationHeroes.length) {
-        // If no heroes remain, handle defeat
-        this.handleDefeat(formationHeroes, roomEnemies, currentRoom, totalRooms, dungeon);
+        this.handleDefeat(
+          formationHeroes,
+          roomEnemies[currentRoom - 1],
+          currentRoom,
+          totalRooms,
+          dungeon
+        );
         return;
       }
 
-      // Simulate combat for the current room
       const roomCleared = await this.simulateRoom(
         currentRoom,
         totalRooms,
@@ -53,59 +52,52 @@ class BattleManager {
         roomEnemies[currentRoom - 1],
         dungeon
       );
-      this.updateStats(formationHeroes, roomEnemies[currentRoom - 1], currentRoom, totalRooms);
+      this.updateStats(
+        formationHeroes,
+        roomEnemies[currentRoom - 1],
+        currentRoom,
+        totalRooms
+      );
 
-      if (!roomCleared) {
-        // If the room isn’t cleared, retry the current room
-        currentRoom--; // Step back to repeat the room
-        this.updateProgress(currentRoom + 0.5, totalRooms); // Show partial progress
-      }
+      if (!roomCleared) currentRoom--; // Retry if room not cleared
+      this.updateProgress(currentRoom + (roomCleared ? 0 : 0.5), totalRooms);
     }
 
-    // Mission success: all rooms cleared
-    this.logEntry(
-      "system",
-      "All rooms cleared! The dungeon is conquered. Press Exit to review the results."
-    );
-    exitBtn.disabled = false; // Enable the exit button for result review
+    this.logEntry("system", "Dungeon conquered. Press Exit for results.");
+    exitBtn.disabled = false; // Enable exit
   }
 
   /**
-   * Generates enemy groups for each room in the dungeon.
-   * @param {Object} dungeon - The dungeon configuration with enemy data.
-   * @param {number} totalRooms - Total number of rooms to generate enemies for.
-   * @returns {Array<Object>} Array of enemy groups, one per room.
+   * Generates enemy groups for dungeon rooms.
+   * @param {Object} dungeon - Dungeon configuration.
+   * @param {number} totalRooms - Total rooms.
+   * @returns {Array<Object>} Enemy groups per room.
    */
   static generateRooms(dungeon, totalRooms) {
-    // Create an array of enemy groups for each room, with the last room potentially containing a boss
     return Array(totalRooms)
       .fill(null)
-      .map((_, i) => {
-        const isBossRoom = i === totalRooms - 1; // Last room is the boss room
-        return generateEnemyGroup(dungeon, i, isBossRoom);
-      });
+      .map((_, i) => generateEnemyGroup(dungeon, i, i === totalRooms - 1));
   }
 
   /**
-   * Retrieves the list of living heroes currently in the formation.
-   * @returns {Array<Object>} Array of hero objects from the formation, excluding casualties.
+   * Gets living heroes in formation.
+   * @returns {Array<Object>} Array of active heroes.
    */
   static getFormationHeroes() {
-    // Filter out null slots, find corresponding heroes, and exclude fallen heroes
     return gameState.formation
-      .filter((id) => id !== null) // Exclude empty formation slots
-      .map((id) => gameState.heroes.find((h) => h.id === id)) // Map IDs to hero objects
-      .filter((hero) => hero && !gameState.casualties.includes(hero.id)); // Remove nulls and casualties
+      .filter((id) => id !== null)
+      .map((id) => gameState.heroes.find((h) => h.id === id))
+      .filter((hero) => hero && !gameState.casualties.includes(hero.id));
   }
 
   /**
-   * Simulates combat for a single room in the dungeon.
-   * @param {number} roomNumber - The current room number being fought.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects for the room.
-   * @param {Object} dungeon - The dungeon configuration.
-   * @returns {Promise<boolean>} Resolves to true if the room is cleared, false otherwise.
+   * Simulates combat for a dungeon room.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {Object} dungeon - Dungeon data.
+   * @returns {Promise<boolean>} True if room cleared.
    */
   static async simulateRoom(
     roomNumber,
@@ -114,24 +106,18 @@ class BattleManager {
     enemyGroup,
     dungeon
   ) {
-    // Check if there are enemies or heroes to fight
-    if (!enemyGroup || !formationHeroes.length) {
-      this.logEntry("system", "Error: No enemies or heroes to fight!");
-      return false;
-    }
+    if (!enemyGroup || !formationHeroes.length) return false;
 
-    // Determine if this is the boss room and log the room entry
     const isBossRoom = roomNumber === totalRooms;
     this.logEntry(
       "system",
-      `Your party enters Room ${roomNumber} ${
-        isBossRoom ? "and faces the boss" : ""
-      }: ${enemyGroup.map((e) => e.type).join(", ")} (${enemyGroup
+      `Room ${roomNumber} ${isBossRoom ? "boss:" : ""} ${enemyGroup
+        .map((e) => e.type)
+        .join(", ")} (${enemyGroup
         .map((e) => `${e.hp}/${e.maxHp}`)
-        .join(", ")} HP)!`
+        .join(", ")} HP)`
     );
 
-    // Run the battle loop until the room is cleared or heroes are defeated
     return await this.runBattleLoop(
       formationHeroes,
       enemyGroup,
@@ -143,14 +129,14 @@ class BattleManager {
   }
 
   /**
-   * Runs the turn-based battle loop for a room until victory or defeat.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects for the room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @param {boolean} isBossRoom - Indicates if this is the boss room.
-   * @param {Object} dungeon - The dungeon configuration.
-   * @returns {Promise<boolean>} Resolves to true if enemies are defeated, false otherwise.
+   * Runs turn-based combat until victory or defeat.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
+   * @param {boolean} isBossRoom - If this is the boss room.
+   * @param {Object} dungeon - Dungeon data.
+   * @returns {Promise<boolean>} True if enemies defeated.
    */
   static async runBattleLoop(
     formationHeroes,
@@ -160,47 +146,62 @@ class BattleManager {
     isBossRoom,
     dungeon
   ) {
-    let allEnemiesDefeated = false; // Track if all enemies are defeated
+    let allEnemiesDefeated = false;
 
-    // Continue the battle while there are living heroes and enemies
     while (!allEnemiesDefeated && formationHeroes.length > 0) {
-      // Execute hero turns
-      await HeroActions.performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms);
-
-      // Refresh heroes to exclude those who fell during their turns
-      formationHeroes = this.getFormationHeroes(); // Update to exclude casualties
-      allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0); // Check if all enemies are defeated
+      await HeroActions.performTurns(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
+      formationHeroes = this.getFormationHeroes();
+      allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
 
       if (allEnemiesDefeated) {
-        // Handle room clearance if all enemies are defeated
-        this.handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+        this.handleRoomClear(
+          formationHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms,
+          isBossRoom,
+          dungeon
+        );
         return true;
       }
 
-      // Execute enemy turns
-      await EnemyActions.performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms);
-
-      // Refresh heroes again after enemy attacks
+      await EnemyActions.performTurns(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
       formationHeroes = this.getFormationHeroes();
       allEnemiesDefeated = enemyGroup.every((enemy) => enemy.hp <= 0);
     }
 
-    // Return true if enemies are defeated, false if heroes are wiped out
     if (allEnemiesDefeated) {
-      this.handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+      this.handleRoomClear(
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms,
+        isBossRoom,
+        dungeon
+      );
       return true;
     }
     return false;
   }
 
   /**
-   * Handles the outcome when a room is successfully cleared.
-   * @param {Array<Object>} formationHeroes - Array of surviving hero objects.
-   * @param {Array<Object>} enemyGroup - Array of defeated enemy objects.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @param {boolean} isBossRoom - Indicates if this is the boss room.
-   * @param {Object} dungeon - The dungeon configuration.
+   * Handles room clearance, awarding XP to surviving heroes.
+   * @param {Array<Object>} formationHeroes - Surviving heroes.
+   * @param {Array<Object>} enemyGroup - Defeated enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
+   * @param {boolean} isBossRoom - If this is the boss room.
+   * @param {Object} dungeon - Dungeon data.
    */
   static handleRoomClear(
     formationHeroes,
@@ -210,25 +211,23 @@ class BattleManager {
     isBossRoom,
     dungeon
   ) {
-    // Calculate XP based on whether it’s a boss or regular enemy room
     const xpPerEnemy = isBossRoom ? dungeon.bossXP : dungeon.enemyXp;
-    const xpGained = Math.round(xpPerEnemy * enemyGroup.length); // Ensure XP is a whole number
+    const xpGained = Math.round(xpPerEnemy * enemyGroup.length);
     this.logEntry("xp-level", `Heroes gained ${xpGained} XP.`);
 
-    // Distribute XP to surviving heroes and check for level-ups
     formationHeroes.forEach((hero) => {
-      hero.xp = Math.round(hero.xp + xpGained); // Update XP, ensuring it’s a whole number
-      levelUpHero(hero); // Handle potential level-up logic
+      hero.xp = Math.round(hero.xp + xpGained);
+      levelUpHero(hero); // Handle level-ups
     });
   }
 
   /**
-   * Handles the outcome when all heroes are defeated in battle.
-   * @param {Array<Object>} formationHeroes - Array of hero objects (likely empty or defeated).
-   * @param {Array<Object>} enemyGroup - Array of remaining enemy objects.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @param {Object} dungeon - The dungeon configuration.
+   * Handles defeat when all heroes are defeated.
+   * @param {Array<Object>} formationHeroes - Defeated or empty heroes.
+   * @param {Array<Object>} enemyGroup - Remaining enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
+   * @param {Object} dungeon - Dungeon data.
    */
   static handleDefeat(
     formationHeroes,
@@ -237,62 +236,59 @@ class BattleManager {
     totalRooms,
     dungeon
   ) {
-    // Log the defeat and enable the exit button for result review
-    this.logEntry(
-      "system",
-      "All heroes have fallen! The battle is lost. Press Exit to review the results."
-    );
-    updateHeroStats(formationHeroes); // Update hero stats UI
-    updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Update enemy stats UI
-    exitBtn.disabled = false; // Allow exiting to see results
+    this.logEntry("system", "All heroes defeated! Press Exit for results.");
+    updateHeroStats(formationHeroes);
+    updateEnemyStats(enemyGroup, roomNumber, totalRooms);
+    exitBtn.disabled = false; // Enable exit
   }
 
   /**
-   * Updates the battle progress bar based on current room progress.
-   * @param {number} currentRoom - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
+   * Updates the battle progress bar.
+   * @param {number} currentRoom - Current room progress.
+   * @param {number} totalRooms - Total rooms.
    */
   static updateProgress(currentRoom, totalRooms) {
-    // Calculate and cap progress at 100%
-    const progress = Math.min(100, Math.floor((currentRoom / totalRooms) * 100));
-    battleProgress.style.width = `${progress}%`; // Update progress bar width
-    document.querySelector(".progress-text").textContent = `${progress}%`; // Update progress text
+    const progress = Math.min(
+      100,
+      Math.floor((currentRoom / totalRooms) * 100)
+    );
+    battleProgress.style.width = `${progress}%`;
+    document.querySelector(".progress-text").textContent = `${progress}%`;
   }
 
   /**
-   * Updates the UI with current hero and enemy stats during battle.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
+   * Updates hero and enemy stats in the UI.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
    */
   static updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms) {
-    updateHeroStats(formationHeroes); // Refresh hero stats display
-    updateEnemyStats(enemyGroup, roomNumber, totalRooms); // Refresh enemy stats display
+    updateHeroStats(formationHeroes);
+    updateEnemyStats(enemyGroup, roomNumber, totalRooms);
   }
 
   /**
-   * Adds a new entry to the battle log with the specified type and text.
-   * @param {string} type - The type of log entry (e.g., "attack", "heal", "system").
-   * @param {string} text - The text message to display in the log.
+   * Adds a log entry to the battle UI.
+   * @param {string} type - Log entry type (e.g., "attack", "heal").
+   * @param {string} text - Log message.
    */
   static logEntry(type, text) {
-    addLogEntry(type, text); // Delegate to the addLogEntry function for UI updates
+    addLogEntry(type, text);
   }
 }
 
 /**
- * HeroActions - Manages hero actions during battle, including attacks, specials, and passives.
+ * Manages hero actions during battle.
  * @class
  */
 class HeroActions {
   /**
-   * Executes turns for all heroes in the formation.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @returns {Promise<void>} Resolves when all hero turns are complete.
+   * Executes turns for all heroes.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
    */
   static async performTurns(
     formationHeroes,
@@ -300,32 +296,35 @@ class HeroActions {
     roomNumber,
     totalRooms
   ) {
-    // Create a copy of heroes to avoid modifying the original array during iteration
-    const activeHeroes = [...formationHeroes];
-    for (let i = 0; i < activeHeroes.length; i++) {
-      const hero = activeHeroes[i];
-      if (hero.hp <= 0) continue; // Skip heroes who are already defeated
+    const heroes = [...formationHeroes];
+    for (let hero of heroes) {
+      if (hero.hp <= 0) continue; // Skip defeated heroes
 
-      // Introduce a delay to simulate turn-based pacing, adjusted by battle speed
-      await new Promise((resolve) => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
-      await this.performHeroTurn(hero, formationHeroes, enemyGroup, roomNumber, totalRooms);
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+      );
+      await this.performHeroTurn(
+        hero,
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
 
-      // Check if the hero was defeated during their turn (e.g., from enemy counterattacks)
       if (hero.hp <= 0) {
-        gameState.casualties.push(hero.id); // Mark hero as a casualty
+        gameState.casualties.push(hero.id);
         BattleManager.logEntry("system", `${hero.name} falls in battle!`);
       }
     }
   }
 
   /**
-   * Performs a single hero's turn, including attacks, specials, and passives.
-   * @param {Object} hero - The hero object performing the turn.
-   * @param {Array<Object>} formationHeroes - Array of all hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @returns {Promise<void>} Resolves when the hero's turn is complete.
+   * Performs a single hero turn, including attacks and specials.
+   * @param {Object} hero - The hero acting.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
    */
   static async performHeroTurn(
     hero,
@@ -334,109 +333,130 @@ class HeroActions {
     roomNumber,
     totalRooms
   ) {
-    // Apply any passive effects before the hero acts
     PassiveEffects.applyPassive(hero, formationHeroes);
-  
-    // Calculate effective hit chance, accounting for passive boosts (e.g., for Archers)
-    let effectiveHitChance = hero.hitChance;
+
+    let hitChance = hero.hitChance;
     if (hero.class === "archer") {
       const passive = heroPassives.find((p) => p.name === hero.passive);
-      if (passive && passive.type === "hitChanceBoost") {
-        effectiveHitChance = Math.min(1.0, effectiveHitChance + passive.value);
-      }
+      if (passive?.type === "hitChanceBoost")
+        hitChance = Math.min(1.0, hitChance + passive.value);
     }
-  
-    let damage = Math.round(hero.attack); // Round base attack damage to a whole number
+
+    let damage = Math.round(hero.attack);
     if (hero.class !== "warrior") {
-      // Apply passive damage boosts for non-Warriors (except Archers)
       const passive = heroPassives.find((p) => p.name === hero.passive);
-      if (passive && passive.type === "damageBoost" && hero.class !== "archer") {
-        damage = Math.round(passive.apply(hero, damage)); // Apply and round boosted damage
-      }
+      if (passive?.type === "damageBoost" && hero.class !== "archer")
+        damage = Math.round(passive.apply(hero, damage));
     }
-  
-    // Target the first living enemy for basic attack
-    const targetEnemy = enemyGroup.find((e) => e.hp > 0) || null;
-    if (targetEnemy && Math.random() < effectiveHitChance) {
-      // Successful hit: reduce enemy HP and log the attack
-      targetEnemy.hp = Math.max(0, targetEnemy.hp - damage);
+
+    const target = enemyGroup.find((e) => e.hp > 0) || null;
+    if (target && Math.random() < hitChance) {
+      target.hp = Math.max(0, target.hp - damage);
       BattleManager.logEntry(
         "attack",
-        `${hero.name} attacks ${targetEnemy.type} for ${damage} damage! (${
-          targetEnemy.type
-        } HP: ${Math.round(targetEnemy.hp)}/${targetEnemy.maxHp})`
+        `${hero.name} hits ${target.type} for ${damage} damage! (${
+          target.type
+        } HP: ${Math.round(target.hp)}/${target.maxHp})`
       );
-    } else if (targetEnemy) {
-      // Missed attack
-      BattleManager.logEntry("attack", `${hero.name} misses ${targetEnemy.type}!`);
+    } else if (target) {
+      BattleManager.logEntry("attack", `${hero.name} misses ${target.type}!`);
     } else {
-      // No enemies left to attack
-      BattleManager.logEntry("attack", `${hero.name} finds no enemies left to attack!`);
+      BattleManager.logEntry("attack", `${hero.name} finds no enemies!`);
     }
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
-  
-    // Attempt to use a special ability if conditions are met
-    if (Math.random() < 0.25 && hero.cooldown === 0) { // 25% chance to use special
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
+
+    if (Math.random() < 0.25 && hero.cooldown === 0) {
       const skill = heroSkills.find((s) => s.name === hero.special);
-      let specialDamage = Math.round(hero.attack * ((skill && skill.value) || 1.0)); // Base special "damage" (healing in this case)
+      let specialDamage = Math.round(hero.attack * (skill?.value || 1));
       if (hero.class !== "warrior") {
-        // No passive damage boost applies here for healing, but kept for consistency
         const passive = heroPassives.find((p) => p.name === hero.passive);
-        if (passive && passive.type === "damageBoost" && hero.class !== "archer") {
-          specialDamage = Math.round(passive.apply(hero, specialDamage)); // This won’t apply for Cleric, but kept for modularity
-        }
+        if (passive?.type === "damageBoost" && hero.class !== "archer")
+          specialDamage = Math.round(passive.apply(hero, specialDamage));
       }
-  
-      const specialTargets = enemyGroup.filter((e) => e.hp > 0); // Not used for healing, but included for consistency
-      if (specialTargets.length > 0 && Math.random() < effectiveHitChance) {
+
+      const targets = enemyGroup.filter((e) => e.hp > 0);
+      if (targets.length > 0 && Math.random() < hitChance) {
         if (skill.type === "damage") {
-          // ... (multi-target and single-target damage logic for other classes)
+          let finalTargets = targets;
+          if (skill.name === "Multi Shot") {
+            finalTargets = targets.slice(0, Math.min(3, targets.length));
+            const damages = skill.apply(hero, finalTargets, specialDamage);
+            finalTargets.forEach((target, i) => {
+              const d = damages[i] || 0;
+              target.hp = Math.max(0, target.hp - d);
+              BattleManager.logEntry(
+                "special",
+                `${hero.name} uses ${skill.name} for ${d} damage! (${
+                  target.type
+                } HP: ${Math.round(target.hp)}/${target.maxHp})`
+              );
+            });
+          } else {
+            const t = finalTargets[0];
+            specialDamage = Math.round(skill.apply(hero, t, specialDamage));
+            t.hp = Math.max(0, t.hp - specialDamage);
+            BattleManager.logEntry(
+              "special",
+              `${hero.name} uses ${skill.name} for ${specialDamage} damage! (${
+                t.type
+              } HP: ${Math.round(t.hp)}/${t.maxHp})`
+            );
+          }
         } else if (skill.type === "heal") {
-          // Apply healing-based special (Heal)
           skill.apply(hero, formationHeroes);
-          // Log detailed healing for the target
-          const injuredAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-          if (injuredAllies.length > 0) {
-            const healTarget = injuredAllies[Math.floor(Math.random() * injuredAllies.length)];
-            const healAmount = Math.round(hero.attack * skill.value);
+          const injured = formationHeroes.filter((h) => h.hp < h.maxHp);
+          if (injured.length > 0) {
+            const target = injured[Math.floor(Math.random() * injured.length)];
+            const heal = Math.round(hero.attack * skill.value);
             BattleManager.logEntry(
               "heal",
-              `${hero.name} heals ${healTarget.name} for ${healAmount} HP! (${
-                healTarget.name
-              } HP: ${Math.round(healTarget.hp)}/${healTarget.maxHp})`
+              `${hero.name} heals ${target.name} for ${heal} HP! (${
+                target.name
+              } HP: ${Math.round(target.hp)}/${target.maxHp})`
             );
           }
         }
-      } else if (specialTargets.length > 0) {
-        // Missed special ability (not applicable for healing, but kept for consistency)
-        BattleManager.logEntry("special", `${hero.name} misses with ${hero.special}!`);
+      } else if (targets.length > 0) {
+        BattleManager.logEntry(
+          "special",
+          `${hero.name} misses with ${hero.special}!`
+        );
       } else {
-        // No enemies left for special (not applicable for healing, but kept for consistency)
-        BattleManager.logEntry("special", `${hero.name} finds no enemies left for ${hero.special}!`);
+        BattleManager.logEntry(
+          "special",
+          `${hero.name} finds no targets for ${hero.special}!`
+        );
       }
-      hero.cooldown = skill.cooldown; // Set cooldown to 3 turns after using Heal
+      hero.cooldown = skill?.cooldown || 0;
     } else if (hero.cooldown > 0) {
-      // Decrease cooldown if active
       hero.cooldown--;
     }
-  
-    // Update UI after the hero's turn
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
   }
 }
 
 /**
- * EnemyActions - Manages enemy actions during battle, including targeting and attacking heroes.
+ * Manages enemy actions during battle.
  * @class
  */
 class EnemyActions {
   /**
-   * Executes turns for all enemies in the current room.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @returns {Promise<void>} Resolves when all enemy turns are complete.
+   * Executes turns for all enemies.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
    */
   static async performTurns(
     formationHeroes,
@@ -444,24 +464,29 @@ class EnemyActions {
     roomNumber,
     totalRooms
   ) {
-    // Iterate through each living enemy to perform their turn
     for (const enemy of enemyGroup) {
       if (enemy.hp > 0) {
-        // Introduce a delay to simulate turn-based pacing, adjusted by battle speed
-        await new Promise((resolve) => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
-        await this.performEnemyTurn(enemy, formationHeroes, enemyGroup, roomNumber, totalRooms);
+        await new Promise((resolve) =>
+          setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+        );
+        await this.performEnemyTurn(
+          enemy,
+          formationHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms
+        );
       }
     }
   }
 
   /**
-   * Performs a single enemy's turn, targeting and attacking heroes.
-   * @param {Object} enemy - The enemy object performing the turn.
-   * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
-   * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
-   * @param {number} roomNumber - The current room number.
-   * @param {number} totalRooms - Total number of rooms in the dungeon.
-   * @returns {Promise<void>} Resolves when the enemy's turn is complete.
+   * Performs a single enemy turn, targeting heroes by row priority.
+   * @param {Object} enemy - The enemy acting.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<Object>} enemyGroup - Room enemies.
+   * @param {number} roomNumber - Current room.
+   * @param {number} totalRooms - Total rooms.
    */
   static async performEnemyTurn(
     enemy,
@@ -470,337 +495,314 @@ class EnemyActions {
     roomNumber,
     totalRooms
   ) {
-    // Filter out defeated heroes
-    const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
-    if (!livingHeroes.length) return; // Exit if no heroes remain
+    const living = formationHeroes.filter((h) => h.hp > 0);
+    if (!living.length) return;
 
-    let targetHeroesInRow = [];
-    // Prioritize targeting heroes in the front row (indices 0-2)
-    targetHeroesInRow = livingHeroes.filter((h) => gameState.formation.indexOf(h.id) < 3);
-    if (!targetHeroesInRow.length) {
-      // If no front-row heroes, target middle row (indices 3-5)
-      targetHeroesInRow = livingHeroes.filter((h) => gameState.formation.indexOf(h.id) < 6);
-    }
-    if (!targetHeroesInRow.length) {
-      // If no middle-row heroes, target back row (indices 6-8)
-      targetHeroesInRow = livingHeroes;
-    }
+    let targets = living.filter((h) => gameState.formation.indexOf(h.id) < 3); // Front row
+    if (!targets.length)
+      targets = living.filter((h) => gameState.formation.indexOf(h.id) < 6); // Middle row
+    if (!targets.length) targets = living; // Back row
 
-    if (targetHeroesInRow.length > 0) {
-      // Randomly select a target from the prioritized row
-      const targetHero = targetHeroesInRow[Math.floor(Math.random() * targetHeroesInRow.length)];
+    if (targets.length > 0) {
+      const target = targets[Math.floor(Math.random() * targets.length)];
       if (Math.random() < enemy.hitChance) {
-        let damage = Math.round(enemy.damage); // Round base enemy damage
-        if (targetHero.class === "warrior") {
-          // Apply damage reduction for Warriors via their passive
-          const passive = heroPassives.find((p) => p.name === targetHero.passive);
-          if (passive && passive.type === "damageReduction") {
-            damage = Math.round(passive.apply(targetHero, null, damage));
-          }
+        let damage = Math.round(enemy.damage);
+        if (target.class === "warrior") {
+          const passive = heroPassives.find((p) => p.name === target.passive);
+          if (passive?.type === "damageReduction")
+            damage = Math.round(passive.apply(target, null, damage));
         }
-        // Apply damage to the target hero
-        targetHero.hp = Math.max(0, Math.round(targetHero.hp - damage));
+        target.hp = Math.max(0, Math.round(target.hp - damage));
         BattleManager.logEntry(
           "enemy-attack",
-          `The ${enemy.type} hits ${targetHero.name} for ${damage} damage! (${
-            targetHero.name
-          } HP: ${Math.round(targetHero.hp)}/${targetHero.maxHp})`
+          `The ${enemy.type} hits ${target.name} for ${damage} damage! (${
+            target.name
+          } HP: ${Math.round(target.hp)}/${target.maxHp})`
         );
-        if (targetHero.hp <= 0) {
-          // If the hero is defeated, log the casualty
-          gameState.casualties.push(targetHero.id);
-          BattleManager.logEntry("system", `${targetHero.name} falls in battle!`);
+        if (target.hp <= 0) {
+          gameState.casualties.push(target.id);
+          BattleManager.logEntry("system", `${target.name} falls in battle!`);
         }
       } else {
-        // Missed attack
-        BattleManager.logEntry("enemy-attack", `The ${enemy.type} misses ${targetHero.name}!`);
+        BattleManager.logEntry(
+          "enemy-attack",
+          `The ${enemy.type} misses ${target.name}!`
+        );
       }
     }
-    // Update UI after the enemy's turn
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
   }
 }
 
 /**
- * PassiveEffects - Manages passive abilities for heroes during battle.
+ * Manages passive abilities during battle.
  * @class
  */
 class PassiveEffects {
   /**
-   * Applies the hero's passive ability, if applicable, before their turn.
-   * @param {Object} hero - The hero object with a passive ability.
-   * @param {Array<Object>} formationHeroes - Array of all hero objects in the formation.
-   * @param {Array<string|null>} formation - The current formation array from gameState.formation (indices 0–8).
+   * Applies hero passives, handling position-based effects.
+   * @param {Object} hero - The hero with a passive.
+   * @param {Array<Object>} formationHeroes - Active heroes.
+   * @param {Array<string|null>} formation - Formation grid (indices 0–8).
    */
   static applyPassive(hero, formationHeroes, formation = gameState.formation) {
-    // Find the passive ability matching the hero's class and name
     const passive = heroPassives.find(
       (p) => p.name === hero.passive && p.appliesTo.includes(hero.class)
     );
-    if (!passive) return; // Exit if no matching passive is found
+    if (!passive) return;
 
     switch (passive.type) {
       case "damageReduction":
-        // Apply damage reduction via the passive's apply function and log if applied
-        const reducedDamage = passive.apply(hero, null, 100); // Use a dummy damage value (100) for logging
-        if (reducedDamage < 100) { // If damage was reduced (position check passed in apply)
+        const reduced = passive.apply(hero, null, 100);
+        if (reduced < 100)
           BattleManager.logEntry(
             "special",
-            `${hero.name}'s passive ${passive.name} reduces incoming damage by ${Math.floor(
-              (1 - (reducedDamage / 100)) * 100
+            `${hero.name}'s ${passive.name} reduces damage by ${Math.floor(
+              (1 - reduced / 100) * 100
             )}%.`
           );
-        }
         break;
       case "hitChanceBoost":
-        // Apply hit chance boost via the passive's apply function and log if applied
-        const boostedHitChance = passive.apply(hero);
-        if (boostedHitChance > hero.hitChance) { // If hit chance was boosted (position check passed in apply)
+        const hitChance = passive.apply(hero);
+        if (hitChance > hero.hitChance)
           BattleManager.logEntry(
             "special",
-            `${hero.name}'s passive ${passive.name} increases hit chance by ${Math.floor(
-              (boostedHitChance - hero.hitChance) * 100
+            `${hero.name}'s ${passive.name} boosts hit chance by ${Math.floor(
+              (hitChance - hero.hitChance) * 100
             )}%.`
           );
-        }
         break;
       case "damageBoost":
-        // Apply damage boost via the passive's apply function and log if applied
-        const boostedDamage = passive.apply(hero, 100); // Use a dummy damage value (100) for logging
-        if (boostedDamage > 100) { // If damage was boosted (position check passed in apply)
+        const boosted = passive.apply(hero, 100);
+        if (boosted > 100)
           BattleManager.logEntry(
             "special",
-            `${hero.name}'s passive ${passive.name} increases damage by ${Math.floor(
-              ((boostedDamage / 100) - 1) * 100
+            `${hero.name}'s ${passive.name} boosts damage by ${Math.floor(
+              (boosted / 100 - 1) * 100
             )}%.`
           );
-        }
         break;
-        case "heal":
-        // Apply healing to injured allies if any exist, letting the passive's apply function handle position-based multipliers
-        const healedAllies = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-        if (healedAllies.length > 0) {
-          passive.apply(hero, formationHeroes); // Apply the healing passive, which handles position-based healing
-          // Log healing for each ally, using the amount calculated by the passive's apply function
-          healedAllies.forEach((ally) => {
-            const healAmount = Math.round(ally.hp - (ally.hp - (hero.attack * (formation.indexOf(hero.id) >= 6 && formation.indexOf(hero.id) <= 8 ? 0.8 : 0.4)))); // Calculate heal amount based on new HP
+      case "heal":
+        const healed = formationHeroes.filter((h) => h.hp < h.maxHp);
+        if (healed.length > 0) {
+          passive.apply(hero, formationHeroes);
+          healed.forEach((ally) => {
+            const heal = Math.round(
+              ally.hp -
+                (ally.hp -
+                  hero.attack *
+                    (formation.indexOf(hero.id) >= 6 &&
+                    formation.indexOf(hero.id) <= 8
+                      ? 0.8
+                      : 0.4))
+            );
             BattleManager.logEntry(
               "heal",
-              `${hero.name} heals ${ally.name} for ${healAmount} HP via ${passive.name}! (${
-                ally.name
-              } HP: ${Math.round(ally.hp)}/${ally.maxHp})`
+              `${hero.name} heals ${ally.name} for ${heal} HP via ${
+                passive.name
+              }! (${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp})`
             );
           });
         }
-        break;
-      default:
         break;
     }
   }
 }
 
 /**
- * Updates the UI with the current stats of heroes in the formation.
- * @param {Array<Object>} formationHeroes - Array of hero objects in the formation.
+ * Updates hero stats UI during battle.
+ * @param {Array<Object>} formationHeroes - Active heroes.
  */
 function updateHeroStats(formationHeroes) {
-  // Clear existing hero stats and rebuild for each living hero
   heroStatsList.innerHTML = "";
   formationHeroes.forEach((hero) => {
-    const heroStat = document.createElement("div");
-    heroStat.className = "hero-stat";
-    heroStat.innerHTML = `
-            <span>${hero.name.split(" ")[0]} (Lv${hero.level})</span>
-            <div class="stat-hp-bar">
-                <div class="stat-hp-fill${
-                  hero.hp / hero.maxHp <= 0.3 ? " low" : ""
-                }" style="width: ${Math.floor(
+    const stat = document.createElement("div");
+    stat.className = "hero-stat";
+    stat.innerHTML = `
+      <span>${hero.name.split(" ")[0]} (Lv${hero.level})</span>
+      <div class="stat-hp-bar"><div class="stat-hp-fill${
+        hero.hp / hero.maxHp <= 0.3 ? " low" : ""
+      }" style="width: ${Math.floor(
       (hero.hp / hero.maxHp) * 100
-    )}%;"></div>
-            </div>
-            <span>${Math.round(hero.hp)}/${hero.maxHp}</span>  <!-- Round HP for display -->
-        `;
-    heroStatsList.appendChild(heroStat);
+    )}%;"></div></div>
+      <span>${Math.round(hero.hp)}/${hero.maxHp}</span>
+    `;
+    heroStatsList.appendChild(stat);
   });
 }
 
 /**
- * Updates the UI with the current stats of enemies in the room.
- * @param {Array<Object>} enemyGroup - Array of enemy objects in the current room.
- * @param {number} roomNumber - The current room number.
- * @param {number} totalRooms - Total number of rooms in the dungeon.
+ * Updates enemy stats UI during battle.
+ * @param {Array<Object>} enemyGroup - Room enemies.
+ * @param {number} roomNumber - Current room.
+ * @param {number} totalRooms - Total rooms.
  */
 function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
-  // Clear existing enemy stats and rebuild for each enemy
   enemyStatsList.innerHTML = "";
-  if (!enemyGroup || enemyGroup.length === 0) {
-    enemyStatsList.innerHTML = "<span>No enemies remaining in this room.</span>";
+  if (!enemyGroup || !enemyGroup.length) {
+    enemyStatsList.innerHTML = "<span>No enemies remaining.</span>";
     return;
   }
 
-  // Determine if this is the boss room for labeling
-  const isBossRoom = roomNumber === totalRooms;
+  const isBoss = roomNumber === totalRooms;
   enemyGroup.forEach((enemy) => {
-    const enemyStat = document.createElement("div");
-    enemyStat.innerHTML = `
-        <span>${isBossRoom ? "Boss: " : ""}${enemy.type}</span>
-        <div class="stat-hp-bar">
-          <div class="stat-hp-fill${
-            enemy.hp / enemy.maxHp <= 0.3 ? " low" : ""
-          }" style="width: ${Math.floor(
+    const stat = document.createElement("div");
+    stat.innerHTML = `
+      <span>${isBoss ? "Boss: " : ""}${enemy.type}</span>
+      <div class="stat-hp-bar"><div class="stat-hp-fill${
+        enemy.hp / enemy.maxHp <= 0.3 ? " low" : ""
+      }" style="width: ${Math.floor(
       (enemy.hp / enemy.maxHp) * 100
-    )}%;"></div>
-        </div>
-        <span>${Math.round(enemy.hp)}/${enemy.maxHp}</span>  <!-- Round HP for display -->
-      `;
-    enemyStatsList.appendChild(enemyStat);
+    )}%;"></div></div>
+      <span>${Math.round(enemy.hp)}/${enemy.maxHp}</span>
+    `;
+    enemyStatsList.appendChild(stat);
   });
 }
 
 /**
- * Initiates a dungeon mission when the player clicks "Embark on Mission".
- * Validates dungeon and formation before starting battle.
+ * Starts a dungeon mission, validating setup.
  */
 function startMission() {
-  // Check if a dungeon is selected
   if (!gameState.selectedDungeon) {
-    alert("No dungeon selected! Please choose a dungeon first.");
+    alert("Select a dungeon first!");
     return;
   }
-  // Check if at least one hero is in the formation
   if (!gameState.formation.some((id) => id !== null)) {
-    alert("No heroes in formation! Assign at least one hero before embarking.");
+    alert("Assign at least one hero!");
     return;
   }
 
-  // Hide main screen and show battle screen
   mainScreen.style.display = "none";
   battleScreen.style.display = "flex";
-  dungeonName.textContent = gameState.selectedDungeon.name; // Set dungeon name
-  battleLog.innerHTML = ""; // Clear previous battle log
-  battleProgress.style.width = "0%"; // Reset progress bar
-  document.querySelector(".progress-text").textContent = "0%"; // Reset progress text
-  exitBtn.disabled = true; // Disable exit until battle ends
-  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`; // Set initial speed display
-  BattleManager.start(gameState.selectedDungeon, gameState.selectedDungeon.roomCount); // Start the battle
+  dungeonName.textContent = gameState.selectedDungeon.name;
+  battleLog.innerHTML = ""; // Clear log
+  battleProgress.style.width = "0%";
+  document.querySelector(".progress-text").textContent = "0%";
+  exitBtn.disabled = true; // Disable until battle ends
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
+  BattleManager.start(
+    gameState.selectedDungeon,
+    gameState.selectedDungeon.roomCount
+  );
 }
 
 /**
- * Generates a group of enemies for a specific room in the dungeon.
- * @param {Object} dungeon - The dungeon configuration with enemy data.
- * @param {number} roomNumber - The room number being generated for.
- * @param {boolean} isBossRoom - Indicates if this is a boss room.
- * @returns {Array<Object>} Array of enemy objects with stats.
+ * Generates enemies for a dungeon room.
+ * @param {Object} dungeon - Dungeon data.
+ * @param {number} roomNumber - Room index.
+ * @param {boolean} isBossRoom - If this is a boss room.
+ * @returns {Array<Object>} Enemy group.
  */
 function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
-  const { enemyCountOnRoom, enemies, enemyStats, bosses, bossStats, bossCount } = dungeon;
-  // Determine the number of enemies based on room type (boss or regular)
-  const enemyCount = isBossRoom
-    ? Math.floor(Math.random() * (bossCount.max - bossCount.min + 1)) + bossCount.min
-    : Math.floor(Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min + 1)) + enemyCountOnRoom.min;
-  const enemyPool = isBossRoom ? bosses : enemies; // Select enemy pool (bosses or regular enemies)
-  const stats = isBossRoom ? bossStats : enemyStats; // Select appropriate stats
+  const {
+    enemyCountOnRoom,
+    enemies,
+    enemyStats,
+    bosses,
+    bossStats,
+    bossCount,
+  } = dungeon;
+  const count = isBossRoom
+    ? Math.floor(Math.random() * (bossCount.max - bossCount.min + 1)) +
+      bossCount.min
+    : Math.floor(
+        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min + 1)
+      ) + enemyCountOnRoom.min;
+  const pool = isBossRoom ? bosses : enemies;
+  const stats = isBossRoom ? bossStats : enemyStats;
 
-  // Create an array of enemies with randomized types and stats
-  return Array(enemyCount)
+  return Array(count)
     .fill(null)
     .map(() => ({
-      type: enemyPool[Math.floor(Math.random() * enemyPool.length)],
+      type: pool[Math.floor(Math.random() * pool.length)],
       hp: stats.hp,
       maxHp: stats.hp,
-      damage: Math.round(stats.damage), // Ensure damage is a whole number
+      damage: Math.round(stats.damage),
       hitChance: stats.hitChance,
     }));
 }
 
 /**
- * Adds a new entry to the battle log with the specified type and text.
- * @param {string} type - The type of log entry (e.g., "attack", "heal", "system").
- * @param {string} text - The text message to display in the log.
+ * Logs a battle message to the UI.
+ * @param {string} type - Log type (e.g., "attack", "heal").
+ * @param {string} text - Log message.
  */
 function addLogEntry(type, text) {
-  // Create a new log entry element
   const entry = document.createElement("div");
-  entry.className = `log-entry ${type}`; // Apply type-specific styling
-  entry.textContent = text; // Set the log message
-  battleLog.appendChild(entry); // Add to the log
-  battleLog.scrollTop = battleLog.scrollHeight; // Auto-scroll to the latest entry
+  entry.className = `log-entry ${type}`;
+  entry.textContent = text;
+  battleLog.appendChild(entry);
+  battleLog.scrollTop = battleLog.scrollHeight; // Auto-scroll
 }
 
 /**
- * Displays the mission results after a battle concludes.
+ * Displays mission results after battle.
  */
 function showResults() {
-  // Hide battle screen and show results screen
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
 
-  // Determine if the mission was a victory
-  const isVictory = checkVictory();
-  resultTitle.textContent = isVictory ? "Victory!" : "Defeat!"; // Set result title
-  resultTitle.style.color = isVictory ? "#2ecc71" : "#e74c3c"; // Colorize based on outcome
+  const victory = checkVictory();
+  resultTitle.textContent = victory ? "Victory!" : "Defeat!";
+  resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
 
-  // Populate casualties list
   casualtiesList.innerHTML = "";
   gameState.casualties.forEach((id) => {
     const hero = gameState.heroes.find((h) => h.id === id);
     if (hero) {
-      const heroEl = document.createElement("div");
-      heroEl.className = `hero-base hero ${hero.class}`; // Use hero-base for shape rendering
-      heroEl.innerHTML = `<div class="shape"></div><div class="hero-info">${hero.name}</div>`;
-      casualtiesList.appendChild(heroEl);
+      const el = document.createElement("div");
+      el.className = `hero-base hero ${hero.class}`;
+      el.innerHTML = `<div class="shape"></div><div class="hero-info">${hero.name}</div>`;
+      casualtiesList.appendChild(el);
     }
   });
 
-  // Populate rewards list
   rewardsList.innerHTML = "";
-  if (isVictory) {
-    const goldReward = gameState.selectedDungeon.reward;
-    gameState.gold += goldReward; // Add gold to game state
-    rewardsList.innerHTML += `<div class="reward-item">Gold: ${goldReward}</div>`;
-
-    // List surviving heroes and mission success
-    const survivors = gameState.formation
-      .filter((id) => id && !gameState.casualties.includes(id))
-      .map((id) => gameState.heroes.find((h) => h.id === id));
+  if (victory) {
+    const reward = gameState.selectedDungeon.reward;
+    gameState.gold += reward;
+    rewardsList.innerHTML += `<div class="reward-item">Gold: ${reward}</div>`;
     rewardsList.innerHTML += `<div class="reward-item">Dungeon Cleared!</div>`;
   }
 
-  // Update game state to reflect casualties and formation changes
-  gameState.heroes = gameState.heroes.filter((h) => !gameState.casualties.includes(h.id));
+  gameState.heroes = gameState.heroes.filter(
+    (h) => !gameState.casualties.includes(h.id)
+  );
   gameState.formation = gameState.formation.map((id) =>
     gameState.casualties.includes(id) ? null : id
   );
 }
 
 /**
- * Toggles the battle speed between predefined values.
+ * Toggles battle speed (0.5x, 1x, 2x, 4x).
  */
 function toggleBattleSpeed() {
-  // Cycle through available speeds: 0.5x, 1x, 2x, 4x
   const speeds = [0.5, 1, 2, 4];
-  const currentIndex = speeds.indexOf(gameState.battleSpeed);
-  gameState.battleSpeed = speeds[(currentIndex + 1) % speeds.length];
-  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`; // Update button text
+  const index = speeds.indexOf(gameState.battleSpeed);
+  gameState.battleSpeed = speeds[(index + 1) % speeds.length];
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 }
 
 /**
- * Returns the player to the guild screen after viewing mission results.
+ * Returns to the guild screen after results.
  */
 function returnToGuild() {
-  // Hide results screen and show main screen
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
-  gameState.day++; // Advance to the next day
-  gameState.selectedDungeon = null; // Clear dungeon selection
-  updateFormationGrid(); // Refresh formation UI
-  renderHeroRoster(); // Refresh hero roster UI
-  updateUI(); // Update all UI elements
+  gameState.day++; // Next day
+  gameState.selectedDungeon = null;
+  updateFormationGrid(); // Refresh formation
+  renderHeroRoster(); // Refresh roster
+  updateUI(); // Update UI
 }
 
-// Event listener for exiting the battle and viewing results
+// Exit battle event listener
 exitBtn.addEventListener("click", () => {
-  if (!exitBtn.disabled) {
-    showResults(); // Show results if exit is enabled
-  }
+  if (!exitBtn.disabled) showResults();
 });

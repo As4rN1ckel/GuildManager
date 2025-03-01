@@ -1,13 +1,9 @@
-// Simple module for generating fantasy hero names
-// Provides a single function to generate random hero names based on predefined first and last names.
+// Generates fantasy hero names
 
-// Arrays of first and last names for generating unique hero names
+// Name arrays for hero generation
 const firstNames = [
-    // Male Names 
     "Aric", "Bron", "Cael", "Dorn", "Elric", "Finn", "Gorm", "Harn", "Irwin", "Jace",
     "Kael", "Lorn", "Merek", "Nero", "Oryn", "Pax", "Quin", "Ryn", "Thane", "Veyn",
-    
-    // Female Names
     "Aelith", "Brynn", "Cindra", "Dalia", "Elara", "Fiora", "Gwyn", "Liora", "Myra", "Sylvi"
   ];
   
@@ -19,18 +15,17 @@ const firstNames = [
   ];
   
   /**
-   * Generates a random fantasy hero name based on the provided class name.
-   * @param {string} className - The name of the hero class (e.g., "Warrior"), used for potential future customization.
-   * @returns {string} A randomly generated hero name (e.g., "Aric the Brave").
+   * Generates a random fantasy hero name.
+   * @param {string} className - Hero class name (e.g., "Warrior") for future customization.
+   * @returns {string} Random hero name (e.g., "Aric the Brave").
    */
   function generateHeroName(className) {
-    // Combine a random first name and last name
     return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${
       lastNames[Math.floor(Math.random() * lastNames.length)]
     }`;
   }
   
-  // Export the function for use in other scripts (browser global)
+  // Make function globally available in browser
   if (typeof window !== 'undefined') {
     window.generateHeroName = generateHeroName;
   }
