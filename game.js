@@ -60,24 +60,8 @@ const heroClasses = [
   },
 ];
 
-/**
- * Generates a random fantasy hero name based on the hero class.
- * @param {string} className - The name of the hero class (e.g., "Warrior").
- * @returns {string} A randomly generated hero name (e.g., "Aric the Brave").
- */
-function generateHeroName(className) {
-  // Arrays of first and last names for generating unique hero names
-  const firstNames = [
-    "Aric", "Bron", "Cael", "Dorn", "Elric", "Finn", "Gorm", "Harn", "Irwin", "Jace",
-  ];
-  const lastNames = [
-    "the Brave", "the Swift", "the Wise", "the Strong", "the Bold", "Darkblade", "Lightbringer", "Stormcaller",
-  ];
-  // Combine a random first name and last name
-  return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${
-    lastNames[Math.floor(Math.random() * lastNames.length)]
-  }`;
-}
+// XP thresholds required for heroes to level up
+const xpThresholds = [0, 10, 25, 60, 120, 250];
 
 /**
  * Defines passive abilities for each hero class, including their effects and applicability.
@@ -197,8 +181,41 @@ const heroSkills = [
   },
 ];
 
-// XP thresholds required for heroes to level up
-const xpThresholds = [0, 10, 25, 60, 120, 250];
+/**
+ * Adds a new hero to the game state and updates the UI.
+ * @param {Object} hero - The hero object to add to the guild.
+ */
+function addHero(hero) {
+  // Add the hero to the global heroes array
+  gameState.heroes.push(hero);
+  renderHeroRoster(); // Refresh the hero roster display
+  updateUI(); // Update all UI elements to reflect the change
+}
+
+/**
+ * Generates a new hero with random characteristics based on hero classes.
+ * @returns {Object} A new hero object with unique ID, name, and stats.
+ */
+function generateHero() {
+  // Randomly select a hero class from the available options
+  const classIndex = Math.floor(Math.random() * heroClasses.length);
+  const heroClass = heroClasses[classIndex];
+  return {
+    id: Date.now() + Math.random().toString(36).substring(2, 9), // Unique ID using timestamp and random string
+    name: generateHeroName(heroClass.name), // Generate a random fantasy name using heroNames.js
+    class: heroClass.type,                 // Hero class type (e.g., "warrior")
+    hp: heroClass.hp,                     // Base hit points
+    maxHp: heroClass.hp,                  // Maximum hit points
+    attack: heroClass.attack,             // Base attack damage
+    special: heroClass.special,           // Special ability name
+    level: 1,                             // Starting level
+    cost: heroClass.cost,                 // Recruitment cost in gold
+    passive: heroClass.passive,           // Passive ability name
+    cooldown: 0,                          // Initial cooldown for specials
+    xp: 0,                                // Starting experience points
+    hitChance: heroClass.hitChance,       // Probability of landing attacks
+  };
+}
 
 /**
  * Levels up a hero if they have sufficient XP, increasing stats and resetting XP.
@@ -271,42 +288,6 @@ const dungeons = [
     bossXP: 5,
   },
 ];
-
-/**
- * Adds a new hero to the game state and updates the UI.
- * @param {Object} hero - The hero object to add to the guild.
- */
-function addHero(hero) {
-  // Add the hero to the global heroes array
-  gameState.heroes.push(hero);
-  renderHeroRoster(); // Refresh the hero roster display
-  updateUI(); // Update all UI elements to reflect the change
-}
-
-/**
- * Generates a new hero with random characteristics based on hero classes.
- * @returns {Object} A new hero object with unique ID, name, and stats.
- */
-function generateHero() {
-  // Randomly select a hero class from the available options
-  const classIndex = Math.floor(Math.random() * heroClasses.length);
-  const heroClass = heroClasses[classIndex];
-  return {
-    id: Date.now() + Math.random().toString(36).substring(2, 9), // Unique ID using timestamp and random string
-    name: generateHeroName(heroClass.name), // Generate a random fantasy name
-    class: heroClass.type,                 // Hero class type (e.g., "warrior")
-    hp: heroClass.hp,                     // Base hit points
-    maxHp: heroClass.hp,                  // Maximum hit points
-    attack: heroClass.attack,             // Base attack damage
-    special: heroClass.special,           // Special ability name
-    level: 1,                             // Starting level
-    cost: heroClass.cost,                 // Recruitment cost in gold
-    passive: heroClass.passive,           // Passive ability name
-    cooldown: 0,                          // Initial cooldown for specials
-    xp: 0,                                // Starting experience points
-    hitChance: heroClass.hitChance,       // Probability of landing attacks
-  };
-}
 
 /**
  * Checks if a hero is currently placed in the formation grid.
