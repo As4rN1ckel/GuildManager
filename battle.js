@@ -593,13 +593,19 @@ function updateHeroStats(formationHeroes) {
   // Group heroes by formation rows: Front (0-2), Middle (3-5), Back (6-8)
   const rows = {
     "Front Row": formationHeroes.filter(
-      (hero) => gameState.formation.indexOf(hero.id) >= 0 && gameState.formation.indexOf(hero.id) <= 2
+      (hero) =>
+        gameState.formation.indexOf(hero.id) >= 0 &&
+        gameState.formation.indexOf(hero.id) <= 2
     ),
     "Middle Row": formationHeroes.filter(
-      (hero) => gameState.formation.indexOf(hero.id) >= 3 && gameState.formation.indexOf(hero.id) <= 5
+      (hero) =>
+        gameState.formation.indexOf(hero.id) >= 3 &&
+        gameState.formation.indexOf(hero.id) <= 5
     ),
     "Back Row": formationHeroes.filter(
-      (hero) => gameState.formation.indexOf(hero.id) >= 6 && gameState.formation.indexOf(hero.id) <= 8
+      (hero) =>
+        gameState.formation.indexOf(hero.id) >= 6 &&
+        gameState.formation.indexOf(hero.id) <= 8
     ),
   };
 
@@ -615,7 +621,12 @@ function updateHeroStats(formationHeroes) {
       // Add heroes for this row
       heroes.forEach((hero) => {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+        const hpClass =
+          hpPercentage < 0.25
+            ? "red"
+            : hpPercentage <= 0.6
+            ? "yellow"
+            : "green";
 
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
@@ -625,7 +636,9 @@ function updateHeroStats(formationHeroes) {
             ${hero.name.split(" ")[0]} (Lv${hero.level})
           </span>
           <div class="stat-hp-bar">
-            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
+            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+          hpPercentage * 100
+        )}%;"></div>
           </div>
           <span class="stat-health">${Math.round(hero.hp)}/${hero.maxHp}</span>
         `;
@@ -645,18 +658,21 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   const isBoss = roomNumber === totalRooms;
   enemyGroup.forEach((enemy, index) => {
     const hpPercentage = enemy.hp / enemy.maxHp;
-    const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
-    const enemyId = `${enemy.type.toLowerCase().replace(" ", "-")}-${index}`; 
+    const hpClass =
+      hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+    const enemyId = `${enemy.type.toLowerCase().replace(" ", "-")}-${index}`;
 
     const stat = document.createElement("div");
-    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${enemyId}`; 
+    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${enemyId}`;
     stat.innerHTML = `
       <span class="stat-name">
         <span class="enemy-icon ${isBoss ? "boss" : "minion"}"></span>
         ${isBoss ? "Boss: " : ""}${enemy.type}
       </span>
       <div class="stat-hp-bar">
-        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
+        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+      hpPercentage * 100
+    )}%;"></div>
       </div>
       <span class="stat-health">${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
@@ -743,43 +759,109 @@ function addLogEntry(type, text, roomNumber) {
 function showResults() {
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
+  resultsScreen.classList.remove("victory", "defeat"); // Reset classes
 
   const victory = checkVictory();
+  resultsScreen.classList.add(victory ? "victory" : "defeat"); // Add outcome class
   resultTitle.textContent = victory ? "Victory!" : "Defeat!";
   resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
 
+  // Add animated outcome icon and subtitle
+  resultTitle.innerHTML = `
+    <span class="outcome-icon ${
+      victory ? "victory-icon" : "defeat-icon"
+    }"></span>
+    ${resultTitle.textContent}
+    <span class="result-subtitle">${
+      victory
+        ? "Your heroes have returned triumphant!"
+        : "Your heroes have fallen..."
+    }</span>
+  `;
+
   casualtiesList.innerHTML = "";
-  gameState.casualties.forEach((id) => {
-    const hero = gameState.heroes.find((h) => h.id === id);
-    if (hero) {
-      const el = document.createElement("div");
-      el.className = `hero-base hero ${hero.class}`;
-      el.innerHTML = `<div class="shape"></div><div class="hero-info">${hero.name}</div>`;
-      casualtiesList.appendChild(el);
-    }
-  });
+  if (gameState.casualties.length > 0) {
+    const casualtiesTitle = document.createElement("h3");
+    casualtiesTitle.textContent = "Casualties:";
+    casualtiesTitle.className = "section-title";
+    casualtiesList.appendChild(casualtiesTitle);
+
+    gameState.casualties.forEach((id) => {
+      const hero = gameState.heroes.find((h) => h.id === id);
+      if (hero) {
+        const el = document.createElement("div");
+        el.className = `hero-base hero ${hero.class} casualty`;
+        el.innerHTML = `
+          <div class="shape"></div>
+          <div class="hero-info">${hero.name}</div>
+          <span class="casualty-mark">✝</span>
+        `;
+        casualtiesList.appendChild(el);
+      }
+    });
+  } else {
+    const noCasualties = document.createElement("div");
+    noCasualties.className = "no-casualties";
+    noCasualties.innerHTML = `
+      <span class="no-casualties-icon">✔</span>
+      No Casualties
+    `;
+    casualtiesList.appendChild(noCasualties);
+  }
 
   rewardsList.innerHTML = "";
   if (victory) {
+    const rewardsTitle = document.createElement("h3");
+    rewardsTitle.textContent = "Rewards:";
+    rewardsTitle.className = "section-title";
+    rewardsList.appendChild(rewardsTitle);
+
     const reward = gameState.selectedDungeon.reward;
     gameState.gold += reward;
-    rewardsList.innerHTML += `<div class="reward-item">Gold: ${reward}</div>`;
-    rewardsList.innerHTML += `<div class="reward-item">Dungeon Cleared!</div>`;
+    rewardsList.innerHTML += `
+      <div class="reward-item gold-reward">
+        <span class="reward-icon gold-icon"></span> Gold: ${reward}
+      </div>
+      <div class="reward-item cleared-reward">
+        <span class="reward-icon cleared-icon"></span> Dungeon Cleared!
+      </div>
+    `;
+  } else {
+    const noRewards = document.createElement("div");
+    noRewards.className = "no-rewards";
+    noRewards.innerHTML = `
+      <span class="no-rewards-icon">✗</span>
+      No Rewards Earned
+    `;
+    rewardsList.appendChild(noRewards);
   }
 
   const milestonesList = document.getElementById("milestones-list");
   milestonesList.innerHTML = "";
+  const milestonesTitle = document.createElement("h3");
+  milestonesTitle.textContent = "Battle Milestones:";
+  milestonesTitle.className = "section-title";
+  milestonesList.parentElement.insertBefore(milestonesTitle, milestonesList);
+
   if (gameState.battleMilestones.length > 0) {
     gameState.battleMilestones.forEach((milestone) => {
       const entry = document.createElement("div");
       entry.className = `milestone-entry ${milestone.type}`;
-      entry.textContent = milestone.text;
+      entry.innerHTML = `
+        <span class="milestone-icon ${
+          milestone.type === "milestone" ? "milestone-mark" : "xp-mark"
+        }"></span>
+        ${milestone.text}
+      `;
       milestonesList.appendChild(entry);
     });
   } else {
     const noMilestones = document.createElement("div");
     noMilestones.className = "milestone-entry system";
-    noMilestones.textContent = "No notable milestones recorded.";
+    noMilestones.innerHTML = `
+      <span class="no-milestones-icon">—</span>
+      No notable milestones recorded.
+    `;
     milestonesList.appendChild(noMilestones);
   }
 
@@ -789,6 +871,9 @@ function showResults() {
   gameState.formation = gameState.formation.map((id) =>
     gameState.casualties.includes(id) ? null : id
   );
+
+  // Trigger animation
+  setTimeout(() => resultsScreen.classList.add("animate-in"), 10);
 }
 
 function toggleBattleSpeed() {
