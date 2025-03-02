@@ -130,7 +130,9 @@ const heroSkills = [
     value: 1.3,
     cooldown: 3,
     appliesTo: ["warrior"],
-    apply: (hero, target, baseDamage) => Math.round(baseDamage * 1.3),
+    apply: function (hero, target, baseDamage) {
+      return Math.round(baseDamage * this.value);
+    },
   },
   {
     name: "Multi Shot",
@@ -139,9 +141,9 @@ const heroSkills = [
     value: 1.15,
     cooldown: 3,
     appliesTo: ["archer"],
-    apply: (hero, targets, baseDamage) => {
+    apply: function (hero, targets, baseDamage) {
       const targetArray = Array.isArray(targets) ? targets : [targets];
-      return targetArray.map(() => Math.round(baseDamage * 1.15));
+      return targetArray.map(() => Math.round(baseDamage * this.value));
     },
   },
   {
@@ -151,7 +153,9 @@ const heroSkills = [
     value: 1.4,
     cooldown: 3,
     appliesTo: ["mage"],
-    apply: (hero, target, baseDamage) => Math.round(baseDamage * 1.4),
+    apply: function (hero, target, baseDamage) {
+      return Math.round(baseDamage * this.value);
+    },
   },
   {
     name: "Heal",
@@ -160,11 +164,11 @@ const heroSkills = [
     value: 1.5,
     cooldown: 3,
     appliesTo: ["cleric"],
-    apply: (hero, formationHeroes) => {
+    apply: function (hero, formationHeroes) {
       const injured = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
       if (injured.length > 0) {
         const target = injured[Math.floor(Math.random() * injured.length)];
-        const heal = Math.round(hero.attack * 1.5);
+        const heal = Math.round(hero.attack * this.value);
         target.hp = Math.min(target.maxHp, Math.round(target.hp + heal));
       }
     },
