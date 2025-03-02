@@ -201,6 +201,13 @@ function renderHeroRoster() {
       }`;
       el.dataset.id = hero.id;
       el.draggable = true;
+      el.dataset.tooltip = `
+        ${hero.name}
+        ${capitalize(hero.class)}
+        Lv${hero.level}
+        HP: ${hero.hp}/${hero.maxHp}
+        ATK: ${hero.attack}
+      `.trim();
       el.innerHTML = `
         <div class="shape"></div>
         <div class="hero-info">${hero.name.split(" ")[0]}</div>
@@ -213,6 +220,9 @@ function renderHeroRoster() {
         e.dataTransfer.setData("text/plain", hero.id)
       );
       el.addEventListener("click", () => selectHero(hero.id));
+      
+      updateHeroTooltipListeners(el);
+      
       heroRoster.appendChild(el);
     }
   });
@@ -222,6 +232,15 @@ function renderHeroRoster() {
  * @param {string} heroId - Hero ID to select/deselect
  */
 function selectHero(heroId) {
+
+  const tooltip = document.getElementById("hero-tooltip");
+  if (tooltip) {
+    tooltip.style.opacity = "0";
+    tooltip.style.display = "none";
+  }
+  currentHoveredHero = null; 
+  clearTimeout(hideTooltipTimeout); 
+
   gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
   renderHeroRoster();
   updateFormationGrid();
@@ -285,8 +304,15 @@ function updateFormationGrid() {
         el.className = `hero-base hero ${hero.class}`;
         el.dataset.id = hero.id;
         el.draggable = true;
-        el.style.width = "4.5rem"; // Match grid column width
+        el.style.width = "4.5rem";
         el.style.height = "4.5rem";
+        el.dataset.tooltip = `
+          ${hero.name}
+          ${capitalize(hero.class)}
+          Lv${hero.level}
+          HP: ${hero.hp}/${hero.maxHp}
+          ATK: ${hero.attack}
+        `.trim();
         el.innerHTML = `
           <div class="shape"></div>
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
@@ -295,10 +321,97 @@ function updateFormationGrid() {
         `;
         el.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", hero.id));
         el.addEventListener("click", () => selectHero(hero.id));
+        
+        updateHeroTooltipListeners(el);
+        
         slot.appendChild(el);
       }
     }
   });
+}
+
+let tooltipTimeout;
+let currentHoveredHero = null;
+let hideTooltipTimeout = null;
+
+function showTooltip(e) {
+  const hero = e.currentTarget;
+  if (hideTooltipTimeout) {
+    clearTimeout(hideTooltipTimeout);
+    hideTooltipTimeout = null;
+  }
+
+  currentHoveredHero = hero;
+  
+  const tooltipText = hero.dataset.tooltip;
+  let tooltip = document.getElementById("hero-tooltip");
+  
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "hero-tooltip";
+    tooltip.className = "hero-tooltip";
+    document.body.appendChild(tooltip);
+  }
+
+  tooltip.innerHTML = tooltipText
+    .split("\n")
+    .map((line) => `<div>${line}</div>`)
+    .join("");
+  
+  const rect = hero.getBoundingClientRect();
+  tooltip.style.position = "absolute";
+  tooltip.style.top = `${rect.bottom + 5}px`;
+  tooltip.style.left = `${rect.left}px`;
+  tooltip.style.display = "block";
+  tooltip.style.opacity = "1";
+  tooltip.style.transition = "opacity 0.2s ease-in-out";
+
+  const tooltipRect = tooltip.getBoundingClientRect();
+  if (tooltipRect.right > window.innerWidth) {
+    tooltip.style.left = `${window.innerWidth - tooltipRect.width - 5}px`;
+  }
+  if (tooltipRect.bottom > window.innerHeight) {
+    tooltip.style.top = `${rect.top - tooltipRect.height - 5}px`;
+  }
+}
+
+function hideTooltip() {
+  const tooltip = document.getElementById("hero-tooltip");
+  if (!tooltip || currentHoveredHero) return; 
+
+  tooltip.style.opacity = "0";
+  hideTooltipTimeout = setTimeout(() => {
+    if (tooltip) tooltip.style.display = "none";
+    hideTooltipTimeout = null; 
+  }, 200);
+}
+
+let touchStartTime;
+
+function handleTouchStart(e) {
+  touchStartTime = Date.now();
+  const hero = e.currentTarget;
+  tooltipTimeout = setTimeout(() => showTooltip(e), 500); 
+}
+
+function handleTouchEnd(e) {
+  clearTimeout(tooltipTimeout);
+  if (Date.now() - touchStartTime < 500) {
+    selectHero(e.currentTarget.dataset.id);
+  } else {
+    hideTooltip();
+  }
+  touchStartTime = null;
+}
+
+function updateHeroTooltipListeners(heroElement) {
+  heroElement.addEventListener("mouseenter", showTooltip);
+  heroElement.addEventListener("mouseleave", () => {
+    currentHoveredHero = null;
+    hideTooltip();
+  });
+  heroElement.addEventListener("touchstart", handleTouchStart, { passive: true });
+  heroElement.addEventListener("touchend", handleTouchEnd, { passive: true });
 }
 
 /**

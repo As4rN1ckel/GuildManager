@@ -1,9 +1,6 @@
 # GuildManager
  
  --- Correções e Melhorias --- 
-Feedback Visual no Log de Batalha
-- Adicionar informações principais dos heróis visíveis ao passar o mouse (hover) sobre ele
-
 Tela de Recrutamento
 - Permitir visualizar as características dos heróis antes da compra, para ajudar na decisão do jogador.
 
