@@ -17,7 +17,6 @@
 /* Base Layout */
 body {
     background: linear-gradient(to bottom, #111, #0a0a0a);
-    /* Subtle background gradient */
     color: var(--text-color);
     font-family: monospace;
     font-size: 0.875rem;
@@ -25,7 +24,6 @@ body {
     margin: 0;
     padding: var(--spacing-large);
     overflow-y: auto;
-    /* Ensure scroll if needed */
     transition: background 0.3s ease-in-out;
 }
 
@@ -36,7 +34,6 @@ body {
     margin: 0 auto;
     max-width: 50rem;
     background: rgba(0, 0, 0, 0.1);
-    /* Subtle overlay for depth */
     border-radius: 10px;
     padding: var(--spacing-small);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
@@ -51,14 +48,12 @@ body {
 .header {
     align-items: center;
     background: linear-gradient(to bottom, #222, #1a1a1a);
-    /* Gradient for depth */
     border: 2px solid var(--accent-color);
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
     padding: var(--spacing-small);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 5px rgba(123, 104, 238, 0.3);
-    /* Purple glow */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -176,7 +171,6 @@ body {
     align-items: center;
     background: linear-gradient(to bottom, #333, #2d2d2d);
     border: 2px dashed #555;
-    /* Matches formation-slot for consistency */
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -186,9 +180,7 @@ body {
     transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
     will-change: background-color, border-color;
     width: 4.75rem;
-    /* Reduced to match slot width */
     height: 5rem;
-    /* Matches slot height */
     border-radius: 5px;
 }
 
@@ -218,9 +210,7 @@ body {
 .hero .shape,
 .recruit-hero .shape {
     height: 1.75rem;
-    /* Slightly smaller to fit */
     margin-bottom: 0.25rem;
-    /* Adjusted spacing */
     width: 1.75rem;
 }
 
@@ -261,7 +251,6 @@ body {
     background: linear-gradient(to right, #444, #555);
     border-radius: 3px;
     height: 0.4rem;
-    /* Slightly shorter to fit */
     margin-top: 0.25rem;
     width: 100%;
     box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
@@ -308,7 +297,6 @@ body {
 
 .hero-info {
     font-size: 0.75rem;
-    /* Slightly smaller for tighter fit */
     margin-top: 0.25rem;
     max-width: 100%;
     overflow: hidden;
@@ -321,12 +309,9 @@ body {
     background-color: #333;
     border-radius: 3px;
     font-size: 0.65rem;
-    /* Smaller for tighter fit */
     padding: 0.125rem 0.2rem;
-    /* Adjusted padding */
     position: absolute;
     right: 0.1rem;
-    /* Adjusted positioning */
     top: 0.1rem;
 }
 
@@ -353,20 +338,16 @@ body {
 .formation-grid {
     display: grid;
     gap: var(--spacing-small);
-    /* 0.625rem or 10px */
     grid-template-columns: repeat(3, 4.75rem);
-    /* Reduced to 4.75rem (76px) per column */
     grid-template-rows: repeat(6, 4.9rem);
     height: auto;
     min-height: 30rem;
     margin: 0 auto;
     position: relative;
     width: 15.375rem;
-    /* Adjusted to 15.375rem (246px) to fit 3 * 4.75rem + 2 * 0.625rem */
     background: linear-gradient(to bottom, #222, #1a1a1a);
     border-radius: 5px;
     overflow: visible;
-    /* Ensure content stays within, but allow labels to extend */
     transition: box-shadow 0.3s ease-in-out, transform 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
@@ -416,7 +397,6 @@ body {
     justify-content: center;
     position: relative;
     width: 4.75rem;
-    /* Reduced to match grid column width */
     border-radius: 5px;
     transition: all 0.3s ease-in-out;
 }
@@ -570,7 +550,6 @@ button.primary:hover {
 
 button {
     background: linear-gradient(to bottom, var(--button-color), #333);
-    /* Gradient for buttons */
     border: 1px solid #555;
     border-radius: 3px;
     color: var(--text-color);
@@ -868,18 +847,13 @@ button:disabled:hover {
 
 .stat-hp-bar {
     background: linear-gradient(to right, #333, #444);
-    /* Gradient background */
     border: 1px solid #555;
     border-radius: 5px;
-    /* Softer edges */
     height: 0.5rem;
-    /* Slightly taller */
     margin: 0 0.5rem;
-    /* Spacing */
     width: 6.25rem;
     position: relative;
     overflow: hidden;
-    /* For inner effects */
 }
 
 .stat-hp-fill {
@@ -888,7 +862,6 @@ button:disabled:hover {
     transition: width 0.5s ease-out, background-color 0.3s ease;
     will-change: width;
     box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.3);
-    /* Inner glow */
 }
 
 .hp-fill.green,
@@ -1158,12 +1131,9 @@ button:disabled:hover {
 /* Shop Screen */
 .shop-screen {
     background: linear-gradient(to bottom, #222, #1a1a1a);
-    /* Gradient for depth */
     border: 2px solid var(--accent-color);
     border-radius: 10px;
-    /* Larger radius for a softer look */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 10px rgba(123, 104, 238, 0.3);
-    /* Enhanced shadow with purple glow */
     display: none;
     flex-direction: column;
     gap: var(--spacing-large);
@@ -1172,9 +1142,7 @@ button:disabled:hover {
     padding: var(--spacing-large);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
-    /* For potential overlays */
     overflow: hidden;
-    /* Contain animations */
 }
 
 .shop-screen:hover {
@@ -1215,17 +1183,13 @@ button:disabled:hover {
     background: radial-gradient(circle, rgba(123, 104, 238, 0.1) 0%, transparent 70%);
     z-index: 0;
     pointer-events: none;
-    /* Ensure clicks pass through */
 }
 
 .recruit-hero {
     background: linear-gradient(to bottom, #333, #2d2d2d);
-    /* Gradient for depth */
     border: 2px solid #444;
     border-radius: 8px;
-    /* Softer corners */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 5px rgba(123, 104, 238, 0.2);
-    /* Purple glow */
     height: 12.5rem;
     padding: var(--spacing-small);
     transition: border-color 0.3s ease-in-out, background-color 0.3s ease-in-out, transform 0.3s ease, box-shadow 0.3s ease;
@@ -1233,7 +1197,6 @@ button:disabled:hover {
     position: relative;
     overflow: hidden;
     z-index: 1;
-    /* Above the radial gradient */
 }
 
 .recruit-hero:hover {
@@ -1261,23 +1224,18 @@ button:disabled:hover {
 
 .recruit-hero .shape {
     height: 2.5rem;
-    /* Slightly larger for emphasis */
     margin-bottom: 0.5rem;
-    /* More spacing */
     width: 2.5rem;
     transition: transform 0.3s ease, filter 0.3s ease;
 }
 
 .recruit-hero:hover .shape {
     transform: scale(1.1);
-    /* Slight scale on hover for interactivity */
     filter: brightness(1.2);
-    /* Brighten on hover for pop */
 }
 
 .recruit-hero.warrior .shape {
     border-bottom: 2.5rem solid var(--warrior-color);
-    /* Larger shape */
     border-left: 1.25rem solid transparent;
     border-right: 1.25rem solid transparent;
     height: 0;
@@ -1302,9 +1260,7 @@ button:disabled:hover {
 .recruit-hero .hero-info {
     color: var(--text-color);
     font-size: 1.1rem;
-    /* Slightly larger for emphasis */
     margin-bottom: 0.375rem;
-    /* Adjusted spacing */
     max-width: 100%;
     text-align: center;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
@@ -1314,13 +1270,11 @@ button:disabled:hover {
 
 .recruit-hero:hover .hero-info {
     color: var(--accent-color);
-    /* Purple highlight on hover */
 }
 
 .recruit-hero .class-info {
     color: #ccc;
     font-size: 0.9rem;
-    /* Slightly larger for readability */
     margin-bottom: 0.375rem;
     text-align: center;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
@@ -1329,7 +1283,6 @@ button:disabled:hover {
 
 .recruit-hero:hover .class-info {
     color: #fff;
-    /* Brighter on hover */
 }
 
 .recruit-hero .level {
@@ -1344,26 +1297,21 @@ button:disabled:hover {
 
 .recruit-hero:hover .level {
     color: var(--accent-color);
-    /* Purple highlight on hover */
 }
 
 .recruit-hero .cost {
     color: var(--gold);
     font-size: 1.1rem;
-    /* Larger for emphasis */
     font-weight: bold;
     margin-top: 0.375rem;
-    /* Adjusted spacing */
     text-align: center;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     animation: glow 2s infinite ease-in-out;
-    /* Gold glow animation */
     transition: text-shadow 0.3s ease;
 }
 
 .recruit-hero:hover .cost {
     text-shadow: 0 0 10px var(--gold), 0 0 15px var(--gold);
-    /* Enhanced glow on hover */
 }
 
 @keyframes glow {
