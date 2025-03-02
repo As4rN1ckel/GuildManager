@@ -256,6 +256,27 @@ function handleFormationSlotClick(index) {
  * Updates the formation grid UI with current hero placements.
  */
 function updateFormationGrid() {
+  // Clear existing content but preserve labels if they exist
+  const existingLabels = formationGrid.querySelectorAll(".row-label");
+  if (existingLabels.length === 0) {
+    // Define the grid rows and their labels (adjusted for symmetry and screenshot)
+    const labels = [
+      { text: "Front Row", row: 1 },   // Top row, above slot row 2
+      { text: "Middle Row", row: 3 },  // Middle row, above slot row 4
+      { text: "Back Row", row: 5 },    // Bottom row, above slot row 6
+    ];
+
+    labels.forEach((label) => {
+      const labelEl = document.createElement("div");
+      labelEl.className = "row-label";
+      labelEl.textContent = label.text;
+      labelEl.style.gridRow = label.row; // Use row number directly (1-based for CSS grid)
+      labelEl.style.gridColumn = "1 / span 3"; // Span all three columns
+      formationGrid.appendChild(labelEl);
+    });
+  }
+
+  // Update or add formation slots
   const slots = formationGrid.querySelectorAll(".formation-slot");
   slots.forEach((slot, index) => {
     const heroId = gameState.formation[index];
@@ -266,7 +287,7 @@ function updateFormationGrid() {
       if (hero) {
         const hpPercentage = hero.hp / hero.maxHp;
         let hpClass = "green";
-        if (hpPercentage <= 0.5) hpClass = "yellow"; // 50% or less
+        if (hpPercentage <= 0.6) hpClass = "yellow"; // 60% or less
         if (hpPercentage < 0.25) hpClass = "red";   // Less than 25%
 
         const el = document.createElement("div");
@@ -290,7 +311,6 @@ function updateFormationGrid() {
     }
   });
 }
-
 /**
  * Handles hero drag-and-drop between roster and formation.
  * @param {DragEvent} e - Drag event.
