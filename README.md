@@ -1,13 +1,9 @@
 # GuildManager
- 
- --- Correções e Melhorias --- 
-Tela de Recrutamento
-- Permitir visualizar as características dos heróis antes da compra, para ajudar na decisão do jogador.
-
  --- ROADMAP ---
  - Loot/Items/Equipment/Inventory System
  - Hero Skills/Upgrades
  - Hero Tiers & Different Prices and Stats
+ - Improved Recruit
  - Multiplayer?
  - Random Events
  - More Dungeons/Enemies/Classes/Skills/Passives
@@ -17,7 +13,6 @@ Tela de Recrutamento
  - Hero Salary System?
  - Hero Retirement/Veteran System
  - Retreat System
-
  - Sounds
+ - Improved Visual Feedback
  - Enemy Specials
- - Visual Feedback

@@ -358,6 +358,8 @@ function showTooltip(e) {
     .map((line) => `<div>${line}</div>`)
     .join("");
   
+  tooltip.style.pointerEvents = "none";
+
   const rect = hero.getBoundingClientRect();
   tooltip.style.position = "absolute";
   tooltip.style.top = `${rect.bottom + 5}px`;
