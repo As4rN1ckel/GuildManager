@@ -263,12 +263,7 @@ function updateFormationGrid() {
       const hero = gameState.heroes.find((h) => h.id === heroId);
       if (hero) {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass =
-          hpPercentage <= 0.6
-            ? hpPercentage < 0.25
-              ? "red"
-              : "yellow"
-            : "green";
+        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
 
         const el = document.createElement("div");
         el.className = `hero-base hero ${hero.class}`;
@@ -278,13 +273,9 @@ function updateFormationGrid() {
           <div class="shape"></div>
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
           <div class="level">Lv${hero.level}</div>
-          <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100
-        )}%;"></div></div>
+          <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div></div>
         `;
-        el.addEventListener("dragstart", (e) =>
-          e.dataTransfer.setData("text/plain", hero.id)
-        );
+        el.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", hero.id));
         el.addEventListener("click", () => selectHero(hero.id));
         slot.appendChild(el);
       }
