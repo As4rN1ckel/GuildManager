@@ -5,7 +5,6 @@ Feedback Visual no Log de Batalha
 - Adicionar informações principais dos heróis visíveis ao passar o mouse (hover) sobre eles.
 - Melhorar a clareza da ordem de resolução da batalha (ex.: confirmar se é de cima para baixo e explicitar isso no jogo).
 - Incluir indicadores de formação, como "front line" e "back line", para mostrar se a posição dos bonecos influencia a batalha.
-- Indexar e salvar marcos da dungeon (ex.: quando um herói mata, morre, acerta um crítico ou ativa um especial), tanto para heróis quanto para monstros, e exibir isso no log de batalha.
 
 Tela de Recrutamento
 - Permitir visualizar as características dos heróis antes da compra, para ajudar na decisão do jogador.
@@ -31,7 +30,6 @@ Polimento Geral
  - Hero Retirement/Veteran System
  - Retreat System
 
- - Critical Hits
  - Sounds
  - Enemy Specials
  - Visual Feedback

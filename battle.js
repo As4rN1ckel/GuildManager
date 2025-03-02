@@ -640,12 +640,25 @@ function showResults() {
     rewardsList.innerHTML += `<div class="reward-item">Dungeon Cleared!</div>`;
   }
 
-  gameState.heroes = gameState.heroes.filter(
-    (h) => !gameState.casualties.includes(h.id)
-  );
-  gameState.formation = gameState.formation.map((id) =>
-    gameState.casualties.includes(id) ? null : id
-  );
+  // Display Battle Milestones
+  const milestonesList = document.getElementById("milestones-list");
+  milestonesList.innerHTML = "";
+  if (gameState.battleMilestones.length > 0) {
+    gameState.battleMilestones.forEach((milestone) => {
+      const entry = document.createElement("div");
+      entry.className = `milestone-entry ${milestone.type}`;
+      entry.textContent = milestone.text;
+      milestonesList.appendChild(entry);
+    });
+  } else {
+    const noMilestones = document.createElement("div");
+    noMilestones.className = "milestone-entry system";
+    noMilestones.textContent = "No notable milestones recorded.";
+    milestonesList.appendChild(noMilestones);
+  }
+
+  gameState.heroes = gameState.heroes.filter((h) => !gameState.casualties.includes(h.id));
+  gameState.formation = gameState.formation.map((id) => (gameState.casualties.includes(id) ? null : id));
 }
 
 /**
