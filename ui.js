@@ -344,21 +344,26 @@ function showShopScreen() {
 
 function renderShop() {
   const recruitList = document.getElementById("recruit-list");
+  if (!recruitList) {
+    console.error("recruit-list not found in DOM!");
+    return;
+  }
   recruitList.innerHTML = "";
   for (let i = 0; i < 4; i++) {
     const hero = generateHero();
     const el = document.createElement("div");
-    el.className = `hero-base recruit-hero ${hero.class}`;
+    el.className = `hero-base recruit-hero ${hero.class} animate-in`;
     el.innerHTML = `
       <div class="shape"></div>
       <div class="hero-info">${hero.name}</div>
       <div class="class-info">Class: ${capitalize(hero.class)}</div>
-      <div class="stats">HP: ${hero.hp} | ATK: ${hero.attack}</div>
+      <div class="level">Lv${hero.level}</div>
       <div class="cost">${hero.cost} Gold</div>
     `;
     el.addEventListener("click", () => recruitHero(hero, el));
     recruitList.appendChild(el);
   }
+  setTimeout(() => document.querySelectorAll(".recruit-hero").forEach((hero) => hero.classList.add("visible")), 10);
 }
 
 /**
