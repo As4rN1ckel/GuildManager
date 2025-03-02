@@ -442,41 +442,67 @@ button:disabled:hover {
     background-color: #1a1a1a;
     border: 1px solid #444;
     font-size: 0.9rem;
-    max-height: 18.75rem;
-    /* 300px */
-    min-height: 9.375rem;
-    /* 150px */
+    max-height: 18.75rem; /* 300px */
+    min-height: 9.375rem; /* 150px */
     overflow-y: auto;
     padding: var(--spacing-small);
+    border-radius: 5px; /* Softer edges */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); /* Subtle depth */
 }
 
+/* Base Log Entry */
 .log-entry {
-    margin-bottom: 0.3125rem;
-    /* 5px */
+    margin-bottom: 0.625rem; /* Increased to 10px for better separation */
+    padding: 0.25rem 0.5rem; /* 4px 8px padding for a compact, readable block */
+    border-left: 3px solid transparent; /* Placeholder for type-specific borders */
+    transition: background-color 0.2s ease-in-out; /* Smooth hover effect */
 }
 
+/* Hover effect for interactivity */
+.log-entry:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Subtle highlight */
+}
+
+/* Log Types with Enhanced Styling */
 .log-entry.attack {
-    color: #f86a5a;
+    color: #f86a5a; /* Bright red-orange */
+    border-left-color: #f86a5a; /* Matching border */
 }
 
 .log-entry.enemy-attack {
-    color: #770000;
+    color: #ff5555; /* Brighter red for contrast (was #770000, too dark) */
+    border-left-color: #ff5555;
 }
 
 .log-entry.heal {
-    color: #2ecc71;
+    color: #2ecc71; /* Green */
+    border-left-color: #2ecc71;
 }
 
 .log-entry.special {
-    color: #3498db;
+    color: #3498db; /* Blue */
+    border-left-color: #3498db;
+    font-style: italic; /* Emphasize special abilities */
 }
 
 .log-entry.system {
-    color: #f1c40f;
+    color: #f1c40f; /* Yellow */
+    border-left-color: #f1c40f;
+    opacity: 0.9; /* Slightly less intense for system messages */
+}
+
+.log-entry.milestone {
+    color: #e67e22; /* Orange */
+    border-left-color: #e67e22;
+    font-weight: bold;
+    background-color: rgba(230, 126, 34, 0.1); /* Light orange tint */
+    padding: 0.375rem 0.5rem; /* Slightly larger for prominence */
 }
 
 .log-entry.xp-level {
-    color: #9b59b6;
+    color: #9b59b6; /* Purple */
+    border-left-color: #9b59b6;
+    font-weight: 600; /* Slightly bold for importance */
 }
 
 .progress-bar {

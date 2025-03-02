@@ -13,6 +13,16 @@ const gameState = {
   casualties: [],      // IDs of fallen heroes
 };
 
+// Critical Hit Constants
+const HERO_CRIT_CHANCE = 0.1; 
+const HERO_CRIT_MULTIPLIER = 1.5;
+
+const ENEMY_CRIT_CHANCE = 0.08; 
+const ENEMY_CRIT_MULTIPLIER = 1.3;
+
+const BOSS_CRIT_CHANCE = 0.12;  
+const BOSS_CRIT_MULTIPLIER = 1.7;
+
 /**
  * Defines base characteristics for hero classes.
  * @type {Array<Object>}
@@ -112,7 +122,7 @@ const heroPassives = [
   },
   {
     name: "Divine Restoration",   // Passive name
-    description: "Heals allies for 40–80% of attack by position", // UI description
+    description: "Heals allies for 80% of attack on back row and 40% on other rows.", // UI description
     type: "heal",
     value: 0.4,                  // Base 40% healing (front/middle), overridden for back
     appliesTo: ["cleric"],
