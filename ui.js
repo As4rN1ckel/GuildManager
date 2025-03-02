@@ -408,7 +408,6 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// Helper function to prevent scrolling behind modal on mobile
 function preventScroll(e) {
   e.preventDefault();
 }
@@ -435,20 +434,19 @@ function updateHeroStatsPanel() {
   modalOverlay.style.display = "block";
   heroStatsPanel.classList.add("visible");
 
-  // Adjust modal positioning for mobile
-  const isMobile = window.innerWidth <= 37.5; // Match media query breakpoint
+  const isMobile = window.innerWidth <= 37.5;
   if (isMobile) {
-    heroStatsPanel.style.position = "absolute"; // Use absolute positioning on mobile
-    heroStatsPanel.style.top = "10px"; // Small top margin
-    heroStatsPanel.style.left = "10px"; // Small left margin
-    heroStatsPanel.style.right = "10px"; // Ensure right edge fits
-    heroStatsPanel.style.bottom = "auto"; // Allow scrolling if content overflows
-    heroStatsPanel.style.transform = "none"; // Remove translate for mobile
-    heroStatsPanel.style.width = "auto"; // Full width minus margins
-    heroStatsPanel.style.maxWidth = "calc(100vw - 20px)"; // Fit within viewport, accounting for margins
-    heroStatsPanel.style.maxHeight = "calc(100vh - 20px)"; // Fit within viewport height
+    heroStatsPanel.style.position = "absolute";
+    heroStatsPanel.style.top = "10px";
+    heroStatsPanel.style.left = "10px";
+    heroStatsPanel.style.right = "10px";
+    heroStatsPanel.style.bottom = "auto";
+    heroStatsPanel.style.transform = "none";
+    heroStatsPanel.style.width = "auto";
+    heroStatsPanel.style.maxWidth = "calc(100vw - 20px)";
+    heroStatsPanel.style.maxHeight = "calc(100vh - 20px)";
+    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`; 
   } else {
-    // Reset to default desktop positioning
     heroStatsPanel.style.position = "fixed";
     heroStatsPanel.style.top = "50%";
     heroStatsPanel.style.left = "50%";
@@ -457,6 +455,7 @@ function updateHeroStatsPanel() {
     heroStatsPanel.style.maxHeight = "80vh";
     heroStatsPanel.style.right = "auto";
     heroStatsPanel.style.bottom = "auto";
+    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`; 
   }
 
   const heroClass = heroClasses.find((hc) => hc.type === hero.class);
@@ -465,9 +464,7 @@ function updateHeroStatsPanel() {
 
   heroStatsContent.innerHTML = `
     <div class="hero-stat-item"><strong>Name:</strong> ${hero.name}</div>
-    <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
-      hero.class
-    )}</div>
+    <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(hero.class)}</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
     xpThresholds[hero.level]
@@ -479,21 +476,23 @@ function updateHeroStatsPanel() {
     <div class="hero-stat-item"><strong>Hit Chance:</strong> ${Math.floor(
       hero.hitChance * 100
     )}%</div>
-    <div class="hero-stat-item"><strong>Special:</strong> ${hero.special} - ${
+    <div class="hero-stat-item special-item"><strong>Special:</strong> ${hero.special} - ${
     skill?.description || "No description"
-  }</div>
-    <div class="hero-stat-item"><strong>Cooldown:</strong> ${
-      skill?.cooldown || 0
-    } turns</div>
-    <div class="hero-stat-item"><strong>Passive:</strong> ${hero.passive} - ${
+  } <span class="cooldown">(Cooldown: ${skill?.cooldown || 0} turns)</span></div>
+    <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${hero.passive} - ${
     passive?.description || "No description"
   }</div>
   `;
 
-  // Ensure mobile touch support and prevent scrolling behind modal
+  setTimeout(() => heroStatsPanel.classList.add("animate-in"), 10);
+
   if (isMobile) {
     modalOverlay.addEventListener("touchmove", preventScroll, { passive: false });
   } else {
     modalOverlay.removeEventListener("touchmove", preventScroll);
   }
+}
+
+function preventScroll(e) {
+  e.preventDefault();
 }
