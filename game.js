@@ -1,327 +1,275 @@
-// Core game state and logic
-
-// Global game state object
 const gameState = {
-  gold: 200,           // Initial gold
-  cycle: "day",        // Day or night cycle
-  day: 1,              // Current day
-  heroes: [],          // Hero objects in guild
-  formation: Array(9).fill(null), // 3x3 formation grid
-  selectedHero: null,  // Currently selected hero ID
-  selectedDungeon: null, // Selected dungeon for missions
-  battleSpeed: 1,      // Battle speed multiplier
-  casualties: [],      // IDs of fallen heroes
+  gold: 200,
+  cycle: "day",
+  day: 1,
+  heroes: [],
+  formation: Array(9).fill(null),
+  selectedHero: null,
+  selectedDungeon: null,
+  battleSpeed: 1,
+  casualties: [],
 };
 
-// Critical Hit Constants
-const HERO_CRIT_CHANCE = 0.1; 
+const HERO_CRIT_CHANCE = 0.1;
 const HERO_CRIT_MULTIPLIER = 1.5;
-
-const ENEMY_CRIT_CHANCE = 0.08; 
+const ENEMY_CRIT_CHANCE = 0.08;
 const ENEMY_CRIT_MULTIPLIER = 1.3;
-
-const BOSS_CRIT_CHANCE = 0.12;  
+const BOSS_CRIT_CHANCE = 0.12;
 const BOSS_CRIT_MULTIPLIER = 1.7;
 
-/**
- * Defines base characteristics for hero classes.
- * @type {Array<Object>}
- */
 const heroClasses = [
   {
-    type: "warrior",    // Class identifier
-    name: "Warrior",    // Display name
-    hp: 60,             // Base hit points
-    attack: 12,         // Base attack damage
+    type: "warrior",
+    name: "Warrior",
+    hp: 60,
+    attack: 12,
     special: "Shield Bash",
-    cost: 80,           // Recruitment cost
+    cost: 80,
     passive: "Ironclad Resilience",
-    hitChance: 0.8,     // Attack success probability
+    hitChance: 0.8,
   },
   {
-    type: "archer",     // Class identifier
-    name: "Archer",     // Display name
-    hp: 50,             // Base hit points
-    attack: 10,         // Base attack damage
+    type: "archer",
+    name: "Archer",
+    hp: 50,
+    attack: 10,
     special: "Multi Shot",
-    cost: 100,          // Recruitment cost
+    cost: 100,
     passive: "Deadly Precision",
-    hitChance: 0.8,     // Attack success probability
+    hitChance: 0.8,
   },
   {
-    type: "mage",       // Class identifier
-    name: "Mage",       // Display name
-    hp: 30,             // Base hit points
-    attack: 15,         // Base attack damage
+    type: "mage",
+    name: "Mage",
+    hp: 30,
+    attack: 15,
     special: "Fireball",
-    cost: 120,          // Recruitment cost
+    cost: 120,
     passive: "Arcane Potency",
-    hitChance: 0.7,     // Attack success probability
+    hitChance: 0.7,
   },
   {
-    type: "cleric",     // Class identifier
-    name: "Cleric",     // Display name
-    hp: 40,             // Base hit points
-    attack: 5,          // Base attack damage
+    type: "cleric",
+    name: "Cleric",
+    hp: 40,
+    attack: 5,
     special: "Heal",
-    cost: 110,          // Recruitment cost
+    cost: 110,
     passive: "Divine Restoration",
-    hitChance: 0.8,     // Attack success probability
+    hitChance: 0.8,
   },
 ];
 
-// XP thresholds for leveling
 const xpThresholds = [0, 10, 25, 60, 120, 250];
 
-/**
- * Defines passive abilities for hero classes, applying only in specific positions.
- * @type {Array<Object>}
- */
 const heroPassives = [
   {
-    name: "Ironclad Resilience",  // Passive name
-    description: "Reduces damage by 20% in front row", // UI description
+    name: "Ironclad Resilience",
+    description: "Reduces damage by 20% in front row",
     type: "damageReduction",
-    value: 0.8,                  // 20% damage reduction
+    value: 0.8,
     appliesTo: ["warrior"],
     apply: function (hero, target, damage) {
       const position = gameState.formation.indexOf(hero.id);
-      if (position >= 0 && position <= 2) { // Front row
-        return Math.round(damage * this.value); // 20% reduction
-      }
-      return Math.round(damage); // No reduction
+      return position >= 0 && position <= 2
+        ? Math.round(damage * this.value)
+        : Math.round(damage);
     },
   },
   {
-    name: "Deadly Precision",     // Passive name
-    description: "Boosts hit chance by 15% in middle/back row", // UI description
+    name: "Deadly Precision",
+    description: "Boosts hit chance by 15% in middle/back row",
     type: "hitChanceBoost",
-    value: 0.15,                 // 15% hit chance increase
+    value: 0.15,
     appliesTo: ["archer"],
     apply: function (hero) {
       const position = gameState.formation.indexOf(hero.id);
-      if (position >= 3) { // Middle or back row
-        return Math.min(1.0, hero.hitChance + this.value);
-      }
-      return hero.hitChance; // No boost
+      return position >= 3
+        ? Math.min(1.0, hero.hitChance + this.value)
+        : hero.hitChance;
     },
   },
   {
-    name: "Arcane Potency",       // Passive name
-    description: "Boosts damage by 20% in back row", // UI description
+    name: "Arcane Potency",
+    description: "Boosts damage by 20% in back row",
     type: "damageBoost",
-    value: 1.2,                  // 20% damage increase
+    value: 1.2,
     appliesTo: ["mage"],
     apply: function (hero, damage) {
       const position = gameState.formation.indexOf(hero.id);
-      if (position >= 6 && position <= 8) { // Back row
-        return Math.round(damage * this.value);
-      }
-      return Math.round(damage); // No boost
+      return position >= 6 && position <= 8
+        ? Math.round(damage * this.value)
+        : Math.round(damage);
     },
   },
   {
-    name: "Divine Restoration",   // Passive name
-    description: "Heals allies for 80% of attack on back row and 40% on other rows.", // UI description
+    name: "Divine Restoration",
+    description:
+      "Heals allies for 80% of attack on back row and 40% on other rows.",
     type: "heal",
-    value: 0.4,                  // Base 40% healing (front/middle), overridden for back
+    value: 0.4,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
-      let multiplier = this.value; // 40% for front/middle
       const position = gameState.formation.indexOf(hero.id);
-      if (position >= 6 && position <= 8) { // Back row
-        multiplier = 0.8; // 80% for back
-      }
-      formationHeroes.forEach(ally => {
+      const multiplier = position >= 6 && position <= 8 ? 0.8 : this.value;
+      formationHeroes.forEach((ally) => {
         if (ally.hp < ally.maxHp) {
           const heal = Math.round(hero.attack * multiplier);
-          ally.hp = Math.min(ally.maxHp, Math.round(ally.hp + heal)); // Cap at max HP
+          ally.hp = Math.min(ally.maxHp, Math.round(ally.hp + heal));
         }
       });
     },
   },
 ];
 
-/**
- * Defines special abilities for hero classes.
- * @type {Array<Object>}
- */
 const heroSkills = [
   {
-    name: "Shield Bash",          // Skill name
-    description: "Deals 30% more damage", // UI description
+    name: "Shield Bash",
+    description: "Deals 30% more damage",
     type: "damage",
-    value: 1.3,                   // 30% damage increase
-    cooldown: 3,                  // Turns until reuse
+    value: 1.3,
+    cooldown: 3,
     appliesTo: ["warrior"],
-    apply: function (hero, target, baseDamage) {
-      return Math.round(baseDamage * this.value);
-    },
+    apply: (hero, target, baseDamage) => Math.round(baseDamage * 1.3),
   },
   {
-    name: "Multi Shot",           // Skill name
-    description: "Deals 15% more damage to 3 targets", // UI description
+    name: "Multi Shot",
+    description: "Deals 15% more damage to 3 targets",
     type: "damage",
-    value: 1.15,                  // 15% damage increase per target
-    cooldown: 3,                  // Turns until reuse
+    value: 1.15,
+    cooldown: 3,
     appliesTo: ["archer"],
-    apply: function (hero, targets, baseDamage) {
+    apply: (hero, targets, baseDamage) => {
       const targetArray = Array.isArray(targets) ? targets : [targets];
-      return targetArray.map(target => Math.round(baseDamage * this.value));
+      return targetArray.map(() => Math.round(baseDamage * 1.15));
     },
   },
   {
-    name: "Fireball",             // Skill name
-    description: "Deals 40% more damage", // UI description
+    name: "Fireball",
+    description: "Deals 40% more damage",
     type: "damage",
-    value: 1.4,                   // 40% damage increase
-    cooldown: 3,                  // Turns until reuse
+    value: 1.4,
+    cooldown: 3,
     appliesTo: ["mage"],
-    apply: function (hero, target, baseDamage) {
-      return Math.round(baseDamage * this.value);
-    },
+    apply: (hero, target, baseDamage) => Math.round(baseDamage * 1.4),
   },
   {
-    name: "Heal",                 // Skill name
-    description: "Heals a random ally for 150% of attack", // UI description
+    name: "Heal",
+    description: "Heals a random ally for 150% of attack",
     type: "heal",
-    value: 1.5,                   // 150% healing increase
-    cooldown: 3,                  // Turns until reuse
+    value: 1.5,
+    cooldown: 3,
     appliesTo: ["cleric"],
-    apply: function (hero, formationHeroes) {
-      const injured = formationHeroes.filter(ally => ally.hp < ally.maxHp);
+    apply: (hero, formationHeroes) => {
+      const injured = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
       if (injured.length > 0) {
         const target = injured[Math.floor(Math.random() * injured.length)];
-        const heal = Math.round(hero.attack * this.value);
-        target.hp = Math.min(target.maxHp, Math.round(target.hp + heal)); // Cap at max HP
+        const heal = Math.round(hero.attack * 1.5);
+        target.hp = Math.min(target.maxHp, Math.round(target.hp + heal));
       }
     },
   },
 ];
 
-/**
- * Defines available dungeons with difficulties, enemies, and rewards.
- * @type {Array<Object>}
- */
 const dungeons = [
   {
-    name: "Forest Ruins",         // Dungeon name
-    description: "An abandoned forest ruin", // Brief description
-    difficulty: "Easy",           // Difficulty level
-    reward: 200,                  // Gold reward
-    roomCount: 3,                 // Number of rooms
-    enemyCountOnRoom: { min: 3, max: 5 }, // Enemy range per room
+    name: "Forest Ruins",
+    description: "An abandoned forest ruin",
+    difficulty: "Easy",
+    reward: 200,
+    roomCount: 3,
+    enemyCountOnRoom: { min: 3, max: 5 },
     enemies: ["goblin", "kobold", "wolf"],
     enemyStats: { hp: 40, damage: 10, hitChance: 0.8 },
-    enemyXp: 1,                    // XP per enemy
+    enemyXp: 1,
     bosses: ["Goblin Warlord", "Ancient Treant"],
     bossStats: { hp: 200, damage: 25, hitChance: 0.8 },
-    bossCount: { min: 1, max: 1 }, // Boss range per room
-    bossXP: 3,                     // XP per boss
+    bossCount: { min: 1, max: 1 },
+    bossXP: 3,
   },
   {
-    name: "Dark Caverns",         // Dungeon name
-    description: "Caves with eerie undead", // Brief description
-    difficulty: "Medium",         // Difficulty level
-    reward: 400,                  // Gold reward
-    roomCount: 5,                 // Number of rooms
-    enemyCountOnRoom: { min: 4, max: 6 }, // Enemy range per room
+    name: "Dark Caverns",
+    description: "Caves with eerie undead",
+    difficulty: "Medium",
+    reward: 400,
+    roomCount: 5,
+    enemyCountOnRoom: { min: 4, max: 6 },
     enemies: ["skeleton", "ghoul", "shadow"],
     enemyStats: { hp: 60, damage: 18, hitChance: 0.8 },
-    enemyXp: 2,                    // XP per enemy
+    enemyXp: 2,
     bosses: ["Skeleton King", "Ghoul Overlord"],
     bossStats: { hp: 300, damage: 45, hitChance: 0.8 },
-    bossCount: { min: 1, max: 1 }, // Boss range per room
-    bossXP: 4,                     // XP per boss
+    bossCount: { min: 1, max: 1 },
+    bossXP: 4,
   },
   {
-    name: "Dragon's Lair",        // Dungeon name
-    description: "Lair guarded by a dragon", // Brief description
-    difficulty: "Hard",           // Difficulty level
-    reward: 800,                  // Gold reward
-    roomCount: 7,                 // Number of rooms
-    enemyCountOnRoom: { min: 5, max: 7 }, // Enemy range per room
+    name: "Dragon's Lair",
+    description: "Lair guarded by a dragon",
+    difficulty: "Hard",
+    reward: 800,
+    roomCount: 7,
+    enemyCountOnRoom: { min: 5, max: 7 },
     enemies: ["dragon", "wyvern", "demon"],
     enemyStats: { hp: 100, damage: 28, hitChance: 0.8 },
-    enemyXp: 3,                    // XP per enemy
+    enemyXp: 3,
     bosses: ["Elder Dragon", "Infernal Wyrm"],
     bossStats: { hp: 500, damage: 70, hitChance: 0.8 },
-    bossCount: { min: 1, max: 2 }, // Boss range per room
-    bossXP: 5,                     // XP per boss
+    bossCount: { min: 1, max: 2 },
+    bossXP: 5,
   },
 ];
 
-/**
- * Adds a hero to the game state and updates the UI.
- * @param {Object} hero - The hero to add.
- */
 function addHero(hero) {
-  gameState.heroes.push(hero); // Add hero to roster
-  renderHeroRoster();          // Update hero roster display
-  updateUI();                  // Refresh UI
+  gameState.heroes.push(hero);
+  renderHeroRoster();
+  updateUI();
 }
 
-/**
- * Generates a new hero with random stats and name.
- * @returns {Object} A new hero object.
- */
 function generateHero() {
   const classIndex = Math.floor(Math.random() * heroClasses.length);
   const heroClass = heroClasses[classIndex];
   return {
-    id: Date.now() + Math.random().toString(36).substring(2, 9), // Unique ID
-    name: generateHeroName(heroClass.name), // Random fantasy name
-    class: heroClass.type,                   // Hero class
-    hp: heroClass.hp,                       // Base hit points
-    maxHp: heroClass.hp,                    // Max hit points
-    attack: heroClass.attack,               // Base attack
-    special: heroClass.special,             // Special ability
-    level: 1,                               // Starting level
-    cost: heroClass.cost,                   // Recruitment cost
-    passive: heroClass.passive,             // Passive ability
-    cooldown: 0,                            // Initial cooldown
-    xp: 0,                                  // Starting XP
-    hitChance: heroClass.hitChance,         // Base hit chance
+    id: Date.now() + Math.random().toString(36).substring(2, 9),
+    name: generateHeroName(heroClass.name),
+    class: heroClass.type,
+    hp: heroClass.hp,
+    maxHp: heroClass.hp,
+    attack: heroClass.attack,
+    special: heroClass.special,
+    level: 1,
+    cost: heroClass.cost,
+    passive: heroClass.passive,
+    cooldown: 0,
+    xp: 0,
+    hitChance: heroClass.hitChance,
   };
 }
 
-/**
- * Levels up a hero if they have enough XP.
- * @param {Object} hero - The hero to level up.
- */
 function levelUpHero(hero) {
-  const level = hero.level;
-  if (level >= xpThresholds.length - 1) return; // Max level check
-  if (hero.xp >= xpThresholds[level]) {
-    hero.xp = 0;           // Reset XP
-    hero.level++;          // Increase level
-    hero.maxHp += 10;      // Boost max HP
-    hero.hp = Math.min(hero.maxHp, hero.hp + 10); // Heal and cap HP
-    hero.attack += 2;      // Boost attack
-    addLogEntry("xp-level", `${hero.name} leveled up to Level ${hero.level}!`);
-  }
+  if (
+    hero.level >= xpThresholds.length - 1 ||
+    hero.xp < xpThresholds[hero.level]
+  )
+    return;
+  hero.xp = 0;
+  hero.level++;
+  hero.maxHp += 10;
+  hero.hp = Math.min(hero.maxHp, hero.hp + 10);
+  hero.attack += 2;
+  addLogEntry("xp-level", `${hero.name} leveled up to Level ${hero.level}!`);
 }
 
-/**
- * Checks if a hero is in the formation.
- * @param {Object} hero - The hero to check.
- * @returns {boolean} True if in formation.
- */
 function isHeroInFormation(hero) {
-  return gameState.formation.some(slot => slot === hero.id);
+  return gameState.formation.some((slot) => slot === hero.id);
 }
 
-/**
- * Determines if the player won a dungeon mission.
- * @returns {boolean} True if victory.
- */
 function checkVictory() {
-  return gameState.casualties.length < gameState.formation.filter(id => id !== null).length;
+  return (
+    gameState.casualties.length <
+    gameState.formation.filter((id) => id !== null).length
+  );
 }
 
-/**
- * Saves the game state to localStorage.
- */
 function saveGame() {
   try {
     localStorage.setItem("gameState", JSON.stringify(gameState));
@@ -332,15 +280,13 @@ function saveGame() {
   }
 }
 
-/**
- * Loads a saved game state or resets if none exists.
- */
 function loadGame() {
   try {
     const saved = localStorage.getItem("gameState");
     if (saved) {
       const state = JSON.parse(saved);
-      if (!state.heroes || !Array.isArray(state.formation)) throw new Error("Invalid save");
+      if (!state.heroes || !Array.isArray(state.formation))
+        throw new Error("Invalid save");
       Object.assign(gameState, state);
       updateUI();
       speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
@@ -356,40 +302,35 @@ function loadGame() {
   }
 }
 
-/**
- * Resets the game to initial state and clears saves.
- */
 function resetGame() {
-  gameState.gold = 200;        // Reset gold
-  gameState.day = 1;           // Reset day
-  gameState.cycle = "day";     // Reset cycle
-  gameState.heroes = [];       // Clear heroes
-  gameState.formation = Array(9).fill(null); // Clear formation
-  gameState.selectedHero = null; // Clear selection
-  gameState.selectedDungeon = null; // Clear dungeon
-  gameState.battleSpeed = 1;   // Reset speed
-  gameState.casualties = [];   // Clear casualties
-  for (let i = 0; i < 3; i++) addHero(generateHero()); // Add initial heroes
-  localStorage.removeItem("gameState"); // Clear saves
-  updateUI();                  // Refresh UI
+  gameState.gold = 200;
+  gameState.day = 1;
+  gameState.cycle = "day";
+  gameState.heroes = [];
+  gameState.formation = Array(9).fill(null);
+  gameState.selectedHero = null;
+  gameState.selectedDungeon = null;
+  gameState.battleSpeed = 1;
+  gameState.casualties = [];
+  for (let i = 0; i < 3; i++) addHero(generateHero());
+  localStorage.removeItem("gameState");
+  updateUI();
 }
 
-/**
- * Toggles the day/night cycle, incrementing the day if transitioning to day.
- */
 function toggleCycle() {
   gameState.cycle = gameState.cycle === "day" ? "night" : "day";
-  if (gameState.cycle === "day") gameState.day++; // Increment day
+  if (gameState.cycle === "day") gameState.day++;
 }
 
-// Expose globals for ui.js and battle.js
+// Browser-specific exports
 if (typeof window !== "undefined") {
   window.addEventListener("load", loadGame);
-
-  window.gameState = gameState;
-  window.heroClasses = heroClasses;
-  window.heroPassives = heroPassives;
-  window.heroSkills = heroSkills;
-  window.xpThresholds = xpThresholds;
-  window.dungeons = dungeons;
+  Object.assign(window, {
+    gameState,
+    heroClasses,
+    heroPassives,
+    heroSkills,
+    xpThresholds,
+    dungeons,
+  });
 }

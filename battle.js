@@ -1,6 +1,3 @@
-// Battle simulation logic
-
-// DOM elements for battle UI
 const battleLog = document.getElementById("battle-log");
 const battleProgress = document.getElementById("battle-progress");
 const dungeonName = document.getElementById("dungeon-name");
@@ -12,18 +9,13 @@ const exitBtn = document.getElementById("exit-btn");
 const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
 
-// Milestones storage in gameState
-gameState.battleMilestones = []; // Array to store milestone events
+gameState.battleMilestones = [];
 
-/**
- * Manages battle flow, dungeon progression, and combat outcomes.
- * @class
- */
 class BattleManager {
   static async start(dungeon, totalRooms) {
     let currentRoom = 0;
     gameState.casualties = [];
-    gameState.battleMilestones = []; // Reset milestones per dungeon run
+    gameState.battleMilestones = [];
     const roomEnemies = this.generateRooms(dungeon, totalRooms);
     this.logEntry("system", `Your party enters ${dungeon.name}...`, 0);
 
@@ -186,7 +178,7 @@ class BattleManager {
 
     formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
-      levelUpHero(hero); // Level-up logged in levelUpHero
+      levelUpHero(hero);
     });
   }
 
@@ -226,67 +218,112 @@ class BattleManager {
   }
 }
 
-/**
- * Manages hero actions during battle.
- * @class
- */
 class HeroActions {
-  static async performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms) {
+  static async performTurns(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms
+  ) {
     const heroes = [...formationHeroes];
     for (let hero of heroes) {
       if (hero.hp <= 0) continue;
 
-      await new Promise((resolve) => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
-      await this.performHeroTurn(hero, formationHeroes, enemyGroup, roomNumber, totalRooms);
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+      );
+      await this.performHeroTurn(
+        hero,
+        formationHeroes,
+        enemyGroup,
+        roomNumber,
+        totalRooms
+      );
 
       if (hero.hp <= 0) {
         gameState.casualties.push(hero.id);
-        BattleManager.logEntry("milestone", `[Room ${roomNumber}] ${hero.name} falls in battle!`, roomNumber);
+        BattleManager.logEntry(
+          "milestone",
+          `[Room ${roomNumber}] ${hero.name} falls in battle!`,
+          roomNumber
+        );
       }
     }
   }
 
-  static async performHeroTurn(hero, formationHeroes, enemyGroup, roomNumber, totalRooms) {
+  static async performHeroTurn(
+    hero,
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms
+  ) {
     PassiveEffects.applyPassive(hero, formationHeroes);
 
     let hitChance = hero.hitChance;
     if (hero.class === "archer") {
       const passive = heroPassives.find((p) => p.name === hero.passive);
-      if (passive?.type === "hitChanceBoost") hitChance = Math.min(1.0, hitChance + passive.value);
+      if (passive?.type === "hitChanceBoost")
+        hitChance = Math.min(1.0, hitChance + passive.value);
     }
 
     let damage = Math.round(hero.attack);
     if (hero.class !== "warrior") {
       const passive = heroPassives.find((p) => p.name === hero.passive);
-      if (passive?.type === "damageBoost" && hero.class !== "archer") damage = Math.round(passive.apply(hero, damage));
+      if (passive?.type === "damageBoost" && hero.class !== "archer")
+        damage = Math.round(passive.apply(hero, damage));
     }
 
     const target = enemyGroup.find((e) => e.hp > 0) || null;
     if (target && Math.random() < hitChance) {
-      const isCritical = Math.random() < HERO_CRIT_CHANCE; // Use hero crit chance
-      const finalDamage = isCritical ? Math.round(damage * HERO_CRIT_MULTIPLIER) : damage;
+      const isCritical = Math.random() < HERO_CRIT_CHANCE;
+      const finalDamage = isCritical
+        ? Math.round(damage * HERO_CRIT_MULTIPLIER)
+        : damage;
       target.hp = Math.max(0, target.hp - finalDamage);
       BattleManager.logEntry(
         "attack",
-        `[Room ${roomNumber}] ${hero.name} hits ${target.type} for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${target.type} HP: ${Math.round(target.hp)}/${target.maxHp})`,
+        `[Room ${roomNumber}] ${hero.name} hits ${
+          target.type
+        } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
+          target.type
+        } HP: ${Math.round(target.hp)}/${target.maxHp})`,
         roomNumber
       );
       if (target.hp <= 0) {
-        BattleManager.logEntry("milestone", `[Room ${roomNumber}] ${hero.name} defeats ${target.type}!`, roomNumber);
+        BattleManager.logEntry(
+          "milestone",
+          `[Room ${roomNumber}] ${hero.name} defeats ${target.type}!`,
+          roomNumber
+        );
       }
     } else if (target) {
-      BattleManager.logEntry("attack", `[Room ${roomNumber}] ${hero.name} misses ${target.type}!`, roomNumber);
+      BattleManager.logEntry(
+        "attack",
+        `[Room ${roomNumber}] ${hero.name} misses ${target.type}!`,
+        roomNumber
+      );
     } else {
-      BattleManager.logEntry("attack", `[Room ${roomNumber}] ${hero.name} finds no enemies!`, roomNumber);
+      BattleManager.logEntry(
+        "attack",
+        `[Room ${roomNumber}] ${hero.name} finds no enemies!`,
+        roomNumber
+      );
     }
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
 
     if (Math.random() < 0.25 && hero.cooldown === 0) {
       const skill = heroSkills.find((s) => s.name === hero.special);
       let specialDamage = Math.round(hero.attack * (skill?.value || 1));
       if (hero.class !== "warrior") {
         const passive = heroPassives.find((p) => p.name === hero.passive);
-        if (passive?.type === "damageBoost" && hero.class !== "archer") specialDamage = Math.round(passive.apply(hero, specialDamage));
+        if (passive?.type === "damageBoost" && hero.class !== "archer")
+          specialDamage = Math.round(passive.apply(hero, specialDamage));
       }
 
       const targets = enemyGroup.filter((e) => e.hp > 0);
@@ -298,31 +335,53 @@ class HeroActions {
             const damages = skill.apply(hero, finalTargets, specialDamage);
             finalTargets.forEach((target, i) => {
               const d = damages[i] || 0;
-              const isCritical = Math.random() < HERO_CRIT_CHANCE; // Crit on special
-              const finalSpecialDamage = isCritical ? Math.round(d * HERO_CRIT_MULTIPLIER) : d;
+              const isCritical = Math.random() < HERO_CRIT_CHANCE;
+              const finalSpecialDamage = isCritical
+                ? Math.round(d * HERO_CRIT_MULTIPLIER)
+                : d;
               target.hp = Math.max(0, target.hp - finalSpecialDamage);
               BattleManager.logEntry(
                 "special",
-                `[Room ${roomNumber}] ${hero.name} uses ${skill.name} for ${finalSpecialDamage} damage${isCritical ? " (Critical!)" : ""}! (${target.type} HP: ${Math.round(target.hp)}/${target.maxHp})`,
+                `[Room ${roomNumber}] ${hero.name} uses ${
+                  skill.name
+                } for ${finalSpecialDamage} damage${
+                  isCritical ? " (Critical!)" : ""
+                }! (${target.type} HP: ${Math.round(target.hp)}/${
+                  target.maxHp
+                })`,
                 roomNumber
               );
               if (target.hp <= 0) {
-                BattleManager.logEntry("milestone", `[Room ${roomNumber}] ${hero.name} defeats ${target.type} with ${skill.name}!`, roomNumber);
+                BattleManager.logEntry(
+                  "milestone",
+                  `[Room ${roomNumber}] ${hero.name} defeats ${target.type} with ${skill.name}!`,
+                  roomNumber
+                );
               }
             });
           } else {
             const t = finalTargets[0];
             specialDamage = Math.round(skill.apply(hero, t, specialDamage));
-            const isCritical = Math.random() < HERO_CRIT_CHANCE; // Crit on special
-            const finalSpecialDamage = isCritical ? Math.round(specialDamage * HERO_CRIT_MULTIPLIER) : specialDamage;
+            const isCritical = Math.random() < HERO_CRIT_CHANCE;
+            const finalSpecialDamage = isCritical
+              ? Math.round(specialDamage * HERO_CRIT_MULTIPLIER)
+              : specialDamage;
             t.hp = Math.max(0, t.hp - finalSpecialDamage);
             BattleManager.logEntry(
               "special",
-              `[Room ${roomNumber}] ${hero.name} uses ${skill.name} for ${finalSpecialDamage} damage${isCritical ? " (Critical!)" : ""}! (${t.type} HP: ${Math.round(t.hp)}/${t.maxHp})`,
+              `[Room ${roomNumber}] ${hero.name} uses ${
+                skill.name
+              } for ${finalSpecialDamage} damage${
+                isCritical ? " (Critical!)" : ""
+              }! (${t.type} HP: ${Math.round(t.hp)}/${t.maxHp})`,
               roomNumber
             );
             if (t.hp <= 0) {
-              BattleManager.logEntry("milestone", `[Room ${roomNumber}] ${hero.name} defeats ${t.type} with ${skill.name}!`, roomNumber);
+              BattleManager.logEntry(
+                "milestone",
+                `[Room ${roomNumber}] ${hero.name} defeats ${t.type} with ${skill.name}!`,
+                roomNumber
+              );
             }
           }
         } else if (skill.type === "heal") {
@@ -333,82 +392,133 @@ class HeroActions {
             const heal = Math.round(hero.attack * skill.value);
             BattleManager.logEntry(
               "heal",
-              `[Room ${roomNumber}] ${hero.name} heals ${target.name} for ${heal} HP with ${skill.name}! (${target.name} HP: ${Math.round(target.hp)}/${target.maxHp})`,
+              `[Room ${roomNumber}] ${hero.name} heals ${
+                target.name
+              } for ${heal} HP with ${skill.name}! (${
+                target.name
+              } HP: ${Math.round(target.hp)}/${target.maxHp})`,
               roomNumber
             );
           }
         }
       } else if (targets.length > 0) {
-        BattleManager.logEntry("special", `[Room ${roomNumber}] ${hero.name} misses with ${hero.special}!`, roomNumber);
+        BattleManager.logEntry(
+          "special",
+          `[Room ${roomNumber}] ${hero.name} misses with ${hero.special}!`,
+          roomNumber
+        );
       } else {
-        BattleManager.logEntry("special", `[Room ${roomNumber}] ${hero.name} finds no targets for ${hero.special}!`, roomNumber);
+        BattleManager.logEntry(
+          "special",
+          `[Room ${roomNumber}] ${hero.name} finds no targets for ${hero.special}!`,
+          roomNumber
+        );
       }
       hero.cooldown = skill?.cooldown || 0;
     } else if (hero.cooldown > 0) {
       hero.cooldown--;
     }
 
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
   }
 }
 
-/**
- * Manages enemy actions during battle.
- * @class
- */
 class EnemyActions {
-  static async performTurns(formationHeroes, enemyGroup, roomNumber, totalRooms) {
+  static async performTurns(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms
+  ) {
     for (const enemy of enemyGroup) {
       if (enemy.hp > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
-        await this.performEnemyTurn(enemy, formationHeroes, enemyGroup, roomNumber, totalRooms);
+        await new Promise((resolve) =>
+          setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+        );
+        await this.performEnemyTurn(
+          enemy,
+          formationHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms
+        );
       }
     }
   }
 
-  static async performEnemyTurn(enemy, formationHeroes, enemyGroup, roomNumber, totalRooms) {
+  static async performEnemyTurn(
+    enemy,
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms
+  ) {
     const living = formationHeroes.filter((h) => h.hp > 0);
     if (!living.length) return;
 
-    let targets = living.filter((h) => gameState.formation.indexOf(h.id) < 3); // Front row
-    if (!targets.length) targets = living.filter((h) => gameState.formation.indexOf(h.id) < 6); // Middle row
-    if (!targets.length) targets = living; // Back row
+    let targets = living.filter((h) => gameState.formation.indexOf(h.id) < 3);
+    if (!targets.length)
+      targets = living.filter((h) => gameState.formation.indexOf(h.id) < 6);
+    if (!targets.length) targets = living;
 
     if (targets.length > 0) {
       const target = targets[Math.floor(Math.random() * targets.length)];
       if (Math.random() < enemy.hitChance) {
         const isBossRoom = roomNumber === totalRooms;
         const critChance = isBossRoom ? BOSS_CRIT_CHANCE : ENEMY_CRIT_CHANCE;
-        const critMultiplier = isBossRoom ? BOSS_CRIT_MULTIPLIER : ENEMY_CRIT_MULTIPLIER;
+        const critMultiplier = isBossRoom
+          ? BOSS_CRIT_MULTIPLIER
+          : ENEMY_CRIT_MULTIPLIER;
         const isCritical = Math.random() < critChance;
         let damage = Math.round(enemy.damage);
         if (target.class === "warrior") {
           const passive = heroPassives.find((p) => p.name === target.passive);
-          if (passive?.type === "damageReduction") damage = Math.round(passive.apply(target, null, damage));
+          if (passive?.type === "damageReduction")
+            damage = Math.round(passive.apply(target, null, damage));
         }
-        const finalDamage = isCritical ? Math.round(damage * critMultiplier) : damage;
+        const finalDamage = isCritical
+          ? Math.round(damage * critMultiplier)
+          : damage;
         target.hp = Math.max(0, Math.round(target.hp - finalDamage));
         BattleManager.logEntry(
           "enemy-attack",
-          `[Room ${roomNumber}] The ${enemy.type} hits ${target.name} for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${target.name} HP: ${Math.round(target.hp)}/${target.maxHp})`,
+          `[Room ${roomNumber}] The ${enemy.type} hits ${
+            target.name
+          } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
+            target.name
+          } HP: ${Math.round(target.hp)}/${target.maxHp})`,
           roomNumber
         );
         if (target.hp <= 0) {
           gameState.casualties.push(target.id);
-          BattleManager.logEntry("milestone", `[Room ${roomNumber}] ${target.name} falls to ${enemy.type}!`, roomNumber);
+          BattleManager.logEntry(
+            "milestone",
+            `[Room ${roomNumber}] ${target.name} falls to ${enemy.type}!`,
+            roomNumber
+          );
         }
       } else {
-        BattleManager.logEntry("enemy-attack", `[Room ${roomNumber}] The ${enemy.type} misses ${target.name}!`, roomNumber);
+        BattleManager.logEntry(
+          "enemy-attack",
+          `[Room ${roomNumber}] The ${enemy.type} misses ${target.name}!`,
+          roomNumber
+        );
       }
     }
-    BattleManager.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+    BattleManager.updateStats(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms
+    );
   }
 }
 
-/**
- * Manages passive abilities during battle.
- * @class
- */
 class PassiveEffects {
   static applyPassive(hero, formationHeroes, formation = gameState.formation) {
     const passive = heroPassives.find(
@@ -419,33 +529,36 @@ class PassiveEffects {
     switch (passive.type) {
       case "damageReduction":
         const reduced = passive.apply(hero, null, 100);
-        if (reduced < 100)
+        if (reduced < 100) {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} reduces damage by ${Math.floor(
               (1 - reduced / 100) * 100
             )}%.`
           );
+        }
         break;
       case "hitChanceBoost":
         const hitChance = passive.apply(hero);
-        if (hitChance > hero.hitChance)
+        if (hitChance > hero.hitChance) {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts hit chance by ${Math.floor(
               (hitChance - hero.hitChance) * 100
             )}%.`
           );
+        }
         break;
       case "damageBoost":
         const boosted = passive.apply(hero, 100);
-        if (boosted > 100)
+        if (boosted > 100) {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts damage by ${Math.floor(
               (boosted / 100 - 1) * 100
             )}%.`
           );
+        }
         break;
       case "heal":
         const healed = formationHeroes.filter((h) => h.hp < h.maxHp);
@@ -474,16 +587,12 @@ class PassiveEffects {
   }
 }
 
-/**
- * Updates hero stats UI during battle.
- */
 function updateHeroStats(formationHeroes) {
   heroStatsList.innerHTML = "";
   formationHeroes.forEach((hero) => {
     const hpPercentage = hero.hp / hero.maxHp;
-    let hpClass = "green";
-    if (hpPercentage <= 0.5) hpClass = "yellow";
-    if (hpPercentage < 0.25) hpClass = "red";
+    const hpClass =
+      hpPercentage < 0.25 ? "red" : hpPercentage <= 0.5 ? "yellow" : "green";
 
     const stat = document.createElement("div");
     stat.className = "hero-stat";
@@ -498,9 +607,6 @@ function updateHeroStats(formationHeroes) {
   });
 }
 
-/**
- * Updates enemy stats UI during battle.
- */
 function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   enemyStatsList.innerHTML = "";
   if (!enemyGroup || !enemyGroup.length) {
@@ -511,9 +617,8 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   const isBoss = roomNumber === totalRooms;
   enemyGroup.forEach((enemy) => {
     const hpPercentage = enemy.hp / enemy.maxHp;
-    let hpClass = "green";
-    if (hpPercentage <= 0.5) hpClass = "yellow";
-    if (hpPercentage < 0.25) hpClass = "red";
+    const hpClass =
+      hpPercentage < 0.25 ? "red" : hpPercentage <= 0.5 ? "yellow" : "green";
 
     const stat = document.createElement("div");
     stat.innerHTML = `
@@ -527,9 +632,6 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   });
 }
 
-/**
- * Starts a dungeon mission, validating setup.
- */
 function startMission() {
   if (!gameState.selectedDungeon) {
     alert("Select a dungeon first!");
@@ -554,9 +656,6 @@ function startMission() {
   );
 }
 
-/**
- * Generates enemies for a dungeon room.
- */
 function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
   const {
     enemyCountOnRoom,
@@ -587,10 +686,10 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
 }
 
 /**
- * Logs a battle message to the UI with room context and milestone tracking.
- * @param {string} type - Log type (e.g., "attack", "heal", "milestone").
- * @param {string} text - Log message.
- * @param {number} roomNumber - Current room number for context.
+ * Logs battle events with room context and milestone tracking
+ * @param {string} type - Log type (e.g., "attack", "milestone")
+ * @param {string} text - Message to log
+ * @param {number} roomNumber - Current room number
  */
 function addLogEntry(type, text, roomNumber) {
   const entry = document.createElement("div");
@@ -599,7 +698,6 @@ function addLogEntry(type, text, roomNumber) {
   battleLog.appendChild(entry);
   battleLog.scrollTop = battleLog.scrollHeight;
 
-  // Track milestones in gameState
   if (type === "milestone" || type === "xp-level") {
     gameState.battleMilestones.push({
       room: roomNumber,
@@ -610,9 +708,6 @@ function addLogEntry(type, text, roomNumber) {
   }
 }
 
-/**
- * Displays mission results after battle.
- */
 function showResults() {
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
@@ -640,7 +735,6 @@ function showResults() {
     rewardsList.innerHTML += `<div class="reward-item">Dungeon Cleared!</div>`;
   }
 
-  // Display Battle Milestones
   const milestonesList = document.getElementById("milestones-list");
   milestonesList.innerHTML = "";
   if (gameState.battleMilestones.length > 0) {
@@ -657,13 +751,14 @@ function showResults() {
     milestonesList.appendChild(noMilestones);
   }
 
-  gameState.heroes = gameState.heroes.filter((h) => !gameState.casualties.includes(h.id));
-  gameState.formation = gameState.formation.map((id) => (gameState.casualties.includes(id) ? null : id));
+  gameState.heroes = gameState.heroes.filter(
+    (h) => !gameState.casualties.includes(h.id)
+  );
+  gameState.formation = gameState.formation.map((id) =>
+    gameState.casualties.includes(id) ? null : id
+  );
 }
 
-/**
- * Toggles battle speed (0.5x, 1x, 2x, 4x).
- */
 function toggleBattleSpeed() {
   const speeds = [0.5, 1, 2, 4];
   const index = speeds.indexOf(gameState.battleSpeed);
@@ -671,9 +766,6 @@ function toggleBattleSpeed() {
   speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 }
 
-/**
- * Returns to the guild screen after results.
- */
 function returnToGuild() {
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
@@ -684,7 +776,6 @@ function returnToGuild() {
   updateUI();
 }
 
-// Exit battle event listener
 exitBtn.addEventListener("click", () => {
   if (!exitBtn.disabled) showResults();
 });
