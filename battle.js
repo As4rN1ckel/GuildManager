@@ -762,7 +762,7 @@ function showResults() {
   resultsScreen.classList.remove("victory", "defeat");
 
   const victory = checkVictory();
-  resultsScreen.classList.add(victory ? "victory" : "defeat"); 
+  resultsScreen.classList.add(victory ? "victory" : "defeat");
   resultTitle.textContent = victory ? "Victory!" : "Defeat!";
   resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
 
@@ -772,9 +772,7 @@ function showResults() {
     }"></span>
     ${resultTitle.textContent}
     <span class="result-subtitle">${
-      victory
-        ? "Your heroes have returned triumphant!"
-        : "Your heroes have fallen..."
+      victory ? "Your heroes have returned triumphant!" : "Your heroes have fallen..."
     }</span>
   `;
 
@@ -836,12 +834,18 @@ function showResults() {
   }
 
   const milestonesList = document.getElementById("milestones-list");
-  milestonesList.innerHTML = "";
-  const milestonesTitle = document.createElement("h3");
-  milestonesTitle.textContent = "Battle Milestones:";
-  milestonesTitle.className = "section-title";
-  milestonesList.parentElement.insertBefore(milestonesTitle, milestonesList);
+  const milestonesContainer = milestonesList.parentElement;
 
+  // Check if a milestones title already exists and update or replace it
+  let milestonesTitle = milestonesContainer.querySelector(".section-title");
+  if (!milestonesTitle) {
+    milestonesTitle = document.createElement("h3");
+    milestonesTitle.className = "section-title";
+    milestonesTitle.textContent = "Battle Milestones:";
+    milestonesContainer.insertBefore(milestonesTitle, milestonesList);
+  }
+
+  milestonesList.innerHTML = "";
   if (gameState.battleMilestones.length > 0) {
     gameState.battleMilestones.forEach((milestone) => {
       const entry = document.createElement("div");
