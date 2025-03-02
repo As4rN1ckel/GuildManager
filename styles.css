@@ -615,12 +615,12 @@ button:disabled:hover {
 }
 
 .log-entry.attack {
-    color: #f86a5a;
+    color: #f37c6f;
     border-left-color: #f86a5a;
 }
 
 .log-entry.enemy-attack {
-    color: #ff5555;
+    color: #fd3c3c;
     border-left-color: #ff5555;
 }
 
