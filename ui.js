@@ -285,7 +285,7 @@ function updateFormationGrid() {
         el.className = `hero-base hero ${hero.class}`;
         el.dataset.id = hero.id;
         el.draggable = true;
-        el.style.width = "4.5rem";
+        el.style.width = "4.5rem"; // Match grid column width
         el.style.height = "4.5rem";
         el.innerHTML = `
           <div class="shape"></div>
@@ -408,6 +408,11 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// Helper function to prevent scrolling behind modal on mobile
+function preventScroll(e) {
+  e.preventDefault();
+}
+
 function updateHeroStatsPanel() {
   if (!gameState.selectedHero) {
     heroStatsPanel.style.display = "none";
@@ -429,6 +434,30 @@ function updateHeroStatsPanel() {
   heroStatsPanel.style.display = "block";
   modalOverlay.style.display = "block";
   heroStatsPanel.classList.add("visible");
+
+  // Adjust modal positioning for mobile
+  const isMobile = window.innerWidth <= 37.5; // Match media query breakpoint
+  if (isMobile) {
+    heroStatsPanel.style.position = "absolute"; // Use absolute positioning on mobile
+    heroStatsPanel.style.top = "10px"; // Small top margin
+    heroStatsPanel.style.left = "10px"; // Small left margin
+    heroStatsPanel.style.right = "10px"; // Ensure right edge fits
+    heroStatsPanel.style.bottom = "auto"; // Allow scrolling if content overflows
+    heroStatsPanel.style.transform = "none"; // Remove translate for mobile
+    heroStatsPanel.style.width = "auto"; // Full width minus margins
+    heroStatsPanel.style.maxWidth = "calc(100vw - 20px)"; // Fit within viewport, accounting for margins
+    heroStatsPanel.style.maxHeight = "calc(100vh - 20px)"; // Fit within viewport height
+  } else {
+    // Reset to default desktop positioning
+    heroStatsPanel.style.position = "fixed";
+    heroStatsPanel.style.top = "50%";
+    heroStatsPanel.style.left = "50%";
+    heroStatsPanel.style.transform = "translate(-50%, -50%)";
+    heroStatsPanel.style.width = "20rem";
+    heroStatsPanel.style.maxHeight = "80vh";
+    heroStatsPanel.style.right = "auto";
+    heroStatsPanel.style.bottom = "auto";
+  }
 
   const heroClass = heroClasses.find((hc) => hc.type === hero.class);
   const passive = heroPassives.find((p) => p.name === hero.passive);
@@ -460,4 +489,11 @@ function updateHeroStatsPanel() {
     passive?.description || "No description"
   }</div>
   `;
+
+  // Ensure mobile touch support and prevent scrolling behind modal
+  if (isMobile) {
+    modalOverlay.addEventListener("touchmove", preventScroll, { passive: false });
+  } else {
+    modalOverlay.removeEventListener("touchmove", preventScroll);
+  }
 }

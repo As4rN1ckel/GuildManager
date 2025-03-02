@@ -1387,27 +1387,27 @@ button:disabled:hover {
 
 .hero-stats-panel {
     background: linear-gradient(to bottom, #333, #2a2a2a);
-    border: 2px solid #555;
-    border-radius: 0.625rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
-    color: white;
-    padding: var(--spacing-large);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20rem;
-    max-height: 80vh;
-    overflow-y: auto;
-    z-index: 1001;
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    will-change: transform, opacity;
-    opacity: 0;
+  border: 2px solid #555;
+  border-radius: 0.625rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+  color: white;
+  padding: var(--spacing-large);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1001;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  will-change: transform, opacity;
+  opacity: 0;
 }
 
 .hero-stats-panel.visible {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .hero-stats-header {
@@ -1454,6 +1454,18 @@ button:disabled:hover {
     color: var(--accent-color);
 }
 
+.hero-stats-content {
+    line-height: 1.4;
+    font-size: inherit;
+}
+  
+@media (hover: none) and (pointer: coarse) {
+    .modal-overlay {
+      touch-action: pan-x pan-y; 
+    }
+}
+  
+
 /* Responsive Design */
 @media (max-width: 37.5rem) {
     body {
@@ -1488,7 +1500,35 @@ button:disabled:hover {
     }
 
     .hero-stats-panel {
-        position: static;
-        width: 100%;
-    }
+        position: absolute; 
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        bottom: auto;
+        transform: none;
+        width: auto; 
+        max-width: calc(100vw - 20px); 
+        max-height: calc(100vh - 20px); 
+        border-radius: 8px; 
+        padding: var(--spacing-small);
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .hero-stats-panel.visible {
+        transform: none; 
+      }
+    
+      .close-btn {
+        font-size: 1.2rem; 
+        padding: 0.2rem;
+      }
+    
+      .hero-stat-item {
+        font-size: 0.8rem; 
+        margin: 0.375rem 0; 
+      }
+    
+      .hero-stats-header h3 {
+        font-size: 1rem; 
+      }
 }
