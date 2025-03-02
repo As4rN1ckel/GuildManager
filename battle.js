@@ -612,13 +612,11 @@ function updateHeroStats(formationHeroes) {
   // Render each row with its label
   for (const [rowName, heroes] of Object.entries(rows)) {
     if (heroes.length > 0) {
-      // Add row label
       const label = document.createElement("div");
       label.className = "battle-row-label";
       label.textContent = rowName;
       heroStatsList.appendChild(label);
 
-      // Add heroes for this row
       heroes.forEach((hero) => {
         const hpPercentage = hero.hp / hero.maxHp;
         const hpClass =
@@ -690,6 +688,8 @@ function startMission() {
     return;
   }
 
+  hideHeaderButtons();
+
   mainScreen.style.display = "none";
   battleScreen.style.display = "flex";
   dungeonName.textContent = gameState.selectedDungeon.name;
@@ -759,14 +759,13 @@ function addLogEntry(type, text, roomNumber) {
 function showResults() {
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
-  resultsScreen.classList.remove("victory", "defeat"); // Reset classes
+  resultsScreen.classList.remove("victory", "defeat");
 
   const victory = checkVictory();
-  resultsScreen.classList.add(victory ? "victory" : "defeat"); // Add outcome class
+  resultsScreen.classList.add(victory ? "victory" : "defeat"); 
   resultTitle.textContent = victory ? "Victory!" : "Defeat!";
   resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
 
-  // Add animated outcome icon and subtitle
   resultTitle.innerHTML = `
     <span class="outcome-icon ${
       victory ? "victory-icon" : "defeat-icon"
@@ -872,7 +871,6 @@ function showResults() {
     gameState.casualties.includes(id) ? null : id
   );
 
-  // Trigger animation
   setTimeout(() => resultsScreen.classList.add("animate-in"), 10);
 }
 

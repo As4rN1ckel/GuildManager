@@ -32,6 +32,9 @@ const resetBtn = document.createElement("button");
 resetBtn.textContent = "RESET";
 resetBtn.className = "primary";
 
+// Store buttons in an array for easier management
+const headerButtons = [saveBtn, loadBtn, resetBtn];
+
 // Initializes game UI with event listeners and content
 function initGame() {
   if (
@@ -97,6 +100,8 @@ function initGame() {
   headerButtons.append(saveBtn, loadBtn, resetBtn);
   document.querySelector(".header").appendChild(headerButtons);
 
+  showHeaderButtons();
+
   heroRoster.addEventListener("dragover", () =>
     heroRoster.classList.add("dragover")
   );
@@ -115,6 +120,16 @@ function initGame() {
   });
 
   updateUI();
+}
+
+// Helper function to show header buttons
+function showHeaderButtons() {
+  headerButtons.forEach((btn) => (btn.style.display = "inline-block"));
+}
+
+// Helper function to hide header buttons
+function hideHeaderButtons() {
+  headerButtons.forEach((btn) => (btn.style.display = "none"));
 }
 
 // Updates UI to reflect game state
@@ -144,6 +159,7 @@ function returnToGuild() {
   updateFormationGrid();
   renderHeroRoster();
   updateUI();
+  showHeaderButtons();
 }
 
 function restHeroes() {
@@ -269,6 +285,8 @@ function updateFormationGrid() {
         el.className = `hero-base hero ${hero.class}`;
         el.dataset.id = hero.id;
         el.draggable = true;
+        el.style.width = "4.5rem";
+        el.style.height = "4.5rem";
         el.innerHTML = `
           <div class="shape"></div>
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
