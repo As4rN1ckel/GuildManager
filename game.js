@@ -1,3 +1,13 @@
+// Fallback for older browsers or direct script inclusion (global variables)
+if (typeof window !== "undefined") {
+  window.generateHeroName = window.generateHeroName || function () { console.error("generateHeroName not defined"); };
+  window.heroClasses = window.heroClasses || [];
+  window.xpThresholds = window.xpThresholds || [0, 10, 25, 60, 120, 250];
+  window.heroPassives = window.heroPassives || [];
+  window.heroSkills = window.heroSkills || [];
+  window.dungeons = window.dungeons || [];
+}
+
 const gameState = {
   gold: 200,
   cycle: "day",
@@ -17,212 +27,6 @@ const ENEMY_CRIT_MULTIPLIER = 1.3;
 const BOSS_CRIT_CHANCE = 0.12;
 const BOSS_CRIT_MULTIPLIER = 1.7;
 
-const heroClasses = [
-  {
-    type: "warrior",
-    name: "Warrior",
-    hp: 60,
-    attack: 12,
-    special: "Shield Bash",
-    cost: 80,
-    passive: "Ironclad Resilience",
-    hitChance: 0.8,
-  },
-  {
-    type: "archer",
-    name: "Archer",
-    hp: 50,
-    attack: 10,
-    special: "Multi Shot",
-    cost: 100,
-    passive: "Deadly Precision",
-    hitChance: 0.8,
-  },
-  {
-    type: "mage",
-    name: "Mage",
-    hp: 30,
-    attack: 15,
-    special: "Fireball",
-    cost: 120,
-    passive: "Arcane Potency",
-    hitChance: 0.7,
-  },
-  {
-    type: "cleric",
-    name: "Cleric",
-    hp: 40,
-    attack: 5,
-    special: "Heal",
-    cost: 110,
-    passive: "Divine Restoration",
-    hitChance: 0.8,
-  },
-];
-
-const xpThresholds = [0, 10, 25, 60, 120, 250];
-
-const heroPassives = [
-  {
-    name: "Ironclad Resilience",
-    description: "Reduces damage by 20% in front row",
-    type: "damageReduction",
-    value: 0.8,
-    appliesTo: ["warrior"],
-    apply: function (hero, target, damage) {
-      const position = gameState.formation.indexOf(hero.id);
-      return position >= 0 && position <= 2
-        ? Math.round(damage * this.value)
-        : Math.round(damage);
-    },
-  },
-  {
-    name: "Deadly Precision",
-    description: "Boosts hit chance by 15% in middle/back row",
-    type: "hitChanceBoost",
-    value: 0.15,
-    appliesTo: ["archer"],
-    apply: function (hero) {
-      const position = gameState.formation.indexOf(hero.id);
-      return position >= 3
-        ? Math.min(1.0, hero.hitChance + this.value)
-        : hero.hitChance;
-    },
-  },
-  {
-    name: "Arcane Potency",
-    description: "Boosts damage by 20% in back row",
-    type: "damageBoost",
-    value: 1.2,
-    appliesTo: ["mage"],
-    apply: function (hero, damage) {
-      const position = gameState.formation.indexOf(hero.id);
-      return position >= 6 && position <= 8
-        ? Math.round(damage * this.value)
-        : Math.round(damage);
-    },
-  },
-  {
-    name: "Divine Restoration",
-    description:
-      "Heals allies for 80% of attack on back row and 40% on other rows.",
-    type: "heal",
-    value: 0.4,
-    appliesTo: ["cleric"],
-    apply: function (hero, formationHeroes) {
-      const position = gameState.formation.indexOf(hero.id);
-      const multiplier = position >= 6 && position <= 8 ? 0.8 : this.value;
-      formationHeroes.forEach((ally) => {
-        if (ally.hp < ally.maxHp) {
-          const heal = Math.round(hero.attack * multiplier);
-          ally.hp = Math.min(ally.maxHp, Math.round(ally.hp + heal));
-        }
-      });
-    },
-  },
-];
-
-const heroSkills = [
-  {
-    name: "Shield Bash",
-    description: "Deals 30% more damage",
-    type: "damage",
-    value: 1.3,
-    cooldown: 3,
-    appliesTo: ["warrior"],
-    apply: function (hero, target, baseDamage) {
-      return Math.round(baseDamage * this.value);
-    },
-  },
-  {
-    name: "Multi Shot",
-    description: "Deals 15% more damage to 3 targets",
-    type: "damage",
-    value: 1.15,
-    cooldown: 3,
-    appliesTo: ["archer"],
-    apply: function (hero, targets, baseDamage) {
-      const targetArray = Array.isArray(targets) ? targets : [targets];
-      return targetArray.map(() => Math.round(baseDamage * this.value));
-    },
-  },
-  {
-    name: "Fireball",
-    description: "Deals 40% more damage",
-    type: "damage",
-    value: 1.4,
-    cooldown: 3,
-    appliesTo: ["mage"],
-    apply: function (hero, target, baseDamage) {
-      return Math.round(baseDamage * this.value);
-    },
-  },
-  {
-    name: "Heal",
-    description: "Heals a random ally for 150% of attack",
-    type: "heal",
-    value: 1.5,
-    cooldown: 3,
-    appliesTo: ["cleric"],
-    apply: function (hero, formationHeroes) {
-      const injured = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
-      if (injured.length > 0) {
-        const target = injured[Math.floor(Math.random() * injured.length)];
-        const heal = Math.round(hero.attack * this.value);
-        target.hp = Math.min(target.maxHp, Math.round(target.hp + heal));
-      }
-    },
-  },
-];
-
-const dungeons = [
-  {
-    name: "Forest Ruins",
-    description: "An abandoned forest ruin",
-    difficulty: "Easy",
-    reward: 200,
-    roomCount: 3,
-    enemyCountOnRoom: { min: 3, max: 5 },
-    enemies: ["Goblin", "Kobold", "Wolf"],
-    enemyStats: { hp: 40, damage: 10, hitChance: 0.8 },
-    enemyXp: 1,
-    bosses: ["Goblin Warlord", "Ancient Treant"],
-    bossStats: { hp: 200, damage: 25, hitChance: 0.8 },
-    bossCount: { min: 1, max: 1 },
-    bossXP: 3,
-  },
-  {
-    name: "Dark Caverns",
-    description: "Caves with eerie undead",
-    difficulty: "Medium",
-    reward: 400,
-    roomCount: 5,
-    enemyCountOnRoom: { min: 4, max: 6 },
-    enemies: ["Skeleton", "Ghoul", "Shadow"],
-    enemyStats: { hp: 60, damage: 18, hitChance: 0.8 },
-    enemyXp: 2,
-    bosses: ["Skeleton King", "Ghoul Overlord"],
-    bossStats: { hp: 300, damage: 45, hitChance: 0.8 },
-    bossCount: { min: 1, max: 1 },
-    bossXP: 4,
-  },
-  {
-    name: "Dragon's Lair",
-    description: "Lair guarded by a dragon",
-    difficulty: "Hard",
-    reward: 800,
-    roomCount: 7,
-    enemyCountOnRoom: { min: 5, max: 7 },
-    enemies: ["Dragon", "Wyvern", "Demon"],
-    enemyStats: { hp: 100, damage: 28, hitChance: 0.8 },
-    enemyXp: 3,
-    bosses: ["Elder Dragon", "Infernal Wyrm"],
-    bossStats: { hp: 500, damage: 70, hitChance: 0.8 },
-    bossCount: { min: 1, max: 2 },
-    bossXP: 5,
-  },
-];
-
 function addHero(hero) {
   gameState.heroes.push(hero);
   renderHeroRoster();
@@ -230,11 +34,11 @@ function addHero(hero) {
 }
 
 function generateHero() {
-  const classIndex = Math.floor(Math.random() * heroClasses.length);
-  const heroClass = heroClasses[classIndex];
+  const classIndex = Math.floor(Math.random() * window.heroClasses.length);
+  const heroClass = window.heroClasses[classIndex];
   return {
     id: Date.now() + Math.random().toString(36).substring(2, 9),
-    name: generateHeroName(heroClass.name),
+    name: window.generateHeroName(heroClass.name),
     class: heroClass.type,
     hp: heroClass.hp,
     maxHp: heroClass.hp,
@@ -251,14 +55,14 @@ function generateHero() {
 
 function levelUpHero(hero) {
   if (
-    hero.level >= xpThresholds.length - 1 ||
-    hero.xp < xpThresholds[hero.level]
+    hero.level >= window.xpThresholds.length - 1 ||
+    hero.xp < window.xpThresholds[hero.level]
   )
     return;
   hero.xp = 0;
   hero.level++;
   hero.maxHp += 10;
-  hero.hp = Math.min(hero.maxHp, hero.hp + 10);
+  hero.hp = Math.min(hero.maxHp, hero.hp + 5);
   hero.attack += 2;
   addLogEntry("xp-level", `${hero.name} leveled up to Level ${hero.level}!`);
 }
@@ -331,10 +135,11 @@ if (typeof window !== "undefined") {
   window.addEventListener("load", loadGame);
   Object.assign(window, {
     gameState,
-    heroClasses,
-    heroPassives,
-    heroSkills,
-    xpThresholds,
-    dungeons,
+    HERO_CRIT_CHANCE,
+    HERO_CRIT_MULTIPLIER,
+    ENEMY_CRIT_CHANCE,
+    ENEMY_CRIT_MULTIPLIER,
+    BOSS_CRIT_CHANCE,
+    BOSS_CRIT_MULTIPLIER,
   });
 }
