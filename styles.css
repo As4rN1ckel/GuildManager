@@ -16,13 +16,17 @@
 
 /* Base Layout */
 body {
-    background-color: var(--bg-color);
+    background: linear-gradient(to bottom, #111, #0a0a0a);
+    /* Subtle background gradient */
     color: var(--text-color);
     font-family: monospace;
     font-size: 0.875rem;
     line-height: 1.4;
     margin: 0;
     padding: var(--spacing-large);
+    overflow-y: auto;
+    /* Ensure scroll if needed */
+    transition: background 0.3s ease-in-out;
 }
 
 .container {
@@ -31,21 +35,45 @@ body {
     gap: var(--spacing-large);
     margin: 0 auto;
     max-width: 50rem;
+    background: rgba(0, 0, 0, 0.1);
+    /* Subtle overlay for depth */
+    border-radius: 10px;
+    padding: var(--spacing-small);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8);
 }
 
 .header {
     align-items: center;
-    background-color: var(--panel-bg);
-    border: 1px solid var(--accent-color);
+    background: linear-gradient(to bottom, #222, #1a1a1a);
+    /* Gradient for depth */
+    border: 2px solid var(--accent-color);
+    border-radius: 5px;
     display: flex;
     justify-content: space-between;
     padding: var(--spacing-small);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 5px rgba(123, 104, 238, 0.3);
+    /* Purple glow */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 8px rgba(123, 104, 238, 0.5);
 }
 
 .header h1 {
     color: var(--accent-color);
     font-size: 1.5rem;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .header .buttons {
@@ -55,20 +83,20 @@ body {
 
 .resources-panel {
     align-items: center;
-    background-color: var(--panel-bg);
-    border: 1px solid var(--accent-color);
+    background: linear-gradient(to bottom, #222, #1a1a1a);
+    border: 2px solid var(--accent-color);
     border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 5px rgba(123, 104, 238, 0.3);
     display: flex;
     justify-content: space-between;
     margin-bottom: var(--spacing-large);
     padding: var(--spacing-small);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.rest-section {
-    align-items: center;
-    display: flex;
-    gap: var(--spacing-small);
+.resources-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 8px rgba(123, 104, 238, 0.5);
 }
 
 .resources {
@@ -84,25 +112,28 @@ body {
 .rest-cost {
     color: var(--text-color);
     font-size: 1rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .resources-panel button {
-    background-color: var(--accent-color);
+    background: linear-gradient(to bottom, var(--accent-color), #6a5acd);
     border: none;
     border-radius: 3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     color: white;
     cursor: pointer;
     font-family: monospace;
     letter-spacing: 1px;
     padding: 0.3125rem 0.9375rem;
     text-transform: uppercase;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
     will-change: background-color;
 }
 
 .resources-panel button:hover {
-    background-color: #6a5acd;
+    background: linear-gradient(to bottom, #6a5acd, #483d8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 .resources-panel button:focus {
@@ -111,19 +142,31 @@ body {
 }
 
 .panel {
-    background-color: var(--panel-bg);
-    border: 1px solid #444;
+    background: linear-gradient(to bottom, #222, #1a1a1a);
+    border: 2px solid #444;
+    border-radius: 5px;
     padding: 0.9375rem;
     margin-bottom: var(--spacing-large);
     position: relative;
     overflow: visible;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .panel-title {
-    border-bottom: 1px solid #444;
+    border-bottom: 2px solid #444;
     color: var(--accent-color);
     margin: 0 0 var(--spacing-small) 0;
     padding-bottom: 0.3125rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Hero Styles */
@@ -131,23 +174,25 @@ body {
 .hero,
 .recruit-hero {
     align-items: center;
-    background-color: #333;
-    border: 1px solid #555;
+    background: linear-gradient(to bottom, #333, #2d2d2d);
+    border: 2px dashed #555;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: center;
     overflow: hidden;
     position: relative;
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
     will-change: background-color, border-color;
 }
 
 .hero-base:hover,
 .hero:hover,
 .recruit-hero:hover {
-    background-color: #3a3a3a;
+    background: linear-gradient(to bottom, #3a3a3a, #343434);
     border-color: var(--accent-color);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .hero-base:focus,
@@ -160,6 +205,7 @@ body {
 .hero-base.selected,
 .hero.selected {
     border: 2px solid var(--accent-color);
+    box-shadow: 0 0 10px rgba(123, 104, 238, 0.5);
 }
 
 .hero-base .shape,
@@ -183,32 +229,34 @@ body {
 .hero-base.archer .shape,
 .hero.archer .shape,
 .recruit-hero.archer .shape {
-    background-color: var(--archer-color);
+    background: radial-gradient(circle, var(--archer-color), #27ae60);
     border-radius: 50%;
 }
 
 .hero-base.mage .shape,
 .hero.mage .shape,
 .recruit-hero.mage .shape {
-    background-color: var(--mage-color);
+    background: radial-gradient(circle, var(--mage-color), #2980b9);
     clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
 .hero-base.cleric .shape,
 .hero.cleric .shape,
 .recruit-hero.cleric .shape {
-    background-color: var(--cleric-color);
+    background: radial-gradient(circle, var(--cleric-color), #d4a017);
     clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
 }
 
 .hero-base .hp-bar,
 .hero .hp-bar,
 .recruit-hero .hp-bar {
-    background-color: #444;
+    background: linear-gradient(to right, #444, #555);
     border-radius: 3px;
-    height: 0.3125rem;
+    height: 0.5rem;
+    /* Slightly taller */
     margin-top: 0.3125rem;
     width: 100%;
+    box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .hero-base .hp-fill,
@@ -216,8 +264,25 @@ body {
 .recruit-hero .hp-fill {
     border-radius: 3px;
     height: 100%;
-    transition: width 0.5s ease-out;
+    transition: width 0.5s ease-out, background-color 0.3s ease;
     will-change: width;
+    box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+.hp-fill.green,
+.stat-hp-fill.green {
+    background: linear-gradient(to right, #2ecc71, #27ae60);
+}
+
+.hp-fill.yellow,
+.stat-hp-fill.yellow {
+    background: linear-gradient(to right, #f1c40f, #e67e22);
+}
+
+.hp-fill.red,
+.stat-hp-fill.red {
+    background: linear-gradient(to right, #e74c3c, #c0392b);
+    animation: pulse 1.5s infinite;
 }
 
 .hero-roster {
@@ -283,9 +348,16 @@ body {
     margin: 0 auto;
     position: relative;
     width: 15.625rem;
-    background-color: transparent;
+    background: linear-gradient(to bottom, #222, #1a1a1a);
+    border-radius: 5px;
     overflow: visible;
-    transition: box-shadow 0.3s ease-in-out;
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.formation-grid:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .row-label {
@@ -311,6 +383,12 @@ body {
     transform: translateY(-2px);
 }
 
+.row-label:hover {
+    background: linear-gradient(to bottom, #333, #222);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 8px rgba(123, 104, 238, 0.5);
+    transform: translateY(-2px);
+}
+
 .formation-grid .row-label {
     margin: 0 auto;
     width: 75%;
@@ -319,8 +397,8 @@ body {
 
 .formation-slot {
     align-items: center;
-    background-color: #333;
-    border: 1px dashed #555;
+    background: linear-gradient(to bottom, #333, #2d2d2d);
+    border: 2px dashed #555;
     box-sizing: border-box;
     cursor: pointer;
     display: flex;
@@ -328,20 +406,20 @@ body {
     justify-content: center;
     position: relative;
     width: 5rem;
-    border-radius: 3px;
+    border-radius: 5px;
     transition: all 0.3s ease-in-out;
 }
 
 .formation-slot:hover {
-    background-color: #3a3a3a;
-    border: 1px dashed #777;
+    background: linear-gradient(to bottom, #3a3a3a, #343434);
+    border: 2px dashed var(--accent-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 0 5px rgba(0, 0, 0, 0.3);
     transform: scale(1.05);
 }
 
 .formation-slot.occupied {
-    border: 1px solid #666;
-    background-color: #2d2d2d;
+    border: 2px solid #666;
+    background: linear-gradient(to bottom, #2d2d2d, #262626);
     z-index: 20;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
@@ -404,19 +482,22 @@ body {
 
 .dungeon {
     align-items: center;
-    background-color: #333;
-    border: 1px solid #555;
+    background: linear-gradient(to bottom, #333, #2d2d2d);
+    border: 2px solid #555;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     padding: var(--spacing-small);
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
     will-change: background-color, border-color;
+    border-radius: 5px;
 }
 
 .dungeon:hover {
-    background-color: #3a3a3a;
+    background: linear-gradient(to bottom, #3a3a3a, #343434);
     border-color: var(--accent-color);
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .dungeon:focus {
@@ -426,30 +507,75 @@ body {
 
 .dungeon.selected {
     border: 2px solid var(--accent-color);
+    box-shadow: 0 0 10px rgba(123, 104, 238, 0.5);
 }
 
 .buttons {
     display: flex;
     gap: var(--spacing-small);
     justify-content: center;
-    margin-top: var(--spacing-small);
+    margin-top: var(--spacing-large);
+}
+
+button.primary {
+    background: linear-gradient(to bottom, var(--accent-color), #6a5acd);
+    color: white;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button.primary:hover {
+    background: linear-gradient(to bottom, #6a5acd, #483d8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.panel.animate-in {
+    animation: fadeIn 0.5s ease-out;
 }
 
 button {
-    background-color: var(--button-color);
-    border: none;
+    background: linear-gradient(to bottom, var(--button-color), #333);
+    /* Gradient for buttons */
+    border: 1px solid #555;
+    border-radius: 3px;
     color: var(--text-color);
     cursor: pointer;
     font-family: monospace;
     letter-spacing: 1px;
     padding: 0.5rem 1rem;
     text-transform: uppercase;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
     will-change: background-color;
 }
 
 button:hover {
-    background-color: var(--button-hover);
+    background: linear-gradient(to bottom, var(--button-hover), #444);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 button:focus {
@@ -457,22 +583,15 @@ button:focus {
     outline-offset: 2px;
 }
 
-button.primary {
-    background-color: var(--accent-color);
-    color: white;
-}
-
-button.primary:hover {
-    background-color: #6a5acd;
-}
-
 button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+    background: var(--button-color);
 }
 
 button:disabled:hover {
-    background-color: var(--button-color);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Battle Screen */
@@ -581,18 +700,18 @@ button:disabled:hover {
     border-radius: 5px;
     border: 1px solid #555;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-  }
-  
-  .milestones h3 {
+}
+
+.milestones h3 {
     color: var(--accent-color);
     font-size: 1.2rem;
     margin-bottom: 0.625rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  }
-  
-  #milestones-list {
+}
+
+#milestones-list {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid #444;
     border-radius: 5px;
@@ -600,45 +719,50 @@ button:disabled:hover {
     max-height: 12.5rem;
     overflow-y: auto;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-  }
-  
-  .milestone-entry {
+}
+
+.milestone-entry {
     margin-bottom: 0.625rem;
     padding: 0.25rem 0.5rem;
     border-left: 3px solid transparent;
     transition: background-color 0.2s ease-in-out;
-  }
-  
-  .milestone-entry:hover {
+}
+
+.milestone-entry:hover {
     background-color: rgba(255, 255, 255, 0.05);
-  }
-  
-  .milestone-icon {
+}
+
+.milestone-icon {
     display: inline-block;
     width: 1rem;
     height: 1rem;
     margin-right: 0.5rem;
     vertical-align: middle;
-  }
-  
-  .milestone-mark {
+}
+
+.milestone-mark {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e67e22"><path d="M5 13l4 4L19 7"/></svg>') center/cover;
-  }
-  
-  .xp-mark {
+}
+
+.xp-mark {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239b59b6"><path d="M12 2v20"/></svg>') center/cover;
-  }
-  
-  .no-milestones-icon {
+}
+
+.no-milestones-icon {
     margin-right: 0.5rem;
     color: #f1c40f;
     font-size: 1rem;
-  }
-  
-  @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 .class-icon.warrior {
     background: var(--warrior-color) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 22h20L12 2z"/></svg>') center/cover;
@@ -814,30 +938,37 @@ button:disabled:hover {
     overflow: hidden;
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     opacity: 0;
-  }
-  
-  .results-screen.victory {
+}
+
+.results-screen.victory {
     background: linear-gradient(to bottom, #1a1a1a, #2ecc71cc);
     border-color: #2ecc71;
-  }
-  
-  .results-screen.defeat {
+}
+
+.results-screen.defeat {
     background: linear-gradient(to bottom, #1a1a1a, #e74c3ccc);
     border-color: #e74c3c;
-  }
-  
-  .results-screen.animate-in {
+}
+
+.results-screen.animate-in {
     opacity: 1;
     transform: scale(1);
     animation: fadeIn 0.5s ease-out;
-  }
+}
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
 
-  .results-title {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.results-title {
     font-size: 2.5rem;
     margin-bottom: var(--spacing-large);
     text-transform: uppercase;
@@ -845,49 +976,56 @@ button:disabled:hover {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
     position: relative;
     color: var(--text-color);
-  }
-  
-  .result-subtitle {
+}
+
+.result-subtitle {
     display: block;
     font-size: 1rem;
     color: #ccc;
     font-style: italic;
     margin-top: 0.5rem;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  }
-  
-  .outcome-icon {
+}
+
+.outcome-icon {
     display: inline-block;
     width: 2rem;
     height: 2rem;
     margin-right: 0.5rem;
     vertical-align: middle;
     animation: bounce 1.5s infinite;
-  }
+}
 
-  .victory-icon {
+.victory-icon {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232ecc71"><path d="M5 13l4 4L19 7"/></svg>') center/cover;
-  }
-  
-  .defeat-icon {
+}
+
+.defeat-icon {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M6 6l12 12m0-12L6 18"/></svg>') center/cover;
-  }
+}
 
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
+@keyframes bounce {
 
-  .section-title {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.section-title {
     color: var(--accent-color);
     font-size: 1.2rem;
     margin-bottom: 0.625rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  }
+}
 
-  .casualties {
+.casualties {
     display: flex;
     gap: var(--spacing-small);
     justify-content: center;
@@ -897,21 +1035,21 @@ button:disabled:hover {
     border-radius: 5px;
     border: 1px solid #555;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-  }
-  
-  .hero-base.casualty {
+}
+
+.hero-base.casualty {
     position: relative;
     opacity: 0.8;
     border-color: #ff5555;
     transition: opacity 0.3s ease;
-  }
-  
-  .hero-base.casualty:hover {
+}
+
+.hero-base.casualty:hover {
     opacity: 1;
     box-shadow: 0 0 10px rgba(255, 85, 85, 0.5);
-  }
-  
-  .casualty-mark {
+}
+
+.casualty-mark {
     position: absolute;
     top: 0;
     right: 0;
@@ -920,14 +1058,21 @@ button:disabled:hover {
     font-weight: bold;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     animation: fadeInOut 2s infinite;
-  }
-  
-  @keyframes fadeInOut {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-  }
-  
-  .no-casualties {
+}
+
+@keyframes fadeInOut {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.no-casualties {
     font-size: 1.1rem;
     color: #2ecc71;
     font-style: italic;
@@ -935,15 +1080,15 @@ button:disabled:hover {
     background: rgba(46, 204, 113, 0.1);
     border-radius: 5px;
     border: 1px solid #2ecc71;
-  }
-  
-  .no-casualties-icon {
+}
+
+.no-casualties-icon {
     margin-right: 0.5rem;
     color: #2ecc71;
     font-size: 1.2rem;
-  }
+}
 
-  .rewards {
+.rewards {
     font-size: 1.2rem;
     margin: var(--spacing-large) 0;
     padding: 0.5rem;
@@ -951,9 +1096,9 @@ button:disabled:hover {
     border-radius: 5px;
     border: 1px solid #555;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-  }
-  
-  .reward-item {
+}
+
+.reward-item {
     margin: 0.5rem 0;
     display: flex;
     align-items: center;
@@ -961,29 +1106,29 @@ button:disabled:hover {
     font-weight: 600;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s ease;
-  }
-  
-  .reward-item:hover {
+}
+
+.reward-item:hover {
     transform: scale(1.05);
-  }
-  
-  .reward-icon {
+}
+
+.reward-icon {
     display: inline-block;
     width: 1.5rem;
     height: 1.5rem;
     margin-right: 0.5rem;
     animation: rotate 2s infinite linear;
-  }
-  
-  .gold-icon {
+}
+
+.gold-icon {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffd700"><circle cx="12" cy="12" r="10"/><path d="M12 6v12m-4-4h8"/></svg>') center/cover;
-  }
-  
-  .cleared-icon {
+}
+
+.cleared-icon {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232ecc71"><path d="M5 13l4 4L19 7"/></svg>') center/cover;
-  }
-  
-  .no-rewards {
+}
+
+.no-rewards {
     font-size: 1.1rem;
     color: #e74c3c;
     font-style: italic;
@@ -991,13 +1136,13 @@ button:disabled:hover {
     background: rgba(231, 76, 60, 0.1);
     border-radius: 5px;
     border: 1px solid #e74c3c;
-  }
-  
-  .no-rewards-icon {
+}
+
+.no-rewards-icon {
     margin-right: 0.5rem;
     color: #e74c3c;
     font-size: 1.2rem;
-  }
+}
 
 /* Shop Screen */
 .shop-screen {

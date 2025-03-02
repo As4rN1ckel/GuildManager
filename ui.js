@@ -120,9 +120,7 @@ function initGame() {
 // Updates UI to reflect game state
 function updateUI() {
   goldAmount.textContent = gameState.gold;
-  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${
-    gameState.day
-  }`;
+  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${gameState.day}`;
   renderHeroRoster();
   updateFormationGrid();
 
@@ -130,6 +128,12 @@ function updateUI() {
   const cost = injured.length * 20;
   restCostAmount.textContent = cost;
   restBtn.disabled = !injured.length || gameState.gold < cost;
+
+  // Trigger animation for updated panels
+  document.querySelectorAll(".panel").forEach((panel) => {
+    panel.classList.remove("animate-in");
+    setTimeout(() => panel.classList.add("animate-in"), 10);
+  });
 }
 
 function returnToGuild() {
