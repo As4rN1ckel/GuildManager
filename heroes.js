@@ -68,7 +68,7 @@ const heroClasses = [
 ];
 
 // XP thresholds for leveling up
-const xpThresholds = [0, 10, 25, 60, 120, 250];
+const xpThresholds = [0, 10, 25, 60, 120, 250, 520, 1050, 2200, 4500, 9100];
 
 // Hero passives
 const heroPassives = [
