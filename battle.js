@@ -621,14 +621,17 @@ class PassiveEffects {
 function updateHeroStats(formationHeroes) {
   heroStatsList.innerHTML = "";
   formationHeroes.forEach((hero) => {
+    const hpPercentage = hero.hp / hero.maxHp;
+    let hpClass = "green";
+    if (hpPercentage <= 0.5) hpClass = "yellow"; // 50% or less
+    if (hpPercentage < 0.25) hpClass = "red"; // Less than 25%
+
     const stat = document.createElement("div");
     stat.className = "hero-stat";
     stat.innerHTML = `
       <span>${hero.name.split(" ")[0]} (Lv${hero.level})</span>
-      <div class="stat-hp-bar"><div class="stat-hp-fill${
-        hero.hp / hero.maxHp <= 0.3 ? " low" : ""
-      }" style="width: ${Math.floor(
-      (hero.hp / hero.maxHp) * 100
+      <div class="stat-hp-bar"><div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+      hpPercentage * 100
     )}%;"></div></div>
       <span>${Math.round(hero.hp)}/${hero.maxHp}</span>
     `;
@@ -651,13 +654,16 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
 
   const isBoss = roomNumber === totalRooms;
   enemyGroup.forEach((enemy) => {
+    const hpPercentage = enemy.hp / enemy.maxHp;
+    let hpClass = "green";
+    if (hpPercentage <= 0.5) hpClass = "yellow"; // 50% or less
+    if (hpPercentage < 0.25) hpClass = "red"; // Less than 25%
+
     const stat = document.createElement("div");
     stat.innerHTML = `
       <span>${isBoss ? "Boss: " : ""}${enemy.type}</span>
-      <div class="stat-hp-bar"><div class="stat-hp-fill${
-        enemy.hp / enemy.maxHp <= 0.3 ? " low" : ""
-      }" style="width: ${Math.floor(
-      (enemy.hp / enemy.maxHp) * 100
+      <div class="stat-hp-bar"><div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+      hpPercentage * 100
     )}%;"></div></div>
       <span>${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;

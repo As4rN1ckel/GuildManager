@@ -188,6 +188,11 @@ function renderHeroRoster() {
   heroRoster.innerHTML = "";
   gameState.heroes.forEach((hero) => {
     if (!isHeroInFormation(hero)) {
+      const hpPercentage = hero.hp / hero.maxHp;
+      let hpClass = "green";
+      if (hpPercentage <= 0.6) hpClass = "yellow"; 
+      if (hpPercentage < 0.25) hpClass = "red"; 
+
       const el = document.createElement("div");
       el.className = `hero-base hero ${hero.class}${
         gameState.selectedHero === hero.id ? " selected" : ""
@@ -198,11 +203,10 @@ function renderHeroRoster() {
         <div class="shape"></div>
         <div class="hero-info">${hero.name.split(" ")[0]}</div>
         <div class="level">Lv${hero.level}</div>
-        <div class="hp-bar"><div class="hp-fill${
-          hero.hp / hero.maxHp <= 0.3 ? " low" : ""
-        }" style="width: ${Math.floor(
-        (hero.hp / hero.maxHp) * 100
-      )}`;
+        <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
+          hpPercentage * 100
+        )}%;"></div></div>
+      `;
       el.addEventListener("dragstart", (e) =>
         e.dataTransfer.setData("text/plain", hero.id)
       );
@@ -260,6 +264,11 @@ function updateFormationGrid() {
     if (heroId) {
       const hero = gameState.heroes.find((h) => h.id === heroId);
       if (hero) {
+        const hpPercentage = hero.hp / hero.maxHp;
+        let hpClass = "green";
+        if (hpPercentage <= 0.5) hpClass = "yellow"; // 50% or less
+        if (hpPercentage < 0.25) hpClass = "red";   // Less than 25%
+
         const el = document.createElement("div");
         el.className = `hero-base hero ${hero.class}`;
         el.dataset.id = hero.id; // For drag-and-drop
@@ -268,11 +277,9 @@ function updateFormationGrid() {
           <div class="shape"></div>
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
           <div class="level">Lv${hero.level}</div>
-          <div class="hp-bar"><div class="hp-fill${
-            hero.hp / hero.maxHp <= 0.3 ? " low" : ""
-          }" style="width: ${Math.floor(
-          (hero.hp / hero.maxHp) * 100
-        )}%;"></div></div>
+          <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
+            hpPercentage * 100
+          )}%;"></div></div>
         `;
         el.addEventListener("dragstart", (e) =>
           e.dataTransfer.setData("text/plain", hero.id)
