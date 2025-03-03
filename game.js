@@ -47,17 +47,26 @@ function generateHero() {
 }
 
 function levelUpHero(hero) {
-  if (
-    hero.level >= window.xpThresholds.length - 1 ||
-    hero.xp < window.xpThresholds[hero.level]
-  )
-    return;
-  hero.xp = 0;
+  if (hero.level >= xpThresholds.length - 1 || hero.xp < xpThresholds[hero.level]) return;
+
+  hero.xp -= nextThreshold; 
   hero.level++;
-  hero.maxHp += 10;
-  hero.hp = Math.min(hero.maxHp, hero.hp + 5);
-  hero.attack += 2;
+
+  const classStats = {
+    "warrior": { maxHp: 14, hpHeal: 8, attack: 2 },
+    "archer": { maxHp: 10, hpHeal: 5, attack: 3 },
+    "mage": { maxHp: 8, hpHeal: 4, attack: 4 },
+    "cleric": { maxHp: 12, hpHeal: 6, attack: 1 }
+  };
+  const boosts = classStats[hero.class] || { maxHp: 10, hpHeal: 5, attack: 2 };
+
+  hero.maxHp += boosts.maxHp;
+  hero.hp = Math.min(hero.maxHp, hero.hp + boosts.hpHeal);
+  hero.attack += boosts.attack;
+
   addLogEntry("xp-level", `${hero.name} leveled up to Level ${hero.level}!`);
+
+  if (hero.xp >= xpThresholds[hero.level]) levelUpHero(hero);
 }
 
 function isHeroInFormation(hero) {
