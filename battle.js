@@ -82,47 +82,54 @@ class BattleManager {
       ...formationHeroes.map(hero => ({ entity: hero, isHero: true, ticks: 0 })),
       ...enemyGroup.map(enemy => ({ entity: enemy, isHero: false, ticks: 0 }))
     ];
-
+  
     formationHeroes.forEach(hero => hero.ticks = 0);
     enemyGroup.forEach(enemy => enemy.ticks = 0);
-
+  
     while (true) {
       const livingHeroes = formationHeroes.filter(h => h.hp > 0);
       const livingEnemies = enemyGroup.filter(e => e.hp > 0);
-
+  
       if (livingEnemies.length === 0) {
         this.handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
         return true;
       }
       if (livingHeroes.length === 0) return false;
-
+  
       combatants.forEach(combatant => {
         if (combatant.entity.hp > 0) combatant.entity.ticks += combatant.entity.speed;
       });
-
-      const nextCombatant = combatants.reduce((fastest, current) => 
-        current.entity.ticks >= TURN_THRESHOLD && current.entity.hp > 0 && 
-        (!fastest || current.entity.ticks > fastest.entity.ticks) ? current : fastest, 
-        null
-      );
-
-      if (!nextCombatant) {
+  
+      const sortedCombatants = combatants
+        .filter(c => c.entity.hp > 0)
+        .sort((a, b) => b.entity.ticks - a.entity.ticks); 
+      const nextCombatant = sortedCombatants[0]; 
+  
+      if (!nextCombatant || nextCombatant.entity.ticks < TURN_THRESHOLD) {
         await new Promise(resolve => setTimeout(resolve, 50 / (gameState.battleSpeed || 1)));
         continue;
       }
-
+  
       nextCombatant.entity.ticks -= TURN_THRESHOLD;
-
+  
       if (nextCombatant.isHero) {
-        await HeroActions.performHeroTurn(nextCombatant.entity, formationHeroes, enemyGroup, roomNumber, totalRooms);
-        if (nextCombatant.entity.hp <= 0) gameState.casualties.push(nextCombatant.entity.id);
+        await HeroActions.performHeroTurn(nextCombatant.entity, livingHeroes, enemyGroup, roomNumber, totalRooms);
+        if (nextCombatant.entity.hp <= 0) {
+          gameState.casualties.push(nextCombatant.entity.id);
+          const index = combatants.findIndex(c => c.entity.id === nextCombatant.entity.id);
+          if (index !== -1) combatants.splice(index, 1);
+        }
       } else {
-        await EnemyActions.performEnemyTurn(nextCombatant.entity, formationHeroes, enemyGroup, roomNumber, totalRooms);
+        await EnemyActions.performEnemyTurn(nextCombatant.entity, livingHeroes, enemyGroup, roomNumber, totalRooms);
+        if (nextCombatant.entity.hp <= 0) {
+          const index = combatants.findIndex(c => c.entity === nextCombatant.entity);
+          if (index !== -1) combatants.splice(index, 1);
+        }
       }
-
-      this.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+  
+      this.updateStats(livingHeroes, livingEnemies, roomNumber, totalRooms);
       this.updateTurnOrder(combatants, TURN_THRESHOLD);
-
+  
       await new Promise(resolve => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
     }
   }
@@ -263,13 +270,16 @@ class HeroActions {
                 ? Math.round(d * HERO_CRIT_MULTIPLIER)
                 : d;
               target.hp = Math.max(0, target.hp - finalSpecialDamage);
+              const targetName = target.isElite
+                ? `Elite ${target.type}`
+                : target.type;
               BattleManager.logEntry(
                 "special",
                 `[Room ${roomNumber}] ${hero.name} uses ${
                   skill.name
-                } for ${finalSpecialDamage} damage${
+                } on ${targetName} for ${finalSpecialDamage} damage${
                   isCritical ? " (Critical!)" : ""
-                }! (${target.type} HP: ${Math.round(target.hp)}/${
+                }! (${targetName} HP: ${Math.round(target.hp)}/${
                   target.maxHp
                 })`,
                 roomNumber
@@ -277,7 +287,7 @@ class HeroActions {
               if (target.hp <= 0) {
                 BattleManager.logEntry(
                   "milestone",
-                  `[Room ${roomNumber}] ${hero.name} defeats ${target.type} with ${skill.name}!`,
+                  `[Room ${roomNumber}] ${hero.name} defeats ${targetName} with ${skill.name}!`,
                   roomNumber
                 );
               }
@@ -449,18 +459,18 @@ class PassiveEffects {
         }
         break;
       case "heal":
-        const healed = formationHeroes.filter((h) => h.hp < h.maxHp);
+        const healed = formationHeroes.filter(
+          (h) => h.hp > 0 && h.hp < h.maxHp
+        );
         if (healed.length > 0) {
-          passive.apply(hero, formationHeroes);
+          passive.apply(hero, healed);
           healed.forEach((ally) => {
             const heal = Math.round(
-              ally.hp -
-                (ally.hp -
-                  hero.attack *
-                    (formation.indexOf(hero.id) >= 6 &&
-                    formation.indexOf(hero.id) <= 8
-                      ? 0.8
-                      : 0.4))
+              hero.attack *
+                (formation.indexOf(hero.id) >= 6 &&
+                formation.indexOf(hero.id) <= 8
+                  ? 0.8
+                  : 0.4)
             );
             BattleManager.logEntry(
               "heal",
@@ -496,7 +506,7 @@ function updateHeroStats(formationHeroes) {
         stat.innerHTML = `
           <span class="stat-name">
             <span class="class-icon ${hero.class}"></span>
-            ${hero.name.split(" ")[0]} (Lv${hero.level}, Spd${hero.speed})
+            ${hero.name.split(" ")[0]} (Lv${hero.level})
           </span>
           <div class="stat-hp-bar">
             <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
@@ -525,7 +535,7 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
     stat.innerHTML = `
       <span class="stat-name">
         <span class="enemy-icon ${isBoss ? "boss" : enemy.isElite ? "elite" : "minion"}"></span>
-        ${isBoss ? "Boss: " : enemy.isElite ? "Elite: " : ""}${enemy.type} (Spd${enemy.speed})
+        ${isBoss ? "Boss: " : enemy.isElite ? "Elite: " : ""}${enemy.type}
       </span>
       <div class="stat-hp-bar">
         <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
