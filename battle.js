@@ -9,6 +9,21 @@ const exitBtn = document.getElementById("exit-btn");
 const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
 
+const turnOrderContainer = document.createElement("div");
+turnOrderContainer.className = "turn-order-container";
+
+const turnOrderTitle = document.createElement("h3");
+turnOrderTitle.className = "turn-order-title";
+turnOrderTitle.textContent = "Turn Order";
+
+const turnOrderBar = document.createElement("div");
+turnOrderBar.id = "turn-order-bar";
+turnOrderBar.className = "turn-order-bar";
+
+turnOrderContainer.appendChild(turnOrderTitle);
+turnOrderContainer.appendChild(turnOrderBar);
+document.querySelector(".battle-screen .panel").insertBefore(turnOrderContainer, battleLog);
+
 gameState.battleMilestones = [];
 
 class BattleManager {
@@ -62,13 +77,12 @@ class BattleManager {
   }
 
   static async runBattleLoop(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
-    const TURN_THRESHOLD = 100; // Lowered for faster combat
+    const TURN_THRESHOLD = 100;
     const combatants = [
       ...formationHeroes.map(hero => ({ entity: hero, isHero: true, ticks: 0 })),
       ...enemyGroup.map(enemy => ({ entity: enemy, isHero: false, ticks: 0 }))
     ];
 
-    // Initialize ticks in original objects
     formationHeroes.forEach(hero => hero.ticks = 0);
     enemyGroup.forEach(enemy => enemy.ticks = 0);
 
@@ -82,12 +96,10 @@ class BattleManager {
       }
       if (livingHeroes.length === 0) return false;
 
-      // Increment ticks
       combatants.forEach(combatant => {
         if (combatant.entity.hp > 0) combatant.entity.ticks += combatant.entity.speed;
       });
 
-      // Find next to act
       const nextCombatant = combatants.reduce((fastest, current) => 
         current.entity.ticks >= TURN_THRESHOLD && current.entity.hp > 0 && 
         (!fastest || current.entity.ticks > fastest.entity.ticks) ? current : fastest, 
@@ -109,8 +121,31 @@ class BattleManager {
       }
 
       this.updateStats(formationHeroes, enemyGroup, roomNumber, totalRooms);
+      this.updateTurnOrder(combatants, TURN_THRESHOLD);
+
       await new Promise(resolve => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
     }
+  }
+
+  static updateTurnOrder(combatants, threshold) {
+    const sortedCombatants = combatants
+      .filter(c => c.entity.hp > 0)
+      .sort((a, b) => b.entity.ticks - a.entity.ticks)
+      .slice(0, 5);
+
+    turnOrderBar.innerHTML = sortedCombatants.map(c => {
+      const name = c.isHero ? c.entity.name.split(" ")[0] : `${c.entity.isElite ? "Elite " : ""}${c.entity.type}`;
+      const progress = Math.min(100, Math.floor((c.entity.ticks / threshold) * 100));
+      const className = c.isHero ? c.entity.class : c.entity.isElite ? "elite" : "enemy";
+      return `
+        <div class="turn-order-entry ${className}">
+          <span class="turn-name">${name}</span>
+          <div class="turn-progress-bar">
+            <div class="turn-progress-fill" style="width: ${progress}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
   }
 
   static handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
