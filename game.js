@@ -47,9 +47,11 @@ function generateHero() {
 }
 
 function levelUpHero(hero) {
-  if (hero.level >= xpThresholds.length - 1 || hero.xp < xpThresholds[hero.level]) return;
+  if (hero.level >= xpThresholds.length - 1) return;
+  const nextThreshold = xpThresholds[hero.level];
+  if (hero.xp < nextThreshold) return;
 
-  hero.xp -= nextThreshold; 
+  hero.xp -= nextThreshold;
   hero.level++;
 
   const classStats = {
