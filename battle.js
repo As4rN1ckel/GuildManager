@@ -170,11 +170,6 @@ class BattleManager {
   ) {
     const xpPerEnemy = isBossRoom ? dungeon.bossXP : dungeon.enemyXp;
     const xpGained = Math.round(xpPerEnemy * enemyGroup.length);
-    this.logEntry(
-      "xp-level",
-      `[Room ${roomNumber}] Heroes gained ${xpGained} XP.`,
-      roomNumber
-    );
 
     formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
@@ -191,7 +186,7 @@ class BattleManager {
   ) {
     this.logEntry(
       "system",
-      `[Room ${roomNumber}] All heroes defeated! Press Exit for results.`,
+      "[Room " + roomNumber + "] All heroes defeated! Press Exit for results.",
       roomNumber
     );
     updateHeroStats(formationHeroes);
@@ -242,11 +237,6 @@ class HeroActions {
 
       if (hero.hp <= 0) {
         gameState.casualties.push(hero.id);
-        BattleManager.logEntry(
-          "milestone",
-          `[Room ${roomNumber}] ${hero.name} falls in battle!`,
-          roomNumber
-        );
       }
     }
   }
@@ -496,11 +486,6 @@ class EnemyActions {
         );
         if (target.hp <= 0) {
           gameState.casualties.push(target.id);
-          BattleManager.logEntry(
-            "milestone",
-            `[Room ${roomNumber}] ${target.name} falls to ${enemy.type}!`,
-            roomNumber
-          );
         }
       } else {
         BattleManager.logEntry(
@@ -688,10 +673,10 @@ function startMission() {
     return;
   }
 
+  mainScreen.style.display = "none";
+  battleScreen.style.display = "block";
   hideHeaderButtons();
 
-  mainScreen.style.display = "none";
-  battleScreen.style.display = "flex";
   dungeonName.textContent = gameState.selectedDungeon.name;
   battleLog.innerHTML = "";
   battleProgress.style.width = "0%";
@@ -772,7 +757,9 @@ function showResults() {
     }"></span>
     ${resultTitle.textContent}
     <span class="result-subtitle">${
-      victory ? "Your heroes have returned triumphant!" : "Your heroes have fallen..."
+      victory
+        ? "Your heroes have returned triumphant!"
+        : "Your heroes have fallen..."
     }</span>
   `;
 
@@ -883,16 +870,6 @@ function toggleBattleSpeed() {
   const index = speeds.indexOf(gameState.battleSpeed);
   gameState.battleSpeed = speeds[(index + 1) % speeds.length];
   speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
-}
-
-function returnToGuild() {
-  resultsScreen.style.display = "none";
-  mainScreen.style.display = "block";
-  gameState.day++;
-  gameState.selectedDungeon = null;
-  updateFormationGrid();
-  renderHeroRoster();
-  updateUI();
 }
 
 exitBtn.addEventListener("click", () => {

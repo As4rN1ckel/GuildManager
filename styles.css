@@ -41,7 +41,6 @@ body {
 }
 
 .container:hover {
-    transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8);
 }
 
@@ -149,7 +148,6 @@ body {
 }
 
 .panel:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
@@ -353,7 +351,6 @@ body {
 }
 
 .formation-grid:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
@@ -1218,7 +1215,6 @@ button:disabled:hover {
 }
 
 .shop-screen:hover {
-    transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8), 0 0 15px rgba(123, 104, 238, 0.5);
 }
 

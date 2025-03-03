@@ -94,11 +94,11 @@ function initGame() {
   loadBtn.addEventListener("click", loadGame);
   resetBtn.addEventListener("click", resetGame);
 
-  const headerButtons = document.createElement("div");
-  headerButtons.style.display = "flex";
-  headerButtons.style.gap = "10px";
-  headerButtons.append(saveBtn, loadBtn, resetBtn);
-  document.querySelector(".header").appendChild(headerButtons);
+  headerButtonsContainer = document.createElement("div");
+  headerButtonsContainer.style.display = "flex";
+  headerButtonsContainer.style.gap = "10px";
+  headerButtonsContainer.append(saveBtn, loadBtn, resetBtn);
+  document.querySelector(".header").appendChild(headerButtonsContainer);
 
   showHeaderButtons();
 
@@ -124,18 +124,65 @@ function initGame() {
 
 // Helper function to show header buttons
 function showHeaderButtons() {
-  headerButtons.forEach((btn) => (btn.style.display = "inline-block"));
+  if (!headerButtonsContainer) {
+    console.error(
+      "headerButtonsContainer is null or undefined, attempting to recreate..."
+    );
+    const header = document.querySelector(".header");
+    if (header) {
+      headerButtonsContainer = document.createElement("div");
+      headerButtonsContainer.style.display = "flex";
+      headerButtonsContainer.style.gap = "10px";
+      headerButtonsContainer.append(saveBtn, loadBtn, resetBtn);
+      header.appendChild(headerButtonsContainer);
+    } else {
+      console.error(".header not found, cannot recreate buttons.");
+      return;
+    }
+  }
+
+  headerButtons.forEach((btn, index) => {
+    if (btn && headerButtonsContainer.contains(btn)) {
+      btn.style.display = "inline-block";
+    } else {
+      console.warn(
+        `Button ${index} not found in headerButtonsContainer, recreating...`
+      );
+      const newBtn = document.createElement("button");
+      if (index === 0) {
+        newBtn.textContent = "SAVE";
+        newBtn.className = "primary";
+      } else if (index === 1) {
+        newBtn.textContent = "LOAD";
+        newBtn.className = "primary";
+      } else if (index === 2) {
+        newBtn.textContent = "RESET";
+        newBtn.className = "primary";
+      }
+      headerButtons[index] = newBtn;
+      headerButtonsContainer.appendChild(newBtn);
+      newBtn.style.display = "inline-block";
+    }
+  });
 }
 
 // Helper function to hide header buttons
 function hideHeaderButtons() {
-  headerButtons.forEach((btn) => (btn.style.display = "none"));
+  if (headerButtonsContainer) {
+    headerButtons.forEach((btn) => {
+      if (btn && headerButtonsContainer.contains(btn)) {
+        btn.style.display = "none";
+      }
+    });
+  }
 }
 
 // Updates UI to reflect game state
 function updateUI() {
   goldAmount.textContent = gameState.gold;
-  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${gameState.day}`;
+  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${
+    gameState.day
+  }`;
   renderHeroRoster();
   updateFormationGrid();
 
@@ -149,17 +196,6 @@ function updateUI() {
     panel.classList.remove("animate-in");
     setTimeout(() => panel.classList.add("animate-in"), 10);
   });
-}
-
-function returnToGuild() {
-  resultsScreen.style.display = "none";
-  mainScreen.style.display = "block";
-  toggleCycle();
-  gameState.selectedDungeon = null;
-  updateFormationGrid();
-  renderHeroRoster();
-  updateUI();
-  showHeaderButtons();
 }
 
 function restHeroes() {
@@ -220,9 +256,9 @@ function renderHeroRoster() {
         e.dataTransfer.setData("text/plain", hero.id)
       );
       el.addEventListener("click", () => selectHero(hero.id));
-      
+
       updateHeroTooltipListeners(el);
-      
+
       heroRoster.appendChild(el);
     }
   });
@@ -232,14 +268,13 @@ function renderHeroRoster() {
  * @param {string} heroId - Hero ID to select/deselect
  */
 function selectHero(heroId) {
-
   const tooltip = document.getElementById("hero-tooltip");
   if (tooltip) {
     tooltip.style.opacity = "0";
     tooltip.style.display = "none";
   }
-  currentHoveredHero = null; 
-  clearTimeout(hideTooltipTimeout); 
+  currentHoveredHero = null;
+  clearTimeout(hideTooltipTimeout);
 
   gameState.selectedHero = gameState.selectedHero === heroId ? null : heroId;
   renderHeroRoster();
@@ -298,7 +333,12 @@ function updateFormationGrid() {
       const hero = gameState.heroes.find((h) => h.id === heroId);
       if (hero) {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+        const hpClass =
+          hpPercentage < 0.25
+            ? "red"
+            : hpPercentage <= 0.6
+            ? "yellow"
+            : "green";
 
         const el = document.createElement("div");
         el.className = `hero-base hero ${hero.class}`;
@@ -317,13 +357,17 @@ function updateFormationGrid() {
           <div class="shape"></div>
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
           <div class="level">Lv${hero.level}</div>
-          <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div></div>
+          <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
+          hpPercentage * 100
+        )}%;"></div></div>
         `;
-        el.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", hero.id));
+        el.addEventListener("dragstart", (e) =>
+          e.dataTransfer.setData("text/plain", hero.id)
+        );
         el.addEventListener("click", () => selectHero(hero.id));
-        
+
         updateHeroTooltipListeners(el);
-        
+
         slot.appendChild(el);
       }
     }
@@ -342,10 +386,10 @@ function showTooltip(e) {
   }
 
   currentHoveredHero = hero;
-  
+
   const tooltipText = hero.dataset.tooltip;
   let tooltip = document.getElementById("hero-tooltip");
-  
+
   if (!tooltip) {
     tooltip = document.createElement("div");
     tooltip.id = "hero-tooltip";
@@ -357,7 +401,7 @@ function showTooltip(e) {
     .split("\n")
     .map((line) => `<div>${line}</div>`)
     .join("");
-  
+
   tooltip.style.pointerEvents = "none";
 
   const rect = hero.getBoundingClientRect();
@@ -379,12 +423,12 @@ function showTooltip(e) {
 
 function hideTooltip() {
   const tooltip = document.getElementById("hero-tooltip");
-  if (!tooltip || currentHoveredHero) return; 
+  if (!tooltip || currentHoveredHero) return;
 
   tooltip.style.opacity = "0";
   hideTooltipTimeout = setTimeout(() => {
     if (tooltip) tooltip.style.display = "none";
-    hideTooltipTimeout = null; 
+    hideTooltipTimeout = null;
   }, 200);
 }
 
@@ -393,7 +437,7 @@ let touchStartTime;
 function handleTouchStart(e) {
   touchStartTime = Date.now();
   const hero = e.currentTarget;
-  tooltipTimeout = setTimeout(() => showTooltip(e), 500); 
+  tooltipTimeout = setTimeout(() => showTooltip(e), 500);
 }
 
 function handleTouchEnd(e) {
@@ -412,7 +456,9 @@ function updateHeroTooltipListeners(heroElement) {
     currentHoveredHero = null;
     hideTooltip();
   });
-  heroElement.addEventListener("touchstart", handleTouchStart, { passive: true });
+  heroElement.addEventListener("touchstart", handleTouchStart, {
+    passive: true,
+  });
   heroElement.addEventListener("touchend", handleTouchEnd, { passive: true });
 }
 
@@ -496,7 +542,13 @@ function renderShop() {
     el.addEventListener("click", () => recruitHero(hero, el));
     recruitList.appendChild(el);
   }
-  setTimeout(() => document.querySelectorAll(".recruit-hero").forEach((hero) => hero.classList.add("visible")), 10);
+  setTimeout(
+    () =>
+      document
+        .querySelectorAll(".recruit-hero")
+        .forEach((hero) => hero.classList.add("visible")),
+    10
+  );
 }
 
 /**
@@ -517,6 +569,36 @@ function recruitHero(hero, element) {
 function hideShopScreen() {
   shopScreen.style.display = "none";
   mainScreen.style.display = "block";
+}
+
+function returnToGuild() {
+  resultsScreen.style.display = "none";
+  mainScreen.style.display = "block";
+  toggleCycle();
+  gameState.selectedDungeon = null;
+  updateFormationGrid();
+  renderHeroRoster();
+  updateUI();
+
+  // Reattach or recreate headerButtonsContainer if missing
+  const header = document.querySelector(".header");
+  if (!header) {
+    console.error(".header not found in DOM!");
+    return;
+  }
+
+  if (!headerButtonsContainer || !header.contains(headerButtonsContainer)) {
+    if (headerButtonsContainer) {
+      headerButtonsContainer.remove(); // Clean up any orphaned container
+    }
+    headerButtonsContainer = document.createElement("div");
+    headerButtonsContainer.style.display = "flex";
+    headerButtonsContainer.style.gap = "10px";
+    headerButtonsContainer.append(saveBtn, loadBtn, resetBtn);
+    header.appendChild(headerButtonsContainer);
+  }
+
+  showHeaderButtons();
 }
 
 function capitalize(str) {
@@ -560,7 +642,7 @@ function updateHeroStatsPanel() {
     heroStatsPanel.style.width = "auto";
     heroStatsPanel.style.maxWidth = "calc(100vw - 20px)";
     heroStatsPanel.style.maxHeight = "calc(100vh - 20px)";
-    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`; 
+    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`;
   } else {
     heroStatsPanel.style.position = "fixed";
     heroStatsPanel.style.top = "50%";
@@ -570,7 +652,7 @@ function updateHeroStatsPanel() {
     heroStatsPanel.style.maxHeight = "80vh";
     heroStatsPanel.style.right = "auto";
     heroStatsPanel.style.bottom = "auto";
-    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`; 
+    heroStatsPanel.className = `hero-stats-panel visible ${hero.class}`;
   }
 
   const heroClass = heroClasses.find((hc) => hc.type === hero.class);
@@ -579,7 +661,9 @@ function updateHeroStatsPanel() {
 
   heroStatsContent.innerHTML = `
     <div class="hero-stat-item"><strong>Name:</strong> ${hero.name}</div>
-    <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(hero.class)}</div>
+    <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
+      hero.class
+    )}</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
     xpThresholds[hero.level]
@@ -591,18 +675,24 @@ function updateHeroStatsPanel() {
     <div class="hero-stat-item"><strong>Hit Chance:</strong> ${Math.floor(
       hero.hitChance * 100
     )}%</div>
-    <div class="hero-stat-item special-item"><strong>Special:</strong> ${hero.special} - ${
+    <div class="hero-stat-item special-item"><strong>Special:</strong> ${
+      hero.special
+    } - ${
     skill?.description || "No description"
-  } <span class="cooldown">(Cooldown: ${skill?.cooldown || 0} turns)</span></div>
-    <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${hero.passive} - ${
-    passive?.description || "No description"
-  }</div>
+  } <span class="cooldown">(Cooldown: ${
+    skill?.cooldown || 0
+  } turns)</span></div>
+    <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${
+      hero.passive
+    } - ${passive?.description || "No description"}</div>
   `;
 
   setTimeout(() => heroStatsPanel.classList.add("animate-in"), 10);
 
   if (isMobile) {
-    modalOverlay.addEventListener("touchmove", preventScroll, { passive: false });
+    modalOverlay.addEventListener("touchmove", preventScroll, {
+      passive: false,
+    });
   } else {
     modalOverlay.removeEventListener("touchmove", preventScroll);
   }
