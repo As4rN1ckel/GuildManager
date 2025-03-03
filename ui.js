@@ -352,6 +352,7 @@ function updateFormationGrid() {
           Lv${hero.level}
           HP: ${hero.hp}/${hero.maxHp}
           ATK: ${hero.attack}
+          SPD: ${hero.speed}
         `.trim();
         el.innerHTML = `
           <div class="shape"></div>
@@ -706,6 +707,7 @@ function updateHeroStatsPanel() {
     hero.maxHp
   }</div>
     <div class="hero-stat-item"><strong>Attack:</strong> ${hero.attack}</div>
+    <div class="hero-stat-item"><strong>Speed:</strong> ${hero.speed}</div>
     <div class="hero-stat-item"><strong>Hit Chance:</strong> ${Math.floor(
       hero.hitChance * 100
     )}%</div>
