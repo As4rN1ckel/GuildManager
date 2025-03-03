@@ -185,7 +185,6 @@ const heroSkills = [
   },
 ];
 
-// Browser-specific export for global access
 if (typeof window !== "undefined") {
   window.generateHeroName = generateHeroName;
   window.heroClasses = heroClasses;

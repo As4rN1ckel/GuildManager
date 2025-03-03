@@ -168,8 +168,10 @@ class BattleManager {
     isBossRoom,
     dungeon
   ) {
-    const xpPerEnemy = isBossRoom ? dungeon.bossXP : dungeon.enemyXp;
-    const xpGained = Math.round(xpPerEnemy * enemyGroup.length);
+    const xpGained = enemyGroup.reduce(
+      (total, enemy) => total + (enemy.hp <= 0 ? enemy.xp : 0),
+      0
+    );
 
     formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
@@ -689,33 +691,41 @@ function startMission() {
   );
 }
 
+function randomizeStat(baseStat, enemyVariance, dungeonVariance) {
+  // Step 1: Apply enemy-specific variance
+  const enemyMin = Math.round(baseStat * (1 - enemyVariance));
+  const enemyMax = Math.round(baseStat * (1 + enemyVariance));
+  const enemyAdjusted = Math.round(Math.random() * (enemyMax - enemyMin) + enemyMin);
+
+  // Step 2: Apply dungeon-specific variance to the adjusted value
+  const finalMin = Math.round(enemyAdjusted * (1 - dungeonVariance));
+  const finalMax = Math.round(enemyAdjusted * (1 + dungeonVariance));
+  return Math.round(Math.random() * (finalMax - finalMin) + finalMin);
+}
+
 function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
-  const {
-    enemyCountOnRoom,
-    enemies,
-    enemyStats,
-    bosses,
-    bossStats,
-    bossCount,
-  } = dungeon;
+  const { enemyCountOnRoom, enemies: enemyNames, bossCount, bosses: bossNames, statVariance } = dungeon;
   const count = isBossRoom
-    ? Math.floor(Math.random() * (bossCount.max - bossCount.min + 1)) +
-      bossCount.min
-    : Math.floor(
-        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min + 1)
-      ) + enemyCountOnRoom.min;
-  const pool = isBossRoom ? bosses : enemies;
-  const stats = isBossRoom ? bossStats : enemyStats;
+    ? Math.round(Math.random() * (bossCount.max - bossCount.min)) + bossCount.min
+    : Math.round(Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min)) + enemyCountOnRoom.min;
+  const pool = isBossRoom ? bossNames : enemyNames;
+  const source = isBossRoom ? bosses : enemies;
 
   return Array(count)
     .fill(null)
-    .map(() => ({
-      type: pool[Math.floor(Math.random() * pool.length)],
-      hp: stats.hp,
-      maxHp: stats.hp,
-      damage: Math.round(stats.damage),
-      hitChance: stats.hitChance,
-    }));
+    .map(() => {
+      const enemyType = pool[Math.floor(Math.random() * pool.length)];
+      const stats = source[enemyType];
+      const hp = randomizeStat(stats.hp, stats.variance, statVariance);
+      return {
+        type: stats.name,
+        hp: hp,
+        maxHp: hp,
+        damage: randomizeStat(stats.damage, stats.variance, statVariance),
+        hitChance: stats.hitChance,
+        xp: stats.xp
+      };
+    });
 }
 
 /**
