@@ -150,9 +150,9 @@ const heroSkills = [
   },
   {
     name: "Multi Shot",
-    description: "Deals 15% more damage to 3 targets",
+    description: "Deals 20% more damage to 3 targets",
     type: "damage",
-    value: 1.15,
+    value: 1.20,
     cooldown: 3,
     appliesTo: ["archer"],
     apply: function (hero, targets, baseDamage) {

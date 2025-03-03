@@ -489,6 +489,11 @@ class EnemyActions {
         );
         if (target.hp <= 0) {
           gameState.casualties.push(target.id);
+          BattleManager.logEntry(
+            "milestone",
+            `[Room ${roomNumber}] ${target.name} has been defeated by ${enemy.type}!`,
+            roomNumber
+          );
         }
       } else {
         BattleManager.logEntry(
@@ -871,11 +876,10 @@ function showResults() {
   if (gameState.battleMilestones.length > 0) {
     gameState.battleMilestones.forEach((milestone) => {
       const entry = document.createElement("div");
-      entry.className = `milestone-entry ${milestone.type}`;
+      const isHeroDeath = milestone.text.includes("has been defeated by");
+      entry.className = `milestone-entry ${milestone.type}${isHeroDeath ? " hero-death" : ""}`;
       entry.innerHTML = `
-        <span class="milestone-icon ${
-          milestone.type === "milestone" ? "milestone-mark" : "xp-mark"
-        }"></span>
+        <span class="milestone-icon ${milestone.type === "milestone" ? "milestone-mark" : "xp-mark"}"></span>
         ${milestone.text}
       `;
       milestonesList.appendChild(entry);

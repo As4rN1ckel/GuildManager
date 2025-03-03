@@ -719,6 +719,17 @@ button:disabled:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+.milestone-entry.hero-death {
+    color: #e74c3c; 
+    border-left-color: #e74c3c;
+    font-weight: bold;
+    background-color: rgba(231, 76, 60, 0.1);
+  }
+  
+  .milestone-entry.hero-death .milestone-icon {
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M6 6l12 12m0-12L6 18"/></svg>') center/cover; /* Cross icon */
+  }
+
 .milestone-icon {
     display: inline-block;
     width: 1rem;
