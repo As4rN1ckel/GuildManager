@@ -377,6 +377,7 @@ function updateFormationGrid() {
 let tooltipTimeout;
 let currentHoveredHero = null;
 let hideTooltipTimeout = null;
+let mouseMoveHandler = null;
 
 function showTooltip(e) {
   const hero = e.currentTarget;
@@ -404,20 +405,35 @@ function showTooltip(e) {
 
   tooltip.style.pointerEvents = "none";
 
-  const rect = hero.getBoundingClientRect();
-  tooltip.style.position = "absolute";
-  tooltip.style.top = `${rect.bottom + 5}px`;
-  tooltip.style.left = `${rect.left}px`;
+  updateTooltipPosition(e);
+
+  tooltip.classList.add("visible");
   tooltip.style.display = "block";
   tooltip.style.opacity = "1";
   tooltip.style.transition = "opacity 0.2s ease-in-out";
 
+  if (!mouseMoveHandler) {
+    mouseMoveHandler = (event) => updateTooltipPosition(event);
+    document.addEventListener("mousemove", mouseMoveHandler);
+  }
+}
+
+function updateTooltipPosition(e) {
+  const tooltip = document.getElementById("hero-tooltip");
+  if (!tooltip || !currentHoveredHero) return;
+
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
   const tooltipRect = tooltip.getBoundingClientRect();
+
+  tooltip.style.left = `${mouseX + 10}px`;
+  tooltip.style.top = `${mouseY + 10}px`;
+
   if (tooltipRect.right > window.innerWidth) {
-    tooltip.style.left = `${window.innerWidth - tooltipRect.width - 5}px`;
+    tooltip.style.left = `${mouseX - tooltipRect.width - 10}px`;
   }
   if (tooltipRect.bottom > window.innerHeight) {
-    tooltip.style.top = `${rect.top - tooltipRect.height - 5}px`;
+    tooltip.style.top = `${mouseY - tooltipRect.height - 10}px`;
   }
 }
 
@@ -425,9 +441,16 @@ function hideTooltip() {
   const tooltip = document.getElementById("hero-tooltip");
   if (!tooltip || currentHoveredHero) return;
 
+  tooltip.classList.remove("visible");
   tooltip.style.opacity = "0";
   hideTooltipTimeout = setTimeout(() => {
-    if (tooltip) tooltip.style.display = "none";
+    if (tooltip) {
+      tooltip.style.display = "none";
+      if (mouseMoveHandler) {
+        document.removeEventListener("mousemove", mouseMoveHandler);
+        mouseMoveHandler = null;
+      }
+    }
     hideTooltipTimeout = null;
   }, 200);
 }
@@ -438,6 +461,12 @@ function handleTouchStart(e) {
   touchStartTime = Date.now();
   const hero = e.currentTarget;
   tooltipTimeout = setTimeout(() => showTooltip(e), 500);
+  const touchMoveHandler = (event) => {
+    const touch = event.touches[0];
+    updateTooltipPosition({ clientX: touch.clientX, clientY: touch.clientY });
+  };
+  hero.addEventListener("touchmove", touchMoveHandler, { passive: true });
+  hero.dataset.touchMoveHandler = touchMoveHandler;
 }
 
 function handleTouchEnd(e) {
@@ -448,6 +477,11 @@ function handleTouchEnd(e) {
     hideTooltip();
   }
   touchStartTime = null;
+  const hero = e.currentTarget;
+  if (hero.dataset.touchMoveHandler) {
+    hero.removeEventListener("touchmove", hero.dataset.touchMoveHandler);
+    delete hero.dataset.touchMoveHandler;
+  }
 }
 
 function updateHeroTooltipListeners(heroElement) {
