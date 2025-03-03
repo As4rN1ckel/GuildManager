@@ -775,6 +775,10 @@ button:disabled:hover {
     background: #e67e22 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2l10 10-10 10-10-10z"/></svg>') center/cover;
 }
 
+.enemy-icon.elite {
+    background: #f1c40f url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2l4 10-4 10-4-10z"/></svg>') center/cover;
+  }
+
 .hero-stats,
 .enemy-stats {
     background: linear-gradient(to bottom, #1a1a1a, #141414);
@@ -841,6 +845,12 @@ button:disabled:hover {
     border-left: 3px solid #e67e22;
     font-weight: bold;
 }
+
+.hero-stat.elite {
+    border-left: 3px solid #f1c40f;
+    font-weight: bold;
+  }
+
 
 .stat-hp-bar {
     background: linear-gradient(to right, #333, #444);

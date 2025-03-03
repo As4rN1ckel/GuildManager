@@ -84,13 +84,14 @@ class BattleManager {
     if (!enemyGroup || !formationHeroes.length) return false;
 
     const isBossRoom = roomNumber === totalRooms;
+    const enemyDescriptions = enemyGroup
+      .map(
+        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`
+      )
+      .join(", ");
     this.logEntry(
       "system",
-      `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyGroup
-        .map((e) => e.type)
-        .join(", ")} (${enemyGroup
-        .map((e) => `${e.hp}/${e.maxHp}`)
-        .join(", ")} HP)`,
+      `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyDescriptions}`,
       roomNumber
     );
 
@@ -648,16 +649,14 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
     const enemyId = `${enemy.type.toLowerCase().replace(" ", "-")}-${index}`;
 
     const stat = document.createElement("div");
-    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${enemyId}`;
+    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${enemy.isElite ? "elite" : ""} ${enemyId}`;
     stat.innerHTML = `
       <span class="stat-name">
-        <span class="enemy-icon ${isBoss ? "boss" : "minion"}"></span>
-        ${isBoss ? "Boss: " : ""}${enemy.type}
+        <span class="enemy-icon ${isBoss ? "boss" : enemy.isElite ? "elite" : "minion"}"></span>
+        ${isBoss ? "Boss: " : enemy.isElite ? "Elite: " : ""}${enemy.type}
       </span>
       <div class="stat-hp-bar">
-        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-      hpPercentage * 100
-    )}%;"></div>
+        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
       </div>
       <span class="stat-health">${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
@@ -692,22 +691,32 @@ function startMission() {
 }
 
 function randomizeStat(baseStat, enemyVariance, dungeonVariance) {
-  // Step 1: Apply enemy-specific variance
   const enemyMin = Math.round(baseStat * (1 - enemyVariance));
   const enemyMax = Math.round(baseStat * (1 + enemyVariance));
-  const enemyAdjusted = Math.round(Math.random() * (enemyMax - enemyMin) + enemyMin);
+  const enemyAdjusted = Math.round(
+    Math.random() * (enemyMax - enemyMin) + enemyMin
+  );
 
-  // Step 2: Apply dungeon-specific variance to the adjusted value
   const finalMin = Math.round(enemyAdjusted * (1 - dungeonVariance));
   const finalMax = Math.round(enemyAdjusted * (1 + dungeonVariance));
   return Math.round(Math.random() * (finalMax - finalMin) + finalMin);
 }
 
 function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
-  const { enemyCountOnRoom, enemies: enemyNames, bossCount, bosses: bossNames, statVariance } = dungeon;
+  const {
+    enemyCountOnRoom,
+    enemies: enemyNames,
+    bossCount,
+    bosses: bossNames,
+    statVariance,
+    eliteChance,
+  } = dungeon;
   const count = isBossRoom
-    ? Math.round(Math.random() * (bossCount.max - bossCount.min)) + bossCount.min
-    : Math.round(Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min)) + enemyCountOnRoom.min;
+    ? Math.round(Math.random() * (bossCount.max - bossCount.min)) +
+      bossCount.min
+    : Math.round(
+        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min)
+      ) + enemyCountOnRoom.min;
   const pool = isBossRoom ? bossNames : enemyNames;
   const source = isBossRoom ? bosses : enemies;
 
@@ -716,14 +725,31 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
     .map(() => {
       const enemyType = pool[Math.floor(Math.random() * pool.length)];
       const stats = source[enemyType];
-      const hp = randomizeStat(stats.hp, stats.variance, statVariance);
+      const isElite = !isBossRoom && Math.random() < eliteChance; 
+
+      const baseHp = randomizeStat(stats.hp, stats.variance, statVariance);
+      const baseDamage = randomizeStat(
+        stats.damage,
+        stats.variance,
+        statVariance
+      );
+
+      const hp = isElite ? Math.round(baseHp * ELITE_HP_MULTIPLIER) : baseHp;
+      const damage = isElite
+        ? Math.round(baseDamage * ELITE_DAMAGE_MULTIPLIER)
+        : baseDamage;
+      const xp = isElite
+        ? Math.round(stats.xp * ELITE_XP_MULTIPLIER)
+        : stats.xp;
+
       return {
         type: stats.name,
         hp: hp,
-        maxHp: hp,
-        damage: randomizeStat(stats.damage, stats.variance, statVariance),
+        maxHp: hp, 
+        damage: damage,
         hitChance: stats.hitChance,
-        xp: stats.xp
+        xp: xp, 
+        isElite: isElite,
       };
     });
 }
@@ -833,7 +859,6 @@ function showResults() {
   const milestonesList = document.getElementById("milestones-list");
   const milestonesContainer = milestonesList.parentElement;
 
-  // Check if a milestones title already exists and update or replace it
   let milestonesTitle = milestonesContainer.querySelector(".section-title");
   if (!milestonesTitle) {
     milestonesTitle = document.createElement("h3");

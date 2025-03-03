@@ -20,13 +20,6 @@ const gameState = {
   casualties: [],
 };
 
-const HERO_CRIT_CHANCE = 0.1;
-const HERO_CRIT_MULTIPLIER = 1.5;
-const ENEMY_CRIT_CHANCE = 0.08;
-const ENEMY_CRIT_MULTIPLIER = 1.3;
-const BOSS_CRIT_CHANCE = 0.12;
-const BOSS_CRIT_MULTIPLIER = 1.7;
-
 function addHero(hero) {
   gameState.heroes.push(hero);
   renderHeroRoster();
@@ -135,11 +128,5 @@ if (typeof window !== "undefined") {
   window.addEventListener("load", loadGame);
   Object.assign(window, {
     gameState,
-    HERO_CRIT_CHANCE,
-    HERO_CRIT_MULTIPLIER,
-    ENEMY_CRIT_CHANCE,
-    ENEMY_CRIT_MULTIPLIER,
-    BOSS_CRIT_CHANCE,
-    BOSS_CRIT_MULTIPLIER,
   });
 }

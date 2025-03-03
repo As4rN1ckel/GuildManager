@@ -70,6 +70,10 @@ const heroClasses = [
 // XP thresholds for leveling up
 const xpThresholds = [0, 10, 25, 60, 120, 250, 520, 1050, 2200, 4500, 9100];
 
+// Hero Critical Hit Constants
+const HERO_CRIT_CHANCE = 0.1;    
+const HERO_CRIT_MULTIPLIER = 1.5; 
+
 // Hero passives
 const heroPassives = [
   {
@@ -191,4 +195,6 @@ if (typeof window !== "undefined") {
   window.xpThresholds = xpThresholds;
   window.heroPassives = heroPassives;
   window.heroSkills = heroSkills;
+  window.HERO_CRIT_CHANCE = HERO_CRIT_CHANCE;
+  window.HERO_CRIT_MULTIPLIER = HERO_CRIT_MULTIPLIER;
 }

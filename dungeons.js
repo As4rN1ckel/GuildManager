@@ -3,9 +3,10 @@ const dungeons = [
     name: "Forest Ruins",
     description: "An abandoned forest ruin",
     difficulty: "Easy",
-    reward: 200,
+    reward: 150,
     roomCount: 3,
     statVariance: 0.1,
+    eliteChance: 0.05,
     enemyCountOnRoom: { min: 3, max: 5 },
     enemies: ["Goblin", "Kobold", "Wolf"],
     bosses: ["Goblin Warlord", "Ancient Treant"],
@@ -15,9 +16,10 @@ const dungeons = [
     name: "Dark Caverns",
     description: "Caves with eerie undead",
     difficulty: "Medium",
-    reward: 400,
+    reward: 300,
     roomCount: 5,
     statVariance: 0.2,
+    eliteChance: 0.1,
     enemyCountOnRoom: { min: 4, max: 6 },
     enemies: ["Skeleton", "Ghoul", "Shadow"],
     bosses: ["Skeleton King", "Ghoul Overlord"],
@@ -30,12 +32,24 @@ const dungeons = [
     reward: 800,
     roomCount: 7,
     statVariance: 0.3,
+    eliteChance: 0.1,
     enemyCountOnRoom: { min: 5, max: 7 },
     enemies: ["Dragon", "Wyvern", "Demon"],
     bosses: ["Elder Dragon", "Infernal Wyrm"],
     bossCount: { min: 1, max: 2 },
   },
 ];
+
+// Enemy and Boss Critical Hit Constants
+const ENEMY_CRIT_CHANCE = 0.08;    
+const ENEMY_CRIT_MULTIPLIER = 1.3; 
+const BOSS_CRIT_CHANCE = 0.12;     
+const BOSS_CRIT_MULTIPLIER = 1.7; 
+
+// Elite Enemy Modifiers
+const ELITE_HP_MULTIPLIER = 2.0;    
+const ELITE_DAMAGE_MULTIPLIER = 1.5; 
+const ELITE_XP_MULTIPLIER = 2.0;    
 
 const enemies = {
   // Easy Difficulty
@@ -177,4 +191,11 @@ if (typeof window !== "undefined") {
   window.dungeons = dungeons;
   window.enemies = enemies;
   window.bosses = bosses;
+  window.ENEMY_CRIT_CHANCE = ENEMY_CRIT_CHANCE;    
+  window.ENEMY_CRIT_MULTIPLIER = ENEMY_CRIT_MULTIPLIER;
+  window.BOSS_CRIT_CHANCE = BOSS_CRIT_CHANCE;         
+  window.BOSS_CRIT_MULTIPLIER = BOSS_CRIT_MULTIPLIER; 
+  window.ELITE_HP_MULTIPLIER = ELITE_HP_MULTIPLIER;   
+  window.ELITE_DAMAGE_MULTIPLIER = ELITE_DAMAGE_MULTIPLIER; 
+  window.ELITE_XP_MULTIPLIER = ELITE_XP_MULTIPLIER;   
 }
