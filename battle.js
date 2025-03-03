@@ -138,15 +138,16 @@ class BattleManager {
     const sortedCombatants = combatants
       .filter(c => c.entity.hp > 0)
       .sort((a, b) => b.entity.ticks - a.entity.ticks)
-      .slice(0, 5);
+      .slice(0, 6);
 
     turnOrderBar.innerHTML = sortedCombatants.map(c => {
       const name = c.isHero ? c.entity.name.split(" ")[0] : `${c.entity.isElite ? "Elite " : ""}${c.entity.type}`;
+      const speed = c.entity.speed;
       const progress = Math.min(100, Math.floor((c.entity.ticks / threshold) * 100));
       const className = c.isHero ? c.entity.class : c.entity.isElite ? "elite" : "enemy";
       return `
         <div class="turn-order-entry ${className}">
-          <span class="turn-name">${name}</span>
+          <span class="turn-name">${name} (Spd ${speed})</span>
           <div class="turn-progress-bar">
             <div class="turn-progress-fill" style="width: ${progress}%"></div>
           </div>
