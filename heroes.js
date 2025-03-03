@@ -34,6 +34,7 @@ const heroClasses = [
     cost: 80,
     passive: "Ironclad Resilience",
     hitChance: 0.8,
+    speed: 40,
   },
   {
     type: "archer",
@@ -44,6 +45,7 @@ const heroClasses = [
     cost: 100,
     passive: "Deadly Precision",
     hitChance: 0.8,
+    speed: 70,
   },
   {
     type: "mage",
@@ -54,6 +56,7 @@ const heroClasses = [
     cost: 120,
     passive: "Arcane Potency",
     hitChance: 0.7,
+    speed: 60,
   },
   {
     type: "cleric",
@@ -64,6 +67,7 @@ const heroClasses = [
     cost: 110,
     passive: "Divine Restoration",
     hitChance: 0.8,
+    speed: 50,
   },
 ];
 

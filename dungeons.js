@@ -60,6 +60,7 @@ const enemies = {
     hitChance: 0.75,
     xp: 1,
     variance: 0.1,
+    speed: 50,
   },
   Kobold: {
     name: "Kobold",
@@ -68,6 +69,7 @@ const enemies = {
     hitChance: 0.8,
     xp: 1,
     variance: 0.1,
+    speed: 50,
   },
   Wolf: {
     name: "Wolf",
@@ -76,6 +78,7 @@ const enemies = {
     hitChance: 0.7,
     xp: 2,
     variance: 0.1,
+    speed: 70,
   },
 
   // Medium Difficulty
@@ -86,6 +89,7 @@ const enemies = {
     hitChance: 0.8,
     xp: 2,
     variance: 0.1,
+    speed: 50,
   },
   Ghoul: {
     name: "Ghoul",
@@ -94,6 +98,7 @@ const enemies = {
     hitChance: 0.75,
     xp: 3,
     variance: 0.1,
+    speed: 50,
   },
   Shadow: {
     name: "Shadow",
@@ -102,6 +107,7 @@ const enemies = {
     hitChance: 0.85,
     xp: 3,
     variance: 0.1,
+    speed: 50,
   },
 
   // Hard Difficulty
@@ -112,6 +118,7 @@ const enemies = {
     hitChance: 0.8,
     xp: 4,
     variance: 0.1,
+    speed: 80,
   },
   Wyvern: {
     name: "Wyvern",
@@ -120,6 +127,7 @@ const enemies = {
     hitChance: 0.75,
     xp: 3,
     variance: 0.1,
+    speed: 70,
   },
   Demon: {
     name: "Demon",
@@ -128,6 +136,7 @@ const enemies = {
     hitChance: 0.8,
     xp: 5,
     variance: 0.1,
+    speed: 60,
   },
 };
 
@@ -140,6 +149,7 @@ const bosses = {
     hitChance: 0.8,
     xp: 6,
     variance: 0.15,
+    speed: 50,
   },
   "Ancient Treant": {
     name: "Ancient Treant",
@@ -148,6 +158,7 @@ const bosses = {
     hitChance: 0.75,
     xp: 6,
     variance: 0.15,
+    speed: 40,
   },
 
   // Medium Difficulty
@@ -158,6 +169,7 @@ const bosses = {
     hitChance: 0.85,
     xp: 8,
     variance: 0.15,
+    speed: 50,
   },
   "Ghoul Overlord": {
     name: "Ghoul Overlord",
@@ -166,6 +178,7 @@ const bosses = {
     hitChance: 0.8,
     xp: 10,
     variance: 0.15,
+    speed: 50,
   },
 
   // Hard Difficulty
@@ -176,6 +189,7 @@ const bosses = {
     hitChance: 0.85,
     xp: 15,
     variance: 0.15,
+    speed: 80,
   },
   "Infernal Wyrm": {
     name: "Infernal Wyrm",
@@ -184,6 +198,7 @@ const bosses = {
     hitChance: 0.9,
     xp: 12,
     variance: 0.15,
+    speed: 70,
   },
 };
 

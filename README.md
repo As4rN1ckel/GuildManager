@@ -4,6 +4,7 @@
  - Hero Skills/Upgrades
  - Hero Tiers & Different Prices and Stats
  - Improved Recruit
+ - Impproved Turn Based: New Attribute Speed
  - Multiplayer?
  - Random Events
  - More Dungeons/Enemies/Classes/Skills/Passives

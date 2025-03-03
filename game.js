@@ -27,11 +27,11 @@ function addHero(hero) {
 }
 
 function generateHero() {
-  const classIndex = Math.floor(Math.random() * window.heroClasses.length);
-  const heroClass = window.heroClasses[classIndex];
+  const classIndex = Math.floor(Math.random() * heroClasses.length);
+  const heroClass = heroClasses[classIndex];
   return {
     id: Date.now() + Math.random().toString(36).substring(2, 9),
-    name: window.generateHeroName(heroClass.name),
+    name: generateHeroName(heroClass.name),
     class: heroClass.type,
     hp: heroClass.hp,
     maxHp: heroClass.hp,
@@ -43,6 +43,7 @@ function generateHero() {
     cooldown: 0,
     xp: 0,
     hitChance: heroClass.hitChance,
+    speed: heroClass.speed
   };
 }
 
