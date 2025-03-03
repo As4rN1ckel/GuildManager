@@ -611,9 +611,9 @@ button:disabled:hover {
     border-radius: 5px;
     overflow-x: auto;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-  }
-  
-  .turn-order-entry {
+}
+
+.turn-order-entry {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -622,14 +622,14 @@ button:disabled:hover {
     background: rgba(50, 50, 50, 0.8);
     border-radius: 3px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .turn-order-entry:hover {
+}
+
+.turn-order-entry:hover {
     transform: scale(1.05);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  }
-  
-  .turn-name {
+}
+
+.turn-name {
     font-size: 0.75rem;
     color: var(--text-color);
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
@@ -637,9 +637,9 @@ button:disabled:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-  }
-  
-  .turn-progress-bar {
+}
+
+.turn-progress-bar {
     width: 100%;
     height: 0.4rem;
     background: #333;
@@ -647,19 +647,19 @@ button:disabled:hover {
     border-radius: 2px;
     margin-top: 0.2rem;
     overflow: hidden;
-  }
-  
-  .turn-progress-fill {
+}
+
+.turn-progress-fill {
     height: 100%;
     background: var(--accent-color);
     transition: width 0.3s ease;
-  }
+}
 
-  .turn-order-container {
+.turn-order-container {
     margin: 0.5rem 0;
-  }
-  
-  .turn-order-title {
+}
+
+.turn-order-title {
     color: var(--accent-color);
     font-size: 1.1rem;
     margin: 0 0 0.5rem 0;
@@ -670,14 +670,45 @@ button:disabled:hover {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     border-bottom: 2px solid #444;
     background: linear-gradient(to right, transparent, rgba(123, 104, 238, 0.2), transparent);
+}
+
+.turn-order-entry.warrior .turn-name,
+.turn-order-entry.archer .turn-name,
+.turn-order-entry.mage .turn-name,
+.turn-order-entry.cleric .turn-name {
+    color: #4682b4;
+}
+
+.turn-order-entry.enemy .turn-name,
+.turn-order-entry.elite .turn-name {
+    color: #ff4444;
+}
+
+.turn-order-entry.warrior .turn-progress-fill,
+.turn-order-entry.archer .turn-progress-fill,
+.turn-order-entry.mage .turn-progress-fill,
+.turn-order-entry.cleric .turn-progress-fill {
+    background: #4682b4;
+}
+
+.turn-order-entry.enemy .turn-progress-fill,
+.turn-order-entry.elite .turn-progress-fill {
+    background: #ff4444;
+}
+
+.turn-position {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--accent-color); /* Purple for emphasis */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-bottom: 0.1rem;
+    background: rgba(123, 104, 238, 0.2); /* Subtle purple glow */
+    border-radius: 50%;
+    width: 1.2rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+    text-align: center;
   }
-  
-  .turn-order-entry.warrior .turn-progress-fill { background: var(--warrior-color); }
-  .turn-order-entry.archer .turn-progress-fill { background: var(--archer-color); }
-  .turn-order-entry.mage .turn-progress-fill { background: var(--mage-color); }
-  .turn-order-entry.cleric .turn-progress-fill { background: var(--cleric-color); }
-  .turn-order-entry.elite .turn-progress-fill { background: #f1c40f; }
-  .turn-order-entry.enemy .turn-progress-fill { background: #ff5555; }
 
 .log-entry {
     margin-bottom: 0.625rem;
@@ -799,15 +830,16 @@ button:disabled:hover {
 }
 
 .milestone-entry.hero-death {
-    color: #e74c3c; 
+    color: #e74c3c;
     border-left-color: #e74c3c;
     font-weight: bold;
     background-color: rgba(231, 76, 60, 0.1);
-  }
-  
-  .milestone-entry.hero-death .milestone-icon {
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M6 6l12 12m0-12L6 18"/></svg>') center/cover; /* Cross icon */
-  }
+}
+
+.milestone-entry.hero-death .milestone-icon {
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M6 6l12 12m0-12L6 18"/></svg>') center/cover;
+    /* Cross icon */
+}
 
 .milestone-icon {
     display: inline-block;
@@ -867,7 +899,7 @@ button:disabled:hover {
 
 .enemy-icon.elite {
     background: #f1c40f url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2l4 10-4 10-4-10z"/></svg>') center/cover;
-  }
+}
 
 .hero-stats,
 .enemy-stats {
@@ -939,7 +971,7 @@ button:disabled:hover {
 .hero-stat.elite {
     border-left: 3px solid #f1c40f;
     font-weight: bold;
-  }
+}
 
 
 .stat-hp-bar {
