@@ -1,15 +1,68 @@
 // Hero name generation data and function
 const firstNames = [
-  "Aric", "Bron", "Cael", "Dorn", "Elric", "Finn", "Gorm", "Harn", "Irwin", "Jace",
-  "Kael", "Lorn", "Merek", "Nero", "Oryn", "Pax", "Quin", "Ryn", "Thane", "Veyn",
-  "Aelith", "Brynn", "Cindra", "Dalia", "Elara", "Fiora", "Gwyn", "Liora", "Myra", "Sylvi",
+  "Aric",
+  "Bron",
+  "Cael",
+  "Dorn",
+  "Elric",
+  "Finn",
+  "Gorm",
+  "Harn",
+  "Irwin",
+  "Jace",
+  "Kael",
+  "Lorn",
+  "Merek",
+  "Nero",
+  "Oryn",
+  "Pax",
+  "Quin",
+  "Ryn",
+  "Thane",
+  "Veyn",
+  "Aelith",
+  "Brynn",
+  "Cindra",
+  "Dalia",
+  "Elara",
+  "Fiora",
+  "Gwyn",
+  "Liora",
+  "Myra",
+  "Sylvi",
 ];
 
 const lastNames = [
-  "the Brave", "the Swift", "the Wise", "the Strong", "the Bold", "Darkblade", "Lightbringer", "Stormcaller",
-  "Shadowcloak", "Frostwind", "Ironfist", "Moonwhisper", "Sunforge", "Nightshade", "Thunderstrike",
-  "Starfall", "Bloodfang", "Skywatcher", "Emberheart", "Stoneguard", "Riversong", "Frostbite",
-  "Dawnbringer", "Shadowdancer", "Ironwill", "Mistwalker", "Flamebearer", "Stormrider", "Goldenhawk", "Windspear",
+  "the Brave",
+  "the Swift",
+  "the Wise",
+  "the Strong",
+  "the Bold",
+  "Darkblade",
+  "Lightbringer",
+  "Stormcaller",
+  "Shadowcloak",
+  "Frostwind",
+  "Ironfist",
+  "Moonwhisper",
+  "Sunforge",
+  "Nightshade",
+  "Thunderstrike",
+  "Starfall",
+  "Bloodfang",
+  "Skywatcher",
+  "Emberheart",
+  "Stoneguard",
+  "Riversong",
+  "Frostbite",
+  "Dawnbringer",
+  "Shadowdancer",
+  "Ironwill",
+  "Mistwalker",
+  "Flamebearer",
+  "Stormrider",
+  "Goldenhawk",
+  "Windspear",
 ];
 
 /**
@@ -75,8 +128,8 @@ const heroClasses = [
 const xpThresholds = [0, 10, 25, 60, 120, 250, 520, 1050, 2200, 4500, 9100];
 
 // Hero Critical Hit Constants
-const HERO_CRIT_CHANCE = 0.1;    
-const HERO_CRIT_MULTIPLIER = 1.5; 
+const HERO_CRIT_CHANCE = 0.1;
+const HERO_CRIT_MULTIPLIER = 1.5;
 
 // Hero passives
 const heroPassives = [
@@ -156,7 +209,7 @@ const heroSkills = [
     name: "Multi Shot",
     description: "Deals 20% more damage to 3 targets",
     type: "damage",
-    value: 1.20,
+    value: 1.2,
     cooldown: 3,
     appliesTo: ["archer"],
     apply: function (hero, targets, baseDamage) {

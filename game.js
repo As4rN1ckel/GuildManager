@@ -1,6 +1,10 @@
 // Fallback for older browsers or direct script inclusion (global variables)
 if (typeof window !== "undefined") {
-  window.generateHeroName = window.generateHeroName || function () { console.error("generateHeroName not defined"); };
+  window.generateHeroName =
+    window.generateHeroName ||
+    function () {
+      console.error("generateHeroName not defined");
+    };
   window.heroClasses = window.heroClasses || [];
   window.xpThresholds = window.xpThresholds || [0, 10, 25, 60, 120, 250];
   window.heroPassives = window.heroPassives || [];
@@ -43,7 +47,7 @@ function generateHero() {
     cooldown: 0,
     xp: 0,
     hitChance: heroClass.hitChance,
-    speed: heroClass.speed
+    speed: heroClass.speed,
   };
 }
 
@@ -56,10 +60,10 @@ function levelUpHero(hero) {
   hero.level++;
 
   const classStats = {
-    "warrior": { maxHp: 14, hpHeal: 8, attack: 2 },
-    "archer": { maxHp: 10, hpHeal: 5, attack: 3 },
-    "mage": { maxHp: 8, hpHeal: 4, attack: 4 },
-    "cleric": { maxHp: 12, hpHeal: 6, attack: 1 }
+    warrior: { maxHp: 14, hpHeal: 8, attack: 2 },
+    archer: { maxHp: 10, hpHeal: 5, attack: 3 },
+    mage: { maxHp: 8, hpHeal: 4, attack: 4 },
+    cleric: { maxHp: 12, hpHeal: 6, attack: 1 },
   };
   const boosts = classStats[hero.class] || { maxHp: 10, hpHeal: 5, attack: 2 };
 

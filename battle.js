@@ -22,7 +22,9 @@ turnOrderBar.className = "turn-order-bar";
 
 turnOrderContainer.appendChild(turnOrderTitle);
 turnOrderContainer.appendChild(turnOrderBar);
-document.querySelector(".battle-screen .panel").insertBefore(turnOrderContainer, battleLog);
+document
+  .querySelector(".battle-screen .panel")
+  .insertBefore(turnOrderContainer, battleLog);
 
 gameState.battleMilestones = [];
 
@@ -40,113 +42,210 @@ class BattleManager {
 
       const formationHeroes = this.getFormationHeroes();
       if (!formationHeroes.length) {
-        this.handleDefeat(formationHeroes, roomEnemies[currentRoom - 1], currentRoom, totalRooms, dungeon);
+        this.handleDefeat(
+          formationHeroes,
+          roomEnemies[currentRoom - 1],
+          currentRoom,
+          totalRooms,
+          dungeon
+        );
         return;
       }
 
-      const roomCleared = await this.simulateRoom(currentRoom, totalRooms, formationHeroes, roomEnemies[currentRoom - 1], dungeon);
-      this.updateStats(formationHeroes, roomEnemies[currentRoom - 1], currentRoom, totalRooms);
+      const roomCleared = await this.simulateRoom(
+        currentRoom,
+        totalRooms,
+        formationHeroes,
+        roomEnemies[currentRoom - 1],
+        dungeon
+      );
+      this.updateStats(
+        formationHeroes,
+        roomEnemies[currentRoom - 1],
+        currentRoom,
+        totalRooms
+      );
 
       if (!roomCleared) currentRoom--;
       this.updateProgress(currentRoom + (roomCleared ? 0 : 0.5), totalRooms);
     }
 
-    this.logEntry("system", "Dungeon conquered. Press Exit for results.", currentRoom);
+    this.logEntry(
+      "system",
+      "Dungeon conquered. Press Exit for results.",
+      currentRoom
+    );
     exitBtn.disabled = false;
   }
 
   static generateRooms(dungeon, totalRooms) {
-    return Array(totalRooms).fill(null).map((_, i) => generateEnemyGroup(dungeon, i, i === totalRooms - 1));
+    return Array(totalRooms)
+      .fill(null)
+      .map((_, i) => generateEnemyGroup(dungeon, i, i === totalRooms - 1));
   }
 
   static getFormationHeroes() {
     return gameState.formation
-      .filter(id => id !== null)
-      .map(id => gameState.heroes.find(h => h.id === id))
-      .filter(hero => hero && !gameState.casualties.includes(hero.id));
+      .filter((id) => id !== null)
+      .map((id) => gameState.heroes.find((h) => h.id === id))
+      .filter((hero) => hero && !gameState.casualties.includes(hero.id));
   }
 
-  static async simulateRoom(roomNumber, totalRooms, formationHeroes, enemyGroup, dungeon) {
+  static async simulateRoom(
+    roomNumber,
+    totalRooms,
+    formationHeroes,
+    enemyGroup,
+    dungeon
+  ) {
     if (!enemyGroup || !formationHeroes.length) return false;
 
     const isBossRoom = roomNumber === totalRooms;
-    const enemyDescriptions = enemyGroup.map(e => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`).join(", ");
-    this.logEntry("system", `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyDescriptions}`, roomNumber);
+    const enemyDescriptions = enemyGroup
+      .map(
+        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`
+      )
+      .join(", ");
+    this.logEntry(
+      "system",
+      `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyDescriptions}`,
+      roomNumber
+    );
 
-    return await this.runBattleLoop(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+    return await this.runBattleLoop(
+      formationHeroes,
+      enemyGroup,
+      roomNumber,
+      totalRooms,
+      isBossRoom,
+      dungeon
+    );
   }
 
-  static async runBattleLoop(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
+  static async runBattleLoop(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    isBossRoom,
+    dungeon
+  ) {
     const TURN_THRESHOLD = 100;
     const combatants = [
-      ...formationHeroes.map(hero => ({ entity: hero, isHero: true, ticks: 0 })),
-      ...enemyGroup.map(enemy => ({ entity: enemy, isHero: false, ticks: 0 }))
+      ...formationHeroes.map((hero) => ({
+        entity: hero,
+        isHero: true,
+        ticks: 0,
+      })),
+      ...enemyGroup.map((enemy) => ({
+        entity: enemy,
+        isHero: false,
+        ticks: 0,
+      })),
     ];
-  
-    formationHeroes.forEach(hero => hero.ticks = 0);
-    enemyGroup.forEach(enemy => enemy.ticks = 0);
-  
+
+    formationHeroes.forEach((hero) => (hero.ticks = 0));
+    enemyGroup.forEach((enemy) => (enemy.ticks = 0));
+
     while (true) {
-      const livingHeroes = formationHeroes.filter(h => h.hp > 0);
-      const livingEnemies = enemyGroup.filter(e => e.hp > 0);
-  
+      const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
+      const livingEnemies = enemyGroup.filter((e) => e.hp > 0);
+
       if (livingEnemies.length === 0) {
-        this.handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon);
+        this.handleRoomClear(
+          formationHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms,
+          isBossRoom,
+          dungeon
+        );
         return true;
       }
       if (livingHeroes.length === 0) return false;
-  
-      combatants.forEach(combatant => {
-        if (combatant.entity.hp > 0) combatant.entity.ticks += combatant.entity.speed;
+
+      combatants.forEach((combatant) => {
+        if (combatant.entity.hp > 0)
+          combatant.entity.ticks += combatant.entity.speed;
       });
-  
+
       const sortedCombatants = combatants
-        .filter(c => c.entity.hp > 0)
-        .sort((a, b) => b.entity.ticks - a.entity.ticks); 
-      const nextCombatant = sortedCombatants[0]; 
-  
+        .filter((c) => c.entity.hp > 0)
+        .sort((a, b) => b.entity.ticks - a.entity.ticks);
+      const nextCombatant = sortedCombatants[0];
+
       if (!nextCombatant || nextCombatant.entity.ticks < TURN_THRESHOLD) {
-        await new Promise(resolve => setTimeout(resolve, 50 / (gameState.battleSpeed || 1)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 50 / (gameState.battleSpeed || 1))
+        );
         continue;
       }
-  
+
       nextCombatant.entity.ticks -= TURN_THRESHOLD;
-  
+
       if (nextCombatant.isHero) {
-        await HeroActions.performHeroTurn(nextCombatant.entity, livingHeroes, enemyGroup, roomNumber, totalRooms);
+        await HeroActions.performHeroTurn(
+          nextCombatant.entity,
+          livingHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms
+        );
         if (nextCombatant.entity.hp <= 0) {
           gameState.casualties.push(nextCombatant.entity.id);
-          const index = combatants.findIndex(c => c.entity.id === nextCombatant.entity.id);
+          const index = combatants.findIndex(
+            (c) => c.entity.id === nextCombatant.entity.id
+          );
           if (index !== -1) combatants.splice(index, 1);
         }
       } else {
-        await EnemyActions.performEnemyTurn(nextCombatant.entity, livingHeroes, enemyGroup, roomNumber, totalRooms);
+        await EnemyActions.performEnemyTurn(
+          nextCombatant.entity,
+          livingHeroes,
+          enemyGroup,
+          roomNumber,
+          totalRooms
+        );
         if (nextCombatant.entity.hp <= 0) {
-          const index = combatants.findIndex(c => c.entity === nextCombatant.entity);
+          const index = combatants.findIndex(
+            (c) => c.entity === nextCombatant.entity
+          );
           if (index !== -1) combatants.splice(index, 1);
         }
       }
-  
+
       this.updateStats(livingHeroes, livingEnemies, roomNumber, totalRooms);
       this.updateTurnOrder(combatants, TURN_THRESHOLD);
-  
-      await new Promise(resolve => setTimeout(resolve, 500 / (gameState.battleSpeed || 1)));
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+      );
     }
   }
 
   static updateTurnOrder(combatants, threshold) {
     const sortedCombatants = combatants
-      .filter(c => c.entity.hp > 0)
+      .filter((c) => c.entity.hp > 0)
       .sort((a, b) => b.entity.ticks - a.entity.ticks)
       .slice(0, 6);
 
-    turnOrderBar.innerHTML = sortedCombatants.map((c, index) => {
-      const position = index + 1;
-      const name = c.isHero ? c.entity.name.split(" ")[0] : `${c.entity.isElite ? "Elite " : ""}${c.entity.type}`;
-      const speed = c.entity.speed;
-      const progress = Math.min(100, Math.floor((c.entity.ticks / threshold) * 100));
-      const className = c.isHero ? c.entity.class : c.entity.isElite ? "elite" : "enemy";
-      return `
+    turnOrderBar.innerHTML = sortedCombatants
+      .map((c, index) => {
+        const position = index + 1;
+        const name = c.isHero
+          ? c.entity.name.split(" ")[0]
+          : `${c.entity.isElite ? "Elite " : ""}${c.entity.type}`;
+        const speed = c.entity.speed;
+        const progress = Math.min(
+          100,
+          Math.floor((c.entity.ticks / threshold) * 100)
+        );
+        const className = c.isHero
+          ? c.entity.class
+          : c.entity.isElite
+          ? "elite"
+          : "enemy";
+        return `
         <div class="turn-order-entry ${className}">
           <span class="turn-position">${position}</span>
           <span class="turn-name">${name} (Spd ${speed})</span>
@@ -155,26 +254,50 @@ class BattleManager {
           </div>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
   }
 
-  static handleRoomClear(formationHeroes, enemyGroup, roomNumber, totalRooms, isBossRoom, dungeon) {
-    const xpGained = enemyGroup.reduce((total, enemy) => total + (enemy.hp <= 0 ? enemy.xp : 0), 0);
-    formationHeroes.forEach(hero => {
+  static handleRoomClear(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    isBossRoom,
+    dungeon
+  ) {
+    const xpGained = enemyGroup.reduce(
+      (total, enemy) => total + (enemy.hp <= 0 ? enemy.xp : 0),
+      0
+    );
+    formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
       levelUpHero(hero);
     });
   }
 
-  static handleDefeat(formationHeroes, enemyGroup, roomNumber, totalRooms, dungeon) {
-    this.logEntry("system", `[Room ${roomNumber}] All heroes defeated! Press Exit for results.`, roomNumber);
+  static handleDefeat(
+    formationHeroes,
+    enemyGroup,
+    roomNumber,
+    totalRooms,
+    dungeon
+  ) {
+    this.logEntry(
+      "system",
+      `[Room ${roomNumber}] All heroes defeated! Press Exit for results.`,
+      roomNumber
+    );
     updateHeroStats(formationHeroes);
     updateEnemyStats(enemyGroup, roomNumber, totalRooms);
     exitBtn.disabled = false;
   }
 
   static updateProgress(currentRoom, totalRooms) {
-    const progress = Math.min(100, Math.floor((currentRoom / totalRooms) * 100));
+    const progress = Math.min(
+      100,
+      Math.floor((currentRoom / totalRooms) * 100)
+    );
     battleProgress.style.width = `${progress}%`;
     document.querySelector(".progress-text").textContent = `${progress}%`;
   }
@@ -491,9 +614,21 @@ class PassiveEffects {
 function updateHeroStats(formationHeroes) {
   heroStatsList.innerHTML = "";
   const rows = {
-    "Front Row": formationHeroes.filter(h => gameState.formation.indexOf(h.id) >= 0 && gameState.formation.indexOf(h.id) <= 2),
-    "Middle Row": formationHeroes.filter(h => gameState.formation.indexOf(h.id) >= 3 && gameState.formation.indexOf(h.id) <= 5),
-    "Back Row": formationHeroes.filter(h => gameState.formation.indexOf(h.id) >= 6 && gameState.formation.indexOf(h.id) <= 8)
+    "Front Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 0 &&
+        gameState.formation.indexOf(h.id) <= 2
+    ),
+    "Middle Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 3 &&
+        gameState.formation.indexOf(h.id) <= 5
+    ),
+    "Back Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 6 &&
+        gameState.formation.indexOf(h.id) <= 8
+    ),
   };
   for (const [rowName, heroes] of Object.entries(rows)) {
     if (heroes.length > 0) {
@@ -501,9 +636,14 @@ function updateHeroStats(formationHeroes) {
       label.className = "battle-row-label";
       label.textContent = rowName;
       heroStatsList.appendChild(label);
-      heroes.forEach(hero => {
+      heroes.forEach((hero) => {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+        const hpClass =
+          hpPercentage < 0.25
+            ? "red"
+            : hpPercentage <= 0.6
+            ? "yellow"
+            : "green";
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
         stat.innerHTML = `
@@ -512,7 +652,9 @@ function updateHeroStats(formationHeroes) {
             ${hero.name.split(" ")[0]} (Lv${hero.level})
           </span>
           <div class="stat-hp-bar">
-            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
+            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+          hpPercentage * 100
+        )}%;"></div>
           </div>
           <span class="stat-health">${Math.round(hero.hp)}/${hero.maxHp}</span>
         `;
@@ -531,17 +673,24 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
   const isBoss = roomNumber === totalRooms;
   enemyGroup.forEach((enemy, index) => {
     const hpPercentage = enemy.hp / enemy.maxHp;
-    const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+    const hpClass =
+      hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
     const enemyId = `${enemy.type.toLowerCase().replace(" ", "-")}-${index}`;
     const stat = document.createElement("div");
-    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${enemy.isElite ? "elite" : ""} ${enemyId}`;
+    stat.className = `hero-stat enemy ${isBoss ? "boss" : ""} ${
+      enemy.isElite ? "elite" : ""
+    } ${enemyId}`;
     stat.innerHTML = `
       <span class="stat-name">
-        <span class="enemy-icon ${isBoss ? "boss" : enemy.isElite ? "elite" : "minion"}"></span>
+        <span class="enemy-icon ${
+          isBoss ? "boss" : enemy.isElite ? "elite" : "minion"
+        }"></span>
         ${isBoss ? "Boss: " : enemy.isElite ? "Elite: " : ""}${enemy.type}
       </span>
       <div class="stat-hp-bar">
-        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
+        <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+      hpPercentage * 100
+    )}%;"></div>
       </div>
       <span class="stat-health">${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
@@ -755,9 +904,13 @@ function showResults() {
     gameState.battleMilestones.forEach((milestone) => {
       const entry = document.createElement("div");
       const isHeroDeath = milestone.text.includes("has been defeated by");
-      entry.className = `milestone-entry ${milestone.type}${isHeroDeath ? " hero-death" : ""}`;
+      entry.className = `milestone-entry ${milestone.type}${
+        isHeroDeath ? " hero-death" : ""
+      }`;
       entry.innerHTML = `
-        <span class="milestone-icon ${milestone.type === "milestone" ? "milestone-mark" : "xp-mark"}"></span>
+        <span class="milestone-icon ${
+          milestone.type === "milestone" ? "milestone-mark" : "xp-mark"
+        }"></span>
         ${milestone.text}
       `;
       milestonesList.appendChild(entry);

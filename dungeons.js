@@ -41,15 +41,15 @@ const dungeons = [
 ];
 
 // Enemy and Boss Critical Hit Constants
-const ENEMY_CRIT_CHANCE = 0.08;    
-const ENEMY_CRIT_MULTIPLIER = 1.3; 
-const BOSS_CRIT_CHANCE = 0.12;     
-const BOSS_CRIT_MULTIPLIER = 1.7; 
+const ENEMY_CRIT_CHANCE = 0.08;
+const ENEMY_CRIT_MULTIPLIER = 1.3;
+const BOSS_CRIT_CHANCE = 0.12;
+const BOSS_CRIT_MULTIPLIER = 1.7;
 
 // Elite Enemy Modifiers
-const ELITE_HP_MULTIPLIER = 2.0;    
-const ELITE_DAMAGE_MULTIPLIER = 1.5; 
-const ELITE_XP_MULTIPLIER = 2.0;    
+const ELITE_HP_MULTIPLIER = 2.0;
+const ELITE_DAMAGE_MULTIPLIER = 1.5;
+const ELITE_XP_MULTIPLIER = 2.0;
 
 const enemies = {
   // Easy Difficulty
@@ -206,11 +206,11 @@ if (typeof window !== "undefined") {
   window.dungeons = dungeons;
   window.enemies = enemies;
   window.bosses = bosses;
-  window.ENEMY_CRIT_CHANCE = ENEMY_CRIT_CHANCE;    
+  window.ENEMY_CRIT_CHANCE = ENEMY_CRIT_CHANCE;
   window.ENEMY_CRIT_MULTIPLIER = ENEMY_CRIT_MULTIPLIER;
-  window.BOSS_CRIT_CHANCE = BOSS_CRIT_CHANCE;         
-  window.BOSS_CRIT_MULTIPLIER = BOSS_CRIT_MULTIPLIER; 
-  window.ELITE_HP_MULTIPLIER = ELITE_HP_MULTIPLIER;   
-  window.ELITE_DAMAGE_MULTIPLIER = ELITE_DAMAGE_MULTIPLIER; 
-  window.ELITE_XP_MULTIPLIER = ELITE_XP_MULTIPLIER;   
+  window.BOSS_CRIT_CHANCE = BOSS_CRIT_CHANCE;
+  window.BOSS_CRIT_MULTIPLIER = BOSS_CRIT_MULTIPLIER;
+  window.ELITE_HP_MULTIPLIER = ELITE_HP_MULTIPLIER;
+  window.ELITE_DAMAGE_MULTIPLIER = ELITE_DAMAGE_MULTIPLIER;
+  window.ELITE_XP_MULTIPLIER = ELITE_XP_MULTIPLIER;
 }

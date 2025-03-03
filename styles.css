@@ -699,16 +699,18 @@ button:disabled:hover {
 .turn-position {
     font-size: 0.9rem;
     font-weight: bold;
-    color: var(--accent-color); /* Purple for emphasis */
+    color: var(--accent-color);
+    /* Purple for emphasis */
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     margin-bottom: 0.1rem;
-    background: rgba(123, 104, 238, 0.2); /* Subtle purple glow */
+    background: rgba(123, 104, 238, 0.2);
+    /* Subtle purple glow */
     border-radius: 50%;
     width: 1.2rem;
     height: 1.2rem;
     line-height: 1.2rem;
     text-align: center;
-  }
+}
 
 .log-entry {
     margin-bottom: 0.625rem;
