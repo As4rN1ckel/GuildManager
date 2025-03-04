@@ -571,6 +571,7 @@ function renderShop() {
       <div class="shape"></div>
       <div class="hero-info">${hero.name}</div>
       <div class="class-info">Class: ${capitalize(hero.class)}</div>
+      <div class="tier-info">Tier: ${hero.tier}</div>
       <div class="level">Lv${hero.level}</div>
       <div class="cost">${hero.cost} Gold</div>
     `;
@@ -699,6 +700,9 @@ function updateHeroStatsPanel() {
     <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
       hero.class
     )}</div>
+    <div class="hero-stat-item"><strong>Tier:</strong> ${
+      hero.tier
+    }</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
     xpThresholds[hero.level]

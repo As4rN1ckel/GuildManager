@@ -33,21 +33,26 @@ function addHero(hero) {
 function generateHero() {
   const classIndex = Math.floor(Math.random() * heroClasses.length);
   const heroClass = heroClasses[classIndex];
+  const tier = getRandomTier();
+  const statMultiplier = heroTiers[tier].statMultiplier;
+  const costMultiplier = heroTiers[tier].costMultiplier;
+
   return {
     id: Date.now() + Math.random().toString(36).substring(2, 9),
     name: generateHeroName(heroClass.name),
     class: heroClass.type,
-    hp: heroClass.hp,
-    maxHp: heroClass.hp,
-    attack: heroClass.attack,
+    tier: tier,
+    hp: Math.round(heroClass.hp * statMultiplier),
+    maxHp: Math.round(heroClass.hp * statMultiplier),
+    attack: Math.round(heroClass.attack * statMultiplier),
     special: heroClass.special,
     level: 1,
-    cost: heroClass.cost,
+    cost: Math.round(heroClass.cost * costMultiplier),
     passive: heroClass.passive,
     cooldown: 0,
     xp: 0,
-    hitChance: heroClass.hitChance,
-    speed: heroClass.speed,
+    hitChance: Math.min(1.0, heroClass.hitChance),
+    speed: Math.round(heroClass.speed),
   };
 }
 

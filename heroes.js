@@ -65,6 +65,48 @@ const lastNames = [
   "Windspear",
 ];
 
+// Tier definitions
+const heroTiers = {
+  S: {
+    statMultiplier: 2.0,
+    costMultiplier: 5,
+  },
+  A: {
+    statMultiplier: 1.5,
+    costMultiplier: 2.5,
+  },
+  B: {
+    statMultiplier: 1.25,
+    costMultiplier: 1.5,
+  },
+  C: {
+    statMultiplier: 1.0,
+    costMultiplier: 1.0,
+  },
+  D: {
+    statMultiplier: 0.8,
+    costMultiplier: 0.75,
+  },
+};
+
+const tierWeights = {
+  S: 0.05,
+  A: 0.15, 
+  B: 0.30,
+  C: 0.40, 
+  D: 0.10,
+};
+
+function getRandomTier() {
+  const rand = Math.random();
+  let cumulative = 0;
+  for (const [tier, weight] of Object.entries(tierWeights)) {
+    cumulative += weight;
+    if (rand <= cumulative) return tier;
+  }
+  return "C";
+}
+
 /**
  * Generates a random fantasy hero name
  * @param {string} className - Hero class name (unused, reserved for future customization)
@@ -84,7 +126,7 @@ const heroClasses = [
     hp: 60,
     attack: 12,
     special: "Shield Bash",
-    cost: 80,
+    cost: 100,
     passive: "Ironclad Resilience",
     hitChance: 0.8,
     speed: 40,
@@ -95,7 +137,7 @@ const heroClasses = [
     hp: 50,
     attack: 10,
     special: "Multi Shot",
-    cost: 100,
+    cost: 120,
     passive: "Deadly Precision",
     hitChance: 0.8,
     speed: 70,
@@ -106,7 +148,7 @@ const heroClasses = [
     hp: 30,
     attack: 15,
     special: "Fireball",
-    cost: 120,
+    cost: 150,
     passive: "Arcane Potency",
     hitChance: 0.7,
     speed: 60,
@@ -117,7 +159,7 @@ const heroClasses = [
     hp: 40,
     attack: 5,
     special: "Heal",
-    cost: 110,
+    cost: 130,
     passive: "Divine Restoration",
     hitChance: 0.8,
     speed: 50,
@@ -254,4 +296,5 @@ if (typeof window !== "undefined") {
   window.heroSkills = heroSkills;
   window.HERO_CRIT_CHANCE = HERO_CRIT_CHANCE;
   window.HERO_CRIT_MULTIPLIER = HERO_CRIT_MULTIPLIER;
+  window.heroTiers = heroTiers;
 }
