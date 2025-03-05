@@ -607,9 +607,21 @@ class PassiveEffects {
 function updateHeroStats(formationHeroes) {
   heroStatsList.innerHTML = "";
   const rows = {
-    "Front Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 0 && gameState.formation.indexOf(h.id) <= 2),
-    "Middle Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 3 && gameState.formation.indexOf(h.id) <= 5),
-    "Back Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 6 && gameState.formation.indexOf(h.id) <= 8),
+    "Front Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 0 &&
+        gameState.formation.indexOf(h.id) <= 2
+    ),
+    "Middle Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 3 &&
+        gameState.formation.indexOf(h.id) <= 5
+    ),
+    "Back Row": formationHeroes.filter(
+      (h) =>
+        gameState.formation.indexOf(h.id) >= 6 &&
+        gameState.formation.indexOf(h.id) <= 8
+    ),
   };
   for (const [rowName, heroes] of Object.entries(rows)) {
     if (heroes.length > 0) {
@@ -619,25 +631,39 @@ function updateHeroStats(formationHeroes) {
       heroStatsList.appendChild(label);
       heroes.forEach((hero) => {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
-        const skill = heroSkills.find(s => s.name === hero.special);
-        const chargePercentage = Math.floor((hero.charges / skill.maxCharges) * 100);
+        const hpClass =
+          hpPercentage < 0.25
+            ? "red"
+            : hpPercentage <= 0.6
+            ? "yellow"
+            : "green";
+        const skill = heroSkills.find((s) => s.name === hero.special);
+        const chargePercentage = Math.floor(
+          (hero.charges / skill.maxCharges) * 100
+        );
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
         stat.innerHTML = `
-          <span class="stat-name">
-            <span class="class-icon ${hero.class}"></span>
-            ${hero.name.split(" ")[0]} (Lv${hero.level})
-          </span>
-          <div class="stat-hp-bar">
-            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
-          </div>
-          <span class="stat-health">${Math.round(hero.hp)}/${hero.maxHp}</span>
-          <div class="charge-bar">
-            <div class="charge-fill" style="width: ${chargePercentage}%;"></div>
-            <span class="charge-text">${hero.charges}/${skill.maxCharges}</span>
-          </div>
-        `;
+                  <span class="stat-name">
+                      <span class="class-icon ${hero.class}"></span>
+                      ${hero.name.split(" ")[0]} (Lv${hero.level})
+                  </span>
+                  <div class="stat-hp-bar">
+                      <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
+          hpPercentage * 100
+        )}%;"></div>
+                  </div>
+                  <span class="stat-health">HP: ${Math.round(hero.hp)}/${
+          hero.maxHp
+        }</span>
+                  <!-- Charges remain unchanged for now, will update below -->
+                  <div class="charge-bar">
+                      <div class="charge-fill" style="width: ${chargePercentage}%;"></div>
+                      <span class="charge-text">Skill: ${hero.charges}/${
+          skill.maxCharges
+        }</span>
+                  </div>
+              `;
         heroStatsList.appendChild(stat);
       });
     }
@@ -672,7 +698,7 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
       hpPercentage * 100
     )}%;"></div>
       </div>
-      <span class="stat-health">${Math.round(enemy.hp)}/${enemy.maxHp}</span>
+      <span class="stat-health">HP: ${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
     enemyStatsList.appendChild(stat);
   });

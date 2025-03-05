@@ -69,11 +69,11 @@ const lastNames = [
 const heroTiers = {
   S: {
     statMultiplier: 2.0,
-    costMultiplier: 5,
+    costMultiplier: 6,
   },
   A: {
     statMultiplier: 1.5,
-    costMultiplier: 2.5,
+    costMultiplier: 3,
   },
   B: {
     statMultiplier: 1.25,
@@ -124,7 +124,7 @@ const heroClasses = [
     type: "warrior",
     name: "Warrior",
     hp: 60,
-    attack: 12,
+    attack: 10,
     special: "Shield Bash",
     cost: 100,
     passive: "Ironclad Resilience",
@@ -135,7 +135,7 @@ const heroClasses = [
     type: "archer",
     name: "Archer",
     hp: 50,
-    attack: 10,
+    attack: 12,
     special: "Multi Shot",
     cost: 120,
     passive: "Deadly Precision",
@@ -217,13 +217,13 @@ const heroPassives = [
   {
     name: "Divine Restoration",
     description:
-      "Heals allies for 60% of attack on back row and 30% on other rows.",
+      "Heals allies for 80% of attack on back row and 30% on other rows.",
     type: "heal",
     value: 0.3,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       const position = gameState.formation.indexOf(hero.id);
-      const multiplier = position >= 6 && position <= 8 ? 0.6 : this.value;
+      const multiplier = position >= 6 && position <= 8 ? 0.8 : this.value;
       formationHeroes.forEach((ally) => {
         if (ally.hp < ally.maxHp) {
           const heal = Math.round(hero.attack * multiplier);
@@ -274,7 +274,7 @@ const heroSkills = [
     name: "Heal",
     description: "Heals a random ally for 150% of attack",
     type: "heal",
-    value: 1.5,
+    value: 2.0,
     maxCharges: 5,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {

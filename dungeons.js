@@ -78,7 +78,7 @@ const enemies = {
     hitChance: 0.7,
     xp: 2,
     variance: 0.1,
-    speed: 70,
+    speed: 60,
   },
 
   // Medium Difficulty
@@ -107,7 +107,7 @@ const enemies = {
     hitChance: 0.85,
     xp: 3,
     variance: 0.1,
-    speed: 50,
+    speed: 60,
   },
 
   // Hard Difficulty
@@ -118,7 +118,7 @@ const enemies = {
     hitChance: 0.8,
     xp: 4,
     variance: 0.1,
-    speed: 80,
+    speed: 70,
   },
   Wyvern: {
     name: "Wyvern",
@@ -149,7 +149,7 @@ const bosses = {
     hitChance: 0.8,
     xp: 6,
     variance: 0.15,
-    speed: 50,
+    speed: 60,
   },
   "Ancient Treant": {
     name: "Ancient Treant",
@@ -158,7 +158,7 @@ const bosses = {
     hitChance: 0.75,
     xp: 6,
     variance: 0.15,
-    speed: 40,
+    speed: 50,
   },
 
   // Medium Difficulty
@@ -169,7 +169,7 @@ const bosses = {
     hitChance: 0.85,
     xp: 8,
     variance: 0.15,
-    speed: 50,
+    speed: 60,
   },
   "Ghoul Overlord": {
     name: "Ghoul Overlord",
@@ -178,7 +178,7 @@ const bosses = {
     hitChance: 0.8,
     xp: 10,
     variance: 0.15,
-    speed: 50,
+    speed: 60,
   },
 
   // Hard Difficulty

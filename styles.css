@@ -850,7 +850,6 @@ button:disabled:hover {
 
 .milestone-entry.hero-death .milestone-icon {
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M6 6l12 12m0-12L6 18"/></svg>') center/cover;
-    /* Cross icon */
 }
 
 .milestone-icon {
@@ -985,16 +984,16 @@ button:disabled:hover {
     font-weight: bold;
 }
 
-
 .stat-hp-bar {
     background: linear-gradient(to right, #333, #444);
     border: 1px solid #555;
     border-radius: 5px;
-    height: 0.5rem;
-    margin: 0 0.5rem;
-    width: 6.25rem;
+    height: 0.75rem;
+    margin: 0.25rem 0.5rem 0.25rem 0.5rem;
+    width: 10rem;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .stat-hp-fill {
@@ -1024,42 +1023,25 @@ button:disabled:hover {
     animation: pulse 1.5s infinite;
 }
 
-.charge-bar {
-    background: linear-gradient(to right, #333, #444);
-    border: 1px solid #555;
-    border-radius: 5px;
-    height: 1.0rem;
-    margin: 0.25rem 0;
-    width: 25%;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .charge-fill {
-    height: 100%;
-    background: linear-gradient(to right, #3498db, #2980b9);
-    transition: width 0.3s ease-out;
-  }
-  
-  .charge-text {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.75rem;
-    color: #fff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  }
+#hero-stats-list {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    gap: 0.75rem;
+}
 
 .stat-name {
     font-weight: 600;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    flex-grow: 1;
 }
 
 .stat-health {
     font-size: 0.85rem;
     color: #ddd;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-left: 0.5rem;
+    vertical-align: middle;
 }
 
 @keyframes pulse {
@@ -1074,6 +1056,35 @@ button:disabled:hover {
     100% {
         box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
     }
+}
+
+.charge-bar {
+    background: linear-gradient(to right, #333, #444);
+    border: 1px solid #555;
+    border-radius: 5px;
+    height: 0.75rem;
+    margin: 0.25rem 0.5rem 0.25rem 0.5rem;
+    width: 10rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.charge-fill {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2980b9);
+    transition: width 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.charge-text {
+    position: absolute;
+    top: -0.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #fff;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
 }
 
 .results-screen {
