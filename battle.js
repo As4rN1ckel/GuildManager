@@ -365,16 +365,11 @@ class HeroActions {
         `[Room ${roomNumber}] ${hero.name} misses ${target.type}!`,
         roomNumber
       );
-    } else {
-      BattleManager.logEntry(
-        "attack",
-        `[Room ${roomNumber}] ${hero.name} finds no enemies!`,
-        roomNumber
-      );
     }
 
-    if (Math.random() < 0.25 && hero.cooldown === 0) {
-      const skill = heroSkills.find((s) => s.name === hero.special);
+    const skill = heroSkills.find((s) => s.name === hero.special);
+    hero.charges = Math.min(skill.maxCharges, hero.charges + 1);
+    if (hero.charges >= skill.maxCharges) {
       let specialDamage = Math.round(hero.attack * (skill?.value || 1));
       if (hero.class !== "warrior") {
         const passive = heroPassives.find((p) => p.name === hero.passive);
@@ -460,6 +455,7 @@ class HeroActions {
             );
           }
         }
+        hero.charges = 0;
       } else if (targets.length > 0) {
         BattleManager.logEntry(
           "special",
@@ -473,9 +469,6 @@ class HeroActions {
           roomNumber
         );
       }
-      hero.cooldown = skill?.cooldown || 0;
-    } else if (hero.cooldown > 0) {
-      hero.cooldown--;
     }
   }
 }
@@ -614,21 +607,9 @@ class PassiveEffects {
 function updateHeroStats(formationHeroes) {
   heroStatsList.innerHTML = "";
   const rows = {
-    "Front Row": formationHeroes.filter(
-      (h) =>
-        gameState.formation.indexOf(h.id) >= 0 &&
-        gameState.formation.indexOf(h.id) <= 2
-    ),
-    "Middle Row": formationHeroes.filter(
-      (h) =>
-        gameState.formation.indexOf(h.id) >= 3 &&
-        gameState.formation.indexOf(h.id) <= 5
-    ),
-    "Back Row": formationHeroes.filter(
-      (h) =>
-        gameState.formation.indexOf(h.id) >= 6 &&
-        gameState.formation.indexOf(h.id) <= 8
-    ),
+    "Front Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 0 && gameState.formation.indexOf(h.id) <= 2),
+    "Middle Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 3 && gameState.formation.indexOf(h.id) <= 5),
+    "Back Row": formationHeroes.filter((h) => gameState.formation.indexOf(h.id) >= 6 && gameState.formation.indexOf(h.id) <= 8),
   };
   for (const [rowName, heroes] of Object.entries(rows)) {
     if (heroes.length > 0) {
@@ -638,12 +619,9 @@ function updateHeroStats(formationHeroes) {
       heroStatsList.appendChild(label);
       heroes.forEach((hero) => {
         const hpPercentage = hero.hp / hero.maxHp;
-        const hpClass =
-          hpPercentage < 0.25
-            ? "red"
-            : hpPercentage <= 0.6
-            ? "yellow"
-            : "green";
+        const hpClass = hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+        const skill = heroSkills.find(s => s.name === hero.special);
+        const chargePercentage = Math.floor((hero.charges / skill.maxCharges) * 100);
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
         stat.innerHTML = `
@@ -652,11 +630,13 @@ function updateHeroStats(formationHeroes) {
             ${hero.name.split(" ")[0]} (Lv${hero.level})
           </span>
           <div class="stat-hp-bar">
-            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100
-        )}%;"></div>
+            <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(hpPercentage * 100)}%;"></div>
           </div>
           <span class="stat-health">${Math.round(hero.hp)}/${hero.maxHp}</span>
+          <div class="charge-bar">
+            <div class="charge-fill" style="width: ${chargePercentage}%;"></div>
+            <span class="charge-text">${hero.charges}/${skill.maxCharges}</span>
+          </div>
         `;
         heroStatsList.appendChild(stat);
       });

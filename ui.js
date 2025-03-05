@@ -717,11 +717,9 @@ function updateHeroStatsPanel() {
     )}%</div>
     <div class="hero-stat-item special-item"><strong>Special:</strong> ${
       hero.special
-    } - ${
-    skill?.description || "No description"
-  } <span class="cooldown">(Cooldown: ${
-    skill?.cooldown || 0
-  } turns)</span></div>
+    } - ${skill?.description || "No description"} (Charges: ${hero.charges}/${
+    skill.maxCharges
+  })</div>
     <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${
       hero.passive
     } - ${passive?.description || "No description"}</div>

@@ -37,7 +37,7 @@ function generateHero() {
   const statMultiplier = heroTiers[tier].statMultiplier;
   const costMultiplier = heroTiers[tier].costMultiplier;
 
-  return {
+  const hero = {
     id: Date.now() + Math.random().toString(36).substring(2, 9),
     name: generateHeroName(heroClass.name),
     class: heroClass.type,
@@ -49,11 +49,13 @@ function generateHero() {
     level: 1,
     cost: Math.round(heroClass.cost * costMultiplier),
     passive: heroClass.passive,
-    cooldown: 0,
     xp: 0,
     hitChance: Math.min(1.0, heroClass.hitChance),
     speed: Math.round(heroClass.speed),
+    charges: 0,
   };
+
+  return hero;
 }
 
 function levelUpHero(hero) {

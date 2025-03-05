@@ -1024,6 +1024,33 @@ button:disabled:hover {
     animation: pulse 1.5s infinite;
 }
 
+.charge-bar {
+    background: linear-gradient(to right, #333, #444);
+    border: 1px solid #555;
+    border-radius: 5px;
+    height: 1.0rem;
+    margin: 0.25rem 0;
+    width: 25%;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .charge-fill {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2980b9);
+    transition: width 0.3s ease-out;
+  }
+  
+  .charge-text {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
 .stat-name {
     font-weight: 600;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);

@@ -129,7 +129,7 @@ const heroClasses = [
     cost: 100,
     passive: "Ironclad Resilience",
     hitChance: 0.8,
-    speed: 40,
+    speed: 45,
   },
   {
     type: "archer",
@@ -217,13 +217,13 @@ const heroPassives = [
   {
     name: "Divine Restoration",
     description:
-      "Heals allies for 80% of attack on back row and 40% on other rows.",
+      "Heals allies for 60% of attack on back row and 30% on other rows.",
     type: "heal",
-    value: 0.4,
+    value: 0.3,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       const position = gameState.formation.indexOf(hero.id);
-      const multiplier = position >= 6 && position <= 8 ? 0.8 : this.value;
+      const multiplier = position >= 6 && position <= 8 ? 0.6 : this.value;
       formationHeroes.forEach((ally) => {
         if (ally.hp < ally.maxHp) {
           const heal = Math.round(hero.attack * multiplier);
@@ -241,7 +241,7 @@ const heroSkills = [
     description: "Deals 30% more damage",
     type: "damage",
     value: 1.3,
-    cooldown: 3,
+    maxCharges: 3,
     appliesTo: ["warrior"],
     apply: function (hero, target, baseDamage) {
       return Math.round(baseDamage * this.value);
@@ -249,10 +249,10 @@ const heroSkills = [
   },
   {
     name: "Multi Shot",
-    description: "Deals 20% more damage to 3 targets",
+    description: "Deals 20% more damage to up to 3 targets",
     type: "damage",
     value: 1.2,
-    cooldown: 3,
+    maxCharges: 4, 
     appliesTo: ["archer"],
     apply: function (hero, targets, baseDamage) {
       const targetArray = Array.isArray(targets) ? targets : [targets];
@@ -264,7 +264,7 @@ const heroSkills = [
     description: "Deals 40% more damage",
     type: "damage",
     value: 1.4,
-    cooldown: 3,
+    maxCharges: 3,
     appliesTo: ["mage"],
     apply: function (hero, target, baseDamage) {
       return Math.round(baseDamage * this.value);
@@ -275,7 +275,7 @@ const heroSkills = [
     description: "Heals a random ally for 150% of attack",
     type: "heal",
     value: 1.5,
-    cooldown: 3,
+    maxCharges: 5,
     appliesTo: ["cleric"],
     apply: function (hero, formationHeroes) {
       const injured = formationHeroes.filter((ally) => ally.hp < ally.maxHp);
