@@ -1,0 +1,28 @@
+body {
+    background: linear-gradient(to bottom, #111, #0a0a0a);
+    color: var(--text-color);
+    font-family: monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: var(--spacing-large);
+    overflow-y: auto;
+    transition: background 0.3s ease-in-out;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-large);
+    margin: 0 auto;
+    max-width: 50rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: var(--spacing-small);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.container:hover {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8);
+}

@@ -1,0 +1,96 @@
+@media (max-width: 37.5rem) {
+    body {
+        font-size: 0.75rem;
+        padding: var(--spacing-small);
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .formation-grid {
+        grid-template-columns: repeat(3, 3.75rem);
+        grid-template-rows: repeat(3, 3.75rem);
+        height: 11.25rem;
+        width: 11.25rem;
+    }
+
+    .formation-slot,
+    .formation-slot .hero {
+        height: 3.75rem;
+        width: 3.75rem;
+    }
+
+    .hero {
+        height: 4.375rem;
+        width: 3.125rem;
+    }
+
+    .recruit-list {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-stats-panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        bottom: auto;
+        transform: none;
+        width: auto;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+        border-radius: 8px;
+        padding: var(--spacing-small);
+        background: linear-gradient(to bottom, #333, #2a2a2a);
+    }
+
+    .hero-stats-panel.visible {
+        transform: none;
+    }
+
+    .close-btn {
+        font-size: 1.2rem;
+        padding: 0.2rem;
+    }
+
+    .hero-stats-header h3 {
+        font-size: 1rem;
+    }
+
+    .hero-tooltip {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+        min-width: 10rem;
+        max-width: 14rem;
+        border-radius: 6px;
+    }
+
+    .hero-tooltip::after {
+        border-width: 5px;
+        left: 0.75rem;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .hero-tooltip {
+        touch-action: manipulation;
+    }
+
+    .modal-overlay {
+        touch-action: pan-x pan-y;
+    }
+
+    .hero-stats-panel {
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    .close-btn {
+        padding: 0.3rem;
+    }
+
+    .hero-stat-item {
+        touch-action: manipulation;
+    }
+}

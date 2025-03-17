@@ -1,0 +1,15 @@
+:root {
+    --accent-color: #7b68ee;
+    --archer-color: #2ecc71;
+    --bg-color: #111;
+    --button-color: #444;
+    --button-hover: #555;
+    --cleric-color: #f1c40f;
+    --mage-color: #3498db;
+    --panel-bg: #222;
+    --spacing-large: 1.25rem;
+    --spacing-small: 0.625rem;
+    --text-color: #eee;
+    --warrior-color: #e74c3c;
+    --gold: #ffd700;
+}
