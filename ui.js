@@ -240,9 +240,8 @@ function renderHeroRoster() {
       el.dataset.tooltip = `
         ${hero.name}
         ${capitalize(hero.class)}
-        Lv${hero.level}
-        HP: ${hero.hp}/${hero.maxHp}
-        ATK: ${hero.attack}
+        Tier ${hero.tier}
+        Lv ${hero.level}
       `.trim();
       el.innerHTML = `
         <div class="shape"></div>
@@ -349,10 +348,8 @@ function updateFormationGrid() {
         el.dataset.tooltip = `
           ${hero.name}
           ${capitalize(hero.class)}
-          Lv${hero.level}
-          HP: ${hero.hp}/${hero.maxHp}
-          ATK: ${hero.attack}
-          SPD: ${hero.speed}
+          Tier ${hero.tier}
+          Lv ${hero.level}
         `.trim();
         el.innerHTML = `
           <div class="shape"></div>
@@ -563,7 +560,7 @@ function renderShop() {
     return;
   }
   recruitList.innerHTML = "";
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     const hero = generateHero();
     const el = document.createElement("div");
     el.className = `hero-base recruit-hero ${hero.class} animate-in`;
@@ -700,9 +697,7 @@ function updateHeroStatsPanel() {
     <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
       hero.class
     )}</div>
-    <div class="hero-stat-item"><strong>Tier:</strong> ${
-      hero.tier
-    }</div>
+    <div class="hero-stat-item"><strong>Tier:</strong> ${hero.tier}</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
     xpThresholds[hero.level]
