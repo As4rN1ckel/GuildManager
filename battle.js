@@ -4,7 +4,6 @@ const dungeonName = document.getElementById("dungeon-name");
 const resultTitle = document.getElementById("result-title");
 const casualtiesList = document.getElementById("casualties-list");
 const rewardsList = document.getElementById("rewards-list");
-const speedBtn = document.getElementById("speed-btn");
 const exitBtn = document.getElementById("exit-btn");
 const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
@@ -47,7 +46,7 @@ class BattleManager {
           roomEnemies[currentRoom - 1],
           currentRoom,
           totalRooms,
-          dungeon
+          dungeon,
         );
         return;
       }
@@ -57,13 +56,13 @@ class BattleManager {
         totalRooms,
         formationHeroes,
         roomEnemies[currentRoom - 1],
-        dungeon
+        dungeon,
       );
       this.updateStats(
         formationHeroes,
         roomEnemies[currentRoom - 1],
         currentRoom,
-        totalRooms
+        totalRooms,
       );
 
       if (!roomCleared) currentRoom--;
@@ -73,7 +72,7 @@ class BattleManager {
     this.logEntry(
       "system",
       "Dungeon conquered. Press Exit for results.",
-      currentRoom
+      currentRoom,
     );
     exitBtn.disabled = false;
   }
@@ -96,20 +95,20 @@ class BattleManager {
     totalRooms,
     formationHeroes,
     enemyGroup,
-    dungeon
+    dungeon,
   ) {
     if (!enemyGroup || !formationHeroes.length) return false;
 
     const isBossRoom = roomNumber === totalRooms;
     const enemyDescriptions = enemyGroup
       .map(
-        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`
+        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`,
       )
       .join(", ");
     this.logEntry(
       "system",
       `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyDescriptions}`,
-      roomNumber
+      roomNumber,
     );
 
     return await this.runBattleLoop(
@@ -118,7 +117,7 @@ class BattleManager {
       roomNumber,
       totalRooms,
       isBossRoom,
-      dungeon
+      dungeon,
     );
   }
 
@@ -128,7 +127,7 @@ class BattleManager {
     roomNumber,
     totalRooms,
     isBossRoom,
-    dungeon
+    dungeon,
   ) {
     const TURN_THRESHOLD = 100;
     const combatants = [
@@ -158,7 +157,7 @@ class BattleManager {
           roomNumber,
           totalRooms,
           isBossRoom,
-          dungeon
+          dungeon,
         );
         return true;
       }
@@ -175,9 +174,7 @@ class BattleManager {
       const nextCombatant = sortedCombatants[0];
 
       if (!nextCombatant || nextCombatant.entity.ticks < TURN_THRESHOLD) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 50 / (gameState.battleSpeed || 1))
-        );
+        await new Promise((resolve) => setTimeout(resolve, 50));
         continue;
       }
 
@@ -189,12 +186,12 @@ class BattleManager {
           livingHeroes,
           enemyGroup,
           roomNumber,
-          totalRooms
+          totalRooms,
         );
         if (nextCombatant.entity.hp <= 0) {
           gameState.casualties.push(nextCombatant.entity.id);
           const index = combatants.findIndex(
-            (c) => c.entity.id === nextCombatant.entity.id
+            (c) => c.entity.id === nextCombatant.entity.id,
           );
           if (index !== -1) combatants.splice(index, 1);
         }
@@ -204,11 +201,11 @@ class BattleManager {
           livingHeroes,
           enemyGroup,
           roomNumber,
-          totalRooms
+          totalRooms,
         );
         if (nextCombatant.entity.hp <= 0) {
           const index = combatants.findIndex(
-            (c) => c.entity === nextCombatant.entity
+            (c) => c.entity === nextCombatant.entity,
           );
           if (index !== -1) combatants.splice(index, 1);
         }
@@ -217,9 +214,7 @@ class BattleManager {
       this.updateStats(livingHeroes, livingEnemies, roomNumber, totalRooms);
       this.updateTurnOrder(combatants, TURN_THRESHOLD);
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
-      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
@@ -238,13 +233,13 @@ class BattleManager {
         const speed = c.entity.speed;
         const progress = Math.min(
           100,
-          Math.floor((c.entity.ticks / threshold) * 100)
+          Math.floor((c.entity.ticks / threshold) * 100),
         );
         const className = c.isHero
           ? c.entity.class
           : c.entity.isElite
-          ? "elite"
-          : "enemy";
+            ? "elite"
+            : "enemy";
         return `
         <div class="turn-order-entry ${className}">
           <span class="turn-position">${position}</span>
@@ -264,11 +259,11 @@ class BattleManager {
     roomNumber,
     totalRooms,
     isBossRoom,
-    dungeon
+    dungeon,
   ) {
     const xpGained = enemyGroup.reduce(
       (total, enemy) => total + (enemy.hp <= 0 ? enemy.xp : 0),
-      0
+      0,
     );
     formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
@@ -281,12 +276,12 @@ class BattleManager {
     enemyGroup,
     roomNumber,
     totalRooms,
-    dungeon
+    dungeon,
   ) {
     this.logEntry(
       "system",
       `[Room ${roomNumber}] All heroes defeated! Press Exit for results.`,
-      roomNumber
+      roomNumber,
     );
     updateHeroStats(formationHeroes);
     updateEnemyStats(enemyGroup, roomNumber, totalRooms);
@@ -296,7 +291,7 @@ class BattleManager {
   static updateProgress(currentRoom, totalRooms) {
     const progress = Math.min(
       100,
-      Math.floor((currentRoom / totalRooms) * 100)
+      Math.floor((currentRoom / totalRooms) * 100),
     );
     battleProgress.style.width = `${progress}%`;
     document.querySelector(".progress-text").textContent = `${progress}%`;
@@ -318,7 +313,7 @@ class HeroActions {
     formationHeroes,
     enemyGroup,
     roomNumber,
-    totalRooms
+    totalRooms,
   ) {
     PassiveEffects.applyPassive(hero, formationHeroes);
 
@@ -350,20 +345,20 @@ class HeroActions {
         } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
           target.type
         } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-        roomNumber
+        roomNumber,
       );
       if (target.hp <= 0) {
         BattleManager.logEntry(
           "milestone",
           `[Room ${roomNumber}] ${hero.name} defeats ${target.type}!`,
-          roomNumber
+          roomNumber,
         );
       }
     } else if (target) {
       BattleManager.logEntry(
         "attack",
         `[Room ${roomNumber}] ${hero.name} misses ${target.type}!`,
-        roomNumber
+        roomNumber,
       );
     }
 
@@ -403,13 +398,13 @@ class HeroActions {
                 }! (${targetName} HP: ${Math.round(target.hp)}/${
                   target.maxHp
                 })`,
-                roomNumber
+                roomNumber,
               );
               if (target.hp <= 0) {
                 BattleManager.logEntry(
                   "milestone",
                   `[Room ${roomNumber}] ${hero.name} defeats ${targetName} with ${skill.name}!`,
-                  roomNumber
+                  roomNumber,
                 );
               }
             });
@@ -428,13 +423,13 @@ class HeroActions {
               } for ${finalSpecialDamage} damage${
                 isCritical ? " (Critical!)" : ""
               }! (${t.type} HP: ${Math.round(t.hp)}/${t.maxHp})`,
-              roomNumber
+              roomNumber,
             );
             if (t.hp <= 0) {
               BattleManager.logEntry(
                 "milestone",
                 `[Room ${roomNumber}] ${hero.name} defeats ${t.type} with ${skill.name}!`,
-                roomNumber
+                roomNumber,
               );
             }
           }
@@ -451,7 +446,7 @@ class HeroActions {
               } for ${heal} HP with ${skill.name}! (${
                 target.name
               } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-              roomNumber
+              roomNumber,
             );
           }
         }
@@ -460,13 +455,13 @@ class HeroActions {
         BattleManager.logEntry(
           "special",
           `[Room ${roomNumber}] ${hero.name} misses with ${hero.special}!`,
-          roomNumber
+          roomNumber,
         );
       } else {
         BattleManager.logEntry(
           "special",
           `[Room ${roomNumber}] ${hero.name} finds no targets for ${hero.special}!`,
-          roomNumber
+          roomNumber,
         );
       }
     }
@@ -479,7 +474,7 @@ class EnemyActions {
     formationHeroes,
     enemyGroup,
     roomNumber,
-    totalRooms
+    totalRooms,
   ) {
     const living = formationHeroes.filter((h) => h.hp > 0);
     if (!living.length) return;
@@ -515,21 +510,21 @@ class EnemyActions {
           } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
             target.name
           } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-          roomNumber
+          roomNumber,
         );
         if (target.hp <= 0) {
           gameState.casualties.push(target.id);
           BattleManager.logEntry(
             "milestone",
             `[Room ${roomNumber}] ${target.name} has been defeated by ${enemy.type}!`,
-            roomNumber
+            roomNumber,
           );
         }
       } else {
         BattleManager.logEntry(
           "enemy-attack",
           `[Room ${roomNumber}] The ${enemy.type} misses ${target.name}!`,
-          roomNumber
+          roomNumber,
         );
       }
     }
@@ -539,7 +534,7 @@ class EnemyActions {
 class PassiveEffects {
   static applyPassive(hero, formationHeroes, formation = gameState.formation) {
     const passive = heroPassives.find(
-      (p) => p.name === hero.passive && p.appliesTo.includes(hero.class)
+      (p) => p.name === hero.passive && p.appliesTo.includes(hero.class),
     );
     if (!passive) return;
 
@@ -550,8 +545,8 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} reduces damage by ${Math.floor(
-              (1 - reduced / 100) * 100
-            )}%.`
+              (1 - reduced / 100) * 100,
+            )}%.`,
           );
         }
         break;
@@ -561,8 +556,8 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts hit chance by ${Math.floor(
-              (hitChance - hero.hitChance) * 100
-            )}%.`
+              (hitChance - hero.hitChance) * 100,
+            )}%.`,
           );
         }
         break;
@@ -572,14 +567,14 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts damage by ${Math.floor(
-              (boosted / 100 - 1) * 100
-            )}%.`
+              (boosted / 100 - 1) * 100,
+            )}%.`,
           );
         }
         break;
       case "heal":
         const healed = formationHeroes.filter(
-          (h) => h.hp > 0 && h.hp < h.maxHp
+          (h) => h.hp > 0 && h.hp < h.maxHp,
         );
         if (healed.length > 0) {
           passive.apply(hero, healed);
@@ -589,13 +584,13 @@ class PassiveEffects {
                 (formation.indexOf(hero.id) >= 6 &&
                 formation.indexOf(hero.id) <= 8
                   ? 0.8
-                  : 0.4)
+                  : 0.4),
             );
             BattleManager.logEntry(
               "heal",
               `${hero.name} heals ${ally.name} for ${heal} HP via ${
                 passive.name
-              }! (${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp})`
+              }! (${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp})`,
             );
           });
         }
@@ -610,17 +605,17 @@ function updateHeroStats(formationHeroes) {
     "Front Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 0 &&
-        gameState.formation.indexOf(h.id) <= 2
+        gameState.formation.indexOf(h.id) <= 2,
     ),
     "Middle Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 3 &&
-        gameState.formation.indexOf(h.id) <= 5
+        gameState.formation.indexOf(h.id) <= 5,
     ),
     "Back Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 6 &&
-        gameState.formation.indexOf(h.id) <= 8
+        gameState.formation.indexOf(h.id) <= 8,
     ),
   };
   for (const [rowName, heroes] of Object.entries(rows)) {
@@ -635,11 +630,11 @@ function updateHeroStats(formationHeroes) {
           hpPercentage < 0.25
             ? "red"
             : hpPercentage <= 0.6
-            ? "yellow"
-            : "green";
+              ? "yellow"
+              : "green";
         const skill = heroSkills.find((s) => s.name === hero.special);
         const chargePercentage = Math.floor(
-          (hero.charges / skill.maxCharges) * 100
+          (hero.charges / skill.maxCharges) * 100,
         );
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
@@ -650,18 +645,18 @@ function updateHeroStats(formationHeroes) {
                   </span>
                   <div class="stat-hp-bar">
                       <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100
-        )}%;"></div>
+                        hpPercentage * 100,
+                      )}%;"></div>
                   </div>
                   <span class="stat-health">HP: ${Math.round(hero.hp)}/${
-          hero.maxHp
-        }</span>
+                    hero.maxHp
+                  }</span>
                   <!-- Charges remain unchanged for now, will update below -->
                   <div class="charge-bar">
                       <div class="charge-fill" style="width: ${chargePercentage}%;"></div>
                       <span class="charge-text">Skill: ${hero.charges}/${
-          skill.maxCharges
-        }</span>
+                        skill.maxCharges
+                      }</span>
                   </div>
               `;
         heroStatsList.appendChild(stat);
@@ -695,8 +690,8 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
       </span>
       <div class="stat-hp-bar">
         <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-      hpPercentage * 100
-    )}%;"></div>
+          hpPercentage * 100,
+        )}%;"></div>
       </div>
       <span class="stat-health">HP: ${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
@@ -723,10 +718,9 @@ function startMission() {
   battleProgress.style.width = "0%";
   document.querySelector(".progress-text").textContent = "0%";
   exitBtn.disabled = true;
-  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
   BattleManager.start(
     gameState.selectedDungeon,
-    gameState.selectedDungeon.roomCount
+    gameState.selectedDungeon.roomCount,
   );
 }
 
@@ -734,7 +728,7 @@ function randomizeStat(baseStat, enemyVariance, dungeonVariance) {
   const enemyMin = Math.round(baseStat * (1 - enemyVariance));
   const enemyMax = Math.round(baseStat * (1 + enemyVariance));
   const enemyAdjusted = Math.round(
-    Math.random() * (enemyMax - enemyMin) + enemyMin
+    Math.random() * (enemyMax - enemyMin) + enemyMin,
   );
 
   const finalMin = Math.round(enemyAdjusted * (1 - dungeonVariance));
@@ -755,7 +749,7 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
     ? Math.round(Math.random() * (bossCount.max - bossCount.min)) +
       bossCount.min
     : Math.round(
-        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min)
+        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min),
       ) + enemyCountOnRoom.min;
   const pool = isBossRoom ? bossNames : enemyNames;
   const source = isBossRoom ? bosses : enemies;
@@ -770,7 +764,7 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
       const baseDamage = randomizeStat(
         stats.damage,
         stats.variance,
-        statVariance
+        statVariance,
       );
       const hp = isElite ? Math.round(baseHp * ELITE_HP_MULTIPLIER) : baseHp;
       const damage = isElite
@@ -932,20 +926,13 @@ function showResults() {
   }
 
   gameState.heroes = gameState.heroes.filter(
-    (h) => !gameState.casualties.includes(h.id)
+    (h) => !gameState.casualties.includes(h.id),
   );
   gameState.formation = gameState.formation.map((id) =>
-    gameState.casualties.includes(id) ? null : id
+    gameState.casualties.includes(id) ? null : id,
   );
 
   setTimeout(() => resultsScreen.classList.add("animate-in"), 10);
-}
-
-function toggleBattleSpeed() {
-  const speeds = [0.5, 1, 2, 4];
-  const index = speeds.indexOf(gameState.battleSpeed);
-  gameState.battleSpeed = speeds[(index + 1) % speeds.length];
-  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 }
 
 exitBtn.addEventListener("click", () => {

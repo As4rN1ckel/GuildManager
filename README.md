@@ -1,19 +1,1 @@
 # GuildManager
- --- ROADMAP ---
- - Loot/Items/Equipment/Inventory System
- - Hero Skills/Upgrades
- - Hero Tiers & Different Prices and Stats
- - Improved Recruit
- - Impproved Turn Based: New Attribute Speed
- - Multiplayer?
- - Random Events
- - More Dungeons/Enemies/Classes/Skills/Passives
- - Random/Temporary/Event Dungeons
- - Quest Board
- - Campaign
- - Hero Salary System?
- - Hero Retirement/Veteran System
- - Retreat System
- - Sounds
- - Improved Visual Feedback
- - Enemy Specials

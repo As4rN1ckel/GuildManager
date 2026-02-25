@@ -62,8 +62,6 @@ function initGame() {
     return;
   }
 
-  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
-
   for (let i = 0; i < 9; i++) {
     const slot = document.createElement("div");
     slot.className = "formation-slot";
@@ -86,7 +84,6 @@ function initGame() {
 
   recruitBtn.addEventListener("click", showShopScreen);
   embarkBtn.addEventListener("click", startMission);
-  speedBtn.addEventListener("click", toggleBattleSpeed);
   continueBtn.addEventListener("click", returnToGuild);
   backToGuildBtn.addEventListener("click", hideShopScreen);
   restBtn.addEventListener("click", restHeroes);

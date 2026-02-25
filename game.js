@@ -20,7 +20,6 @@ const gameState = {
   formation: Array(9).fill(null),
   selectedHero: null,
   selectedDungeon: null,
-  battleSpeed: 1,
   casualties: [],
   shopHeroes: [],
 };
@@ -114,7 +113,6 @@ function loadGame() {
         throw new Error("Invalid save");
       Object.assign(gameState, state);
       updateUI();
-      speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
       alert("Game loaded successfully!");
     } else {
       resetGame();
@@ -135,7 +133,6 @@ function resetGame() {
   gameState.formation = Array(9).fill(null);
   gameState.selectedHero = null;
   gameState.selectedDungeon = null;
-  gameState.battleSpeed = 1;
   gameState.casualties = [];
   gameState.shopHeroes = [];
   for (let i = 0; i < 3; i++) addHero(generateHero());
