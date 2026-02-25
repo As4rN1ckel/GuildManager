@@ -94,6 +94,10 @@ function initGame() {
   loadBtn.addEventListener("click", loadGame);
   resetBtn.addEventListener("click", resetGame);
 
+  document
+    .getElementById("refresh-shop-btn")
+    .addEventListener("click", refreshShop);
+
   headerButtonsContainer = document.createElement("div");
   headerButtonsContainer.style.display = "flex";
   headerButtonsContainer.style.gap = "10px";
@@ -103,13 +107,13 @@ function initGame() {
   showHeaderButtons();
 
   heroRoster.addEventListener("dragover", () =>
-    heroRoster.classList.add("dragover")
+    heroRoster.classList.add("dragover"),
   );
   heroRoster.addEventListener("dragleave", () =>
-    heroRoster.classList.remove("dragover")
+    heroRoster.classList.remove("dragover"),
   );
   heroRoster.addEventListener("drop", () =>
-    heroRoster.classList.remove("dragover")
+    heroRoster.classList.remove("dragover"),
   );
 
   closeHeroStatsBtn.addEventListener("click", () => {
@@ -126,7 +130,7 @@ function initGame() {
 function showHeaderButtons() {
   if (!headerButtonsContainer) {
     console.error(
-      "headerButtonsContainer is null or undefined, attempting to recreate..."
+      "headerButtonsContainer is null or undefined, attempting to recreate...",
     );
     const header = document.querySelector(".header");
     if (header) {
@@ -146,7 +150,7 @@ function showHeaderButtons() {
       btn.style.display = "inline-block";
     } else {
       console.warn(
-        `Button ${index} not found in headerButtonsContainer, recreating...`
+        `Button ${index} not found in headerButtonsContainer, recreating...`,
       );
       const newBtn = document.createElement("button");
       if (index === 0) {
@@ -209,7 +213,7 @@ function restHeroes() {
       hero.hp = Math.min(hero.maxHp, hero.hp + heal);
       addLogEntry(
         "heal",
-        `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`
+        `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`,
       );
     });
     toggleCycle();
@@ -248,11 +252,11 @@ function renderHeroRoster() {
         <div class="hero-info">${hero.name.split(" ")[0]}</div>
         <div class="level">Lv${hero.level}</div>
         <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
-        hpPercentage * 100
-      )}%;"></div></div>
+          hpPercentage * 100,
+        )}%;"></div></div>
       `;
       el.addEventListener("dragstart", (e) =>
-        e.dataTransfer.setData("text/plain", hero.id)
+        e.dataTransfer.setData("text/plain", hero.id),
       );
       el.addEventListener("click", () => selectHero(hero.id));
 
@@ -294,7 +298,7 @@ function handleFormationSlotClick(index) {
     gameState.selectedHero = null;
   } else if (gameState.selectedHero && current) {
     const slot = gameState.formation.findIndex(
-      (id) => id === gameState.selectedHero
+      (id) => id === gameState.selectedHero,
     );
     if (slot !== -1) gameState.formation[slot] = current;
     gameState.formation[index] = gameState.selectedHero;
@@ -336,8 +340,8 @@ function updateFormationGrid() {
           hpPercentage < 0.25
             ? "red"
             : hpPercentage <= 0.6
-            ? "yellow"
-            : "green";
+              ? "yellow"
+              : "green";
 
         const el = document.createElement("div");
         el.className = `hero-base hero ${hero.class}`;
@@ -356,11 +360,11 @@ function updateFormationGrid() {
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
           <div class="level">Lv${hero.level}</div>
           <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100
-        )}%;"></div></div>
+            hpPercentage * 100,
+          )}%;"></div></div>
         `;
         el.addEventListener("dragstart", (e) =>
-          e.dataTransfer.setData("text/plain", hero.id)
+          e.dataTransfer.setData("text/plain", hero.id),
         );
         el.addEventListener("click", () => selectHero(hero.id));
 
@@ -553,6 +557,8 @@ function showShopScreen() {
   renderShop();
 }
 
+const SHOP_REFRESH_COST = 50;
+
 function renderShop() {
   const recruitList = document.getElementById("recruit-list");
   if (!recruitList) {
@@ -560,28 +566,55 @@ function renderShop() {
     return;
   }
   recruitList.innerHTML = "";
-  for (let i = 0; i < 6; i++) {
-    const hero = generateHero();
+
+  // Only generate new heroes if the pool is empty
+  if (gameState.shopHeroes.length === 0) {
+    for (let i = 0; i < 6; i++) {
+      gameState.shopHeroes.push(generateHero());
+    }
+  }
+
+  gameState.shopHeroes.forEach((hero) => {
     const el = document.createElement("div");
     el.className = `hero-base recruit-hero ${hero.class} animate-in`;
     el.innerHTML = `
-      <div class="shape"></div>
-      <div class="hero-info">${hero.name}</div>
-      <div class="class-info">Class: ${capitalize(hero.class)}</div>
-      <div class="tier-info">Tier: ${hero.tier}</div>
-      <div class="level">Lv${hero.level}</div>
-      <div class="cost">${hero.cost} Gold</div>
-    `;
+            <div class="shape"></div>
+            <div class="hero-info">${hero.name}</div>
+            <div class="class-info">Class: ${capitalize(hero.class)}</div>
+            <div class="tier-info">Tier: ${hero.tier}</div>
+            <div class="level">Lv${hero.level}</div>
+            <div class="cost">${hero.cost} Gold</div>
+        `;
     el.addEventListener("click", () => recruitHero(hero, el));
     recruitList.appendChild(el);
+  });
+
+  setTimeout(() => {
+    document
+      .querySelectorAll(".recruit-hero")
+      .forEach((h) => h.classList.add("visible"));
+  }, 10);
+
+  updateRefreshButton();
+}
+
+function updateRefreshButton() {
+  const btn = document.getElementById("refresh-shop-btn");
+  if (btn) {
+    btn.textContent = `Refresh Shop (${SHOP_REFRESH_COST}g)`;
+    btn.disabled = gameState.gold < SHOP_REFRESH_COST;
   }
-  setTimeout(
-    () =>
-      document
-        .querySelectorAll(".recruit-hero")
-        .forEach((hero) => hero.classList.add("visible")),
-    10
-  );
+}
+
+function refreshShop() {
+  if (gameState.gold < SHOP_REFRESH_COST) {
+    alert(`Not enough gold! Need ${SHOP_REFRESH_COST}g to refresh.`);
+    return;
+  }
+  gameState.gold -= SHOP_REFRESH_COST;
+  gameState.shopHeroes = [];
+  renderShop();
+  updateUI();
 }
 
 /**
@@ -592,8 +625,10 @@ function recruitHero(hero, element) {
   if (gameState.gold >= hero.cost) {
     gameState.gold -= hero.cost;
     addHero(hero);
+    gameState.shopHeroes = gameState.shopHeroes.filter((h) => h.id !== hero.id); // NEW
     element.remove();
     updateUI();
+    updateRefreshButton();
   } else {
     alert("Not enough gold!");
   }
@@ -695,26 +730,26 @@ function updateHeroStatsPanel() {
   heroStatsContent.innerHTML = `
     <div class="hero-stat-item"><strong>Name:</strong> ${hero.name}</div>
     <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
-      hero.class
+      hero.class,
     )}</div>
     <div class="hero-stat-item"><strong>Tier:</strong> ${hero.tier}</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
-    xpThresholds[hero.level]
-  }</div>
+      xpThresholds[hero.level]
+    }</div>
     <div class="hero-stat-item"><strong>HP:</strong> ${hero.hp}/${
-    hero.maxHp
-  }</div>
+      hero.maxHp
+    }</div>
     <div class="hero-stat-item"><strong>Attack:</strong> ${hero.attack}</div>
     <div class="hero-stat-item"><strong>Speed:</strong> ${hero.speed}</div>
     <div class="hero-stat-item"><strong>Hit Chance:</strong> ${Math.floor(
-      hero.hitChance * 100
+      hero.hitChance * 100,
     )}%</div>
     <div class="hero-stat-item special-item"><strong>Special:</strong> ${
       hero.special
     } - ${skill?.description || "No description"} (Charges: ${hero.charges}/${
-    skill.maxCharges
-  })</div>
+      skill.maxCharges
+    })</div>
     <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${
       hero.passive
     } - ${passive?.description || "No description"}</div>

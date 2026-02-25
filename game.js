@@ -22,6 +22,7 @@ const gameState = {
   selectedDungeon: null,
   battleSpeed: 1,
   casualties: [],
+  shopHeroes: [],
 };
 
 function addHero(hero) {
@@ -136,6 +137,7 @@ function resetGame() {
   gameState.selectedDungeon = null;
   gameState.battleSpeed = 1;
   gameState.casualties = [];
+  gameState.shopHeroes = [];
   for (let i = 0; i < 3; i++) addHero(generateHero());
   localStorage.removeItem("gameState");
   updateUI();
@@ -143,7 +145,10 @@ function resetGame() {
 
 function toggleCycle() {
   gameState.cycle = gameState.cycle === "day" ? "night" : "day";
-  if (gameState.cycle === "day") gameState.day++;
+  if (gameState.cycle === "day") {
+    gameState.day++;
+    gameState.shopHeroes = [];
+  }
 }
 
 // Browser-specific exports
