@@ -91,10 +91,10 @@ const heroTiers = {
 
 const tierWeights = {
   S: 0.05,
-  A: 0.15, 
-  B: 0.30,
-  C: 0.40, 
-  D: 0.10,
+  A: 0.15,
+  B: 0.3,
+  C: 0.4,
+  D: 0.1,
 };
 
 function getRandomTier() {
@@ -107,11 +107,6 @@ function getRandomTier() {
   return "C";
 }
 
-/**
- * Generates a random fantasy hero name
- * @param {string} className - Hero class name (unused, reserved for future customization)
- * @returns {string} Random hero name
- */
 function generateHeroName(className) {
   const first = firstNames[Math.floor(Math.random() * firstNames.length)];
   const last = lastNames[Math.floor(Math.random() * lastNames.length)];
@@ -252,7 +247,7 @@ const heroSkills = [
     description: "Deals 20% more damage to up to 3 targets",
     type: "damage",
     value: 1.2,
-    maxCharges: 4, 
+    maxCharges: 4,
     appliesTo: ["archer"],
     apply: function (hero, targets, baseDamage) {
       const targetArray = Array.isArray(targets) ? targets : [targets];

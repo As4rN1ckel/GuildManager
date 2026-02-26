@@ -1,4 +1,3 @@
-// Fallback for older browsers or direct script inclusion (global variables)
 if (typeof window !== "undefined") {
   window.generateHeroName =
     window.generateHeroName ||

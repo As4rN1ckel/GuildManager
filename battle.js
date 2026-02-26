@@ -822,12 +822,6 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
     });
 }
 
-/**
- * Logs battle events with room context and milestone tracking
- * @param {string} type - Log type (e.g., "attack", "milestone")
- * @param {string} text - Message to log
- * @param {number} roomNumber - Current room number
- */
 function addLogEntry(type, text, roomNumber) {
   const entry = document.createElement("div");
   entry.className = `log-entry ${type}`;

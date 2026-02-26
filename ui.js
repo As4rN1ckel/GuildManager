@@ -32,10 +32,8 @@ const resetBtn = document.createElement("button");
 resetBtn.textContent = "RESET";
 resetBtn.className = "primary";
 
-// Store buttons in an array for easier management
 const headerButtons = [saveBtn, loadBtn, resetBtn];
 
-// Initializes game UI with event listeners and content
 function initGame() {
   if (
     !heroRoster ||
@@ -123,7 +121,6 @@ function initGame() {
   updateUI();
 }
 
-// Helper function to show header buttons
 function showHeaderButtons() {
   if (!headerButtonsContainer) {
     console.error(
@@ -167,7 +164,6 @@ function showHeaderButtons() {
   });
 }
 
-// Helper function to hide header buttons
 function hideHeaderButtons() {
   if (headerButtonsContainer) {
     headerButtons.forEach((btn) => {
@@ -178,7 +174,6 @@ function hideHeaderButtons() {
   }
 }
 
-// Updates UI to reflect game state
 function updateUI() {
   goldAmount.textContent = gameState.gold;
   dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${
@@ -264,9 +259,6 @@ function renderHeroRoster() {
   });
 }
 
-/**
- * @param {string} heroId - Hero ID to select/deselect
- */
 function selectHero(heroId) {
   const tooltip = document.getElementById("hero-tooltip");
   if (tooltip) {
@@ -283,9 +275,6 @@ function selectHero(heroId) {
   checkEmbarkButton();
 }
 
-/**
- * @param {number} index - Formation slot index
- */
 function handleFormationSlotClick(index) {
   const current = gameState.formation[index];
   if (current && !gameState.selectedHero) {
@@ -495,10 +484,6 @@ function updateHeroTooltipListeners(heroElement) {
   heroElement.addEventListener("touchend", handleTouchEnd, { passive: true });
 }
 
-/**
- * @param {DragEvent} e - Drag event
- * @param {number|null} targetIndex - Target slot index or null for roster
- */
 function handleDrop(e, targetIndex) {
   e.preventDefault();
   const heroId = e.dataTransfer.getData("text/plain");
@@ -529,9 +514,6 @@ function handleDrop(e, targetIndex) {
   checkEmbarkButton();
 }
 
-/**
- * @param {Object} dungeon - Dungeon to select
- */
 function selectDungeon(dungeon) {
   gameState.selectedDungeon = dungeon;
   dungeonList
@@ -614,10 +596,6 @@ function refreshShop() {
   updateUI();
 }
 
-/**
- * @param {Object} hero - Hero to recruit
- * @param {HTMLElement} element - Shop element to remove
- */
 function recruitHero(hero, element) {
   if (gameState.gold >= hero.cost) {
     gameState.gold -= hero.cost;
