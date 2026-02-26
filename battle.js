@@ -7,6 +7,7 @@ const rewardsList = document.getElementById("rewards-list");
 const exitBtn = document.getElementById("exit-btn");
 const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
+const retreatBtn = document.getElementById("retreat-btn");
 
 const turnOrderContainer = document.createElement("div");
 turnOrderContainer.className = "turn-order-container";
@@ -38,7 +39,6 @@ class BattleManager {
     while (currentRoom < totalRooms) {
       currentRoom++;
       this.updateProgress(currentRoom, totalRooms);
-
       const formationHeroes = this.getFormationHeroes();
       if (!formationHeroes.length) {
         this.handleDefeat(
@@ -50,23 +50,41 @@ class BattleManager {
         );
         return;
       }
-
-      const roomCleared = await this.simulateRoom(
+      const result = await this.simulateRoom(
         currentRoom,
         totalRooms,
         formationHeroes,
         roomEnemies[currentRoom - 1],
         dungeon,
       );
+
+      if (result === "retreated") {
+        gameState.retreatRoomsCleared = currentRoom - 1;
+        retreatBtn.disabled = true;
+        retreatBtn.style.display = "none";
+        exitBtn.disabled = false;
+        return;
+      }
+
       this.updateStats(
         formationHeroes,
         roomEnemies[currentRoom - 1],
         currentRoom,
         totalRooms,
       );
-
-      if (!roomCleared) currentRoom--;
-      this.updateProgress(currentRoom + (roomCleared ? 0 : 0.5), totalRooms);
+      if (!result) {
+        currentRoom--;
+        this.updateProgress(currentRoom + 0.5, totalRooms);
+        this.logEntry(
+          "system",
+          `Room ${currentRoom}: All heroes defeated! Press Exit for results.`,
+          currentRoom,
+        );
+        exitBtn.disabled = false;
+        retreatBtn.disabled = true;
+        retreatBtn.style.display = "none";
+        return;
+      }
     }
 
     this.logEntry(
@@ -75,6 +93,8 @@ class BattleManager {
       currentRoom,
     );
     exitBtn.disabled = false;
+    retreatBtn.disabled = true;
+    retreatBtn.style.display = "none";
   }
 
   static generateRooms(dungeon, totalRooms) {
@@ -150,6 +170,8 @@ class BattleManager {
       const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
       const livingEnemies = enemyGroup.filter((e) => e.hp > 0);
 
+      if (retreatRequested) return "retreated";
+
       if (livingEnemies.length === 0) {
         this.handleRoomClear(
           formationHeroes,
@@ -174,7 +196,12 @@ class BattleManager {
       const nextCombatant = sortedCombatants[0];
 
       if (!nextCombatant || nextCombatant.entity.ticks < TURN_THRESHOLD) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => {
+          retreatResolver = resolve;
+          setTimeout(resolve, 50);
+        });
+        retreatResolver = null;
+        if (retreatRequested) return "retreated";
         continue;
       }
 
@@ -214,7 +241,12 @@ class BattleManager {
       this.updateStats(livingHeroes, livingEnemies, roomNumber, totalRooms);
       this.updateTurnOrder(combatants, TURN_THRESHOLD);
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => {
+        retreatResolver = resolve;
+        setTimeout(resolve, 500);
+      });
+      retreatResolver = null;
+      if (retreatRequested) return "retreated";
     }
   }
 
@@ -709,6 +741,10 @@ function startMission() {
     return;
   }
 
+  retreatRequested = false;
+  retreatBtn.disabled = false;
+  retreatBtn.style.display = "inline-block";
+
   mainScreen.style.display = "none";
   battleScreen.style.display = "block";
   hideHeaderButtons();
@@ -812,14 +848,75 @@ function addLogEntry(type, text, roomNumber) {
 function showResults() {
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
-  resultsScreen.classList.remove("victory", "defeat");
+  resultsScreen.classList.remove("victory", "defeat", "retreat");
 
-  const victory = checkVictory();
-  resultsScreen.classList.add(victory ? "victory" : "defeat");
-  resultTitle.textContent = victory ? "Victory!" : "Defeat!";
-  resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
+  const isRetreat = gameState.retreated || retreatRequested;
+  const victory = !isRetreat && checkVictory();
 
-  resultTitle.innerHTML = `
+  if (isRetreat) {
+    resultsScreen.classList.add("retreat");
+    resultTitle.innerHTML = `
+        <span class="outcome-icon retreat-icon"></span>Retreat!
+        <span class="result-subtitle">Your party fled with their lives...</span>
+    `;
+    resultTitle.style.color = "#e6a817";
+
+    const roomsCleared = gameState.retreatRoomsCleared || 0;
+    const totalRooms = gameState.selectedDungeon.roomCount;
+    const partialReward = Math.floor(
+      (roomsCleared / totalRooms) * gameState.selectedDungeon.reward * 0.5,
+    );
+    gameState.gold += partialReward;
+
+    casualtiesList.innerHTML = "";
+    if (gameState.casualties.length > 0) {
+      const casualtiesTitle = document.createElement("h3");
+      casualtiesTitle.textContent = "Casualties:";
+      casualtiesTitle.className = "section-title";
+      casualtiesList.appendChild(casualtiesTitle);
+
+      gameState.casualties.forEach((id) => {
+        const hero = gameState.heroes.find((h) => h.id === id);
+        if (hero) {
+          const el = document.createElement("div");
+          el.className = `hero-base hero ${hero.class} casualty`;
+          el.innerHTML = `
+                <div class="shape"></div>
+                <div class="hero-info">${hero.name}</div>
+                <span class="casualty-mark">✝</span>
+            `;
+          casualtiesList.appendChild(el);
+        }
+      });
+    } else {
+      casualtiesList.innerHTML = `
+        <div class="no-casualties">
+            <span class="no-casualties-icon">↩</span>
+            No casualties — party retreated safely
+        </div>
+    `;
+    }
+
+    rewardsList.innerHTML = `
+        <h3 class="section-title">Rewards</h3>
+        ${
+          partialReward > 0
+            ? `<div class="reward-item gold-reward">
+                   <span class="reward-icon gold-icon"></span>
+                   Gold: ${partialReward} <small>(${roomsCleared}/${totalRooms} rooms)</small>
+               </div>`
+            : `<div class="no-rewards">
+                   <span class="no-rewards-icon">✗</span>
+                   No rooms cleared — no reward.
+               </div>`
+        }
+    `;
+  } else {
+    resultsScreen.classList.add(victory ? "victory" : "defeat");
+    resultTitle.textContent = victory ? "Victory!" : "Defeat!";
+    resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
+
+    resultTitle.innerHTML = `
     <span class="outcome-icon ${
       victory ? "victory-icon" : "defeat-icon"
     }"></span>
@@ -831,46 +928,46 @@ function showResults() {
     }</span>
   `;
 
-  casualtiesList.innerHTML = "";
-  if (gameState.casualties.length > 0) {
-    const casualtiesTitle = document.createElement("h3");
-    casualtiesTitle.textContent = "Casualties:";
-    casualtiesTitle.className = "section-title";
-    casualtiesList.appendChild(casualtiesTitle);
+    casualtiesList.innerHTML = "";
+    if (gameState.casualties.length > 0) {
+      const casualtiesTitle = document.createElement("h3");
+      casualtiesTitle.textContent = "Casualties:";
+      casualtiesTitle.className = "section-title";
+      casualtiesList.appendChild(casualtiesTitle);
 
-    gameState.casualties.forEach((id) => {
-      const hero = gameState.heroes.find((h) => h.id === id);
-      if (hero) {
-        const el = document.createElement("div");
-        el.className = `hero-base hero ${hero.class} casualty`;
-        el.innerHTML = `
+      gameState.casualties.forEach((id) => {
+        const hero = gameState.heroes.find((h) => h.id === id);
+        if (hero) {
+          const el = document.createElement("div");
+          el.className = `hero-base hero ${hero.class} casualty`;
+          el.innerHTML = `
           <div class="shape"></div>
           <div class="hero-info">${hero.name}</div>
           <span class="casualty-mark">✝</span>
         `;
-        casualtiesList.appendChild(el);
-      }
-    });
-  } else {
-    const noCasualties = document.createElement("div");
-    noCasualties.className = "no-casualties";
-    noCasualties.innerHTML = `
+          casualtiesList.appendChild(el);
+        }
+      });
+    } else {
+      const noCasualties = document.createElement("div");
+      noCasualties.className = "no-casualties";
+      noCasualties.innerHTML = `
       <span class="no-casualties-icon">✔</span>
       No Casualties
     `;
-    casualtiesList.appendChild(noCasualties);
-  }
+      casualtiesList.appendChild(noCasualties);
+    }
 
-  rewardsList.innerHTML = "";
-  if (victory) {
-    const rewardsTitle = document.createElement("h3");
-    rewardsTitle.textContent = "Rewards:";
-    rewardsTitle.className = "section-title";
-    rewardsList.appendChild(rewardsTitle);
+    rewardsList.innerHTML = "";
+    if (victory) {
+      const rewardsTitle = document.createElement("h3");
+      rewardsTitle.textContent = "Rewards:";
+      rewardsTitle.className = "section-title";
+      rewardsList.appendChild(rewardsTitle);
 
-    const reward = gameState.selectedDungeon.reward;
-    gameState.gold += reward;
-    rewardsList.innerHTML += `
+      const reward = gameState.selectedDungeon.reward;
+      gameState.gold += reward;
+      rewardsList.innerHTML += `
       <div class="reward-item gold-reward">
         <span class="reward-icon gold-icon"></span> Gold: ${reward}
       </div>
@@ -878,14 +975,15 @@ function showResults() {
         <span class="reward-icon cleared-icon"></span> Dungeon Cleared!
       </div>
     `;
-  } else {
-    const noRewards = document.createElement("div");
-    noRewards.className = "no-rewards";
-    noRewards.innerHTML = `
+    } else {
+      const noRewards = document.createElement("div");
+      noRewards.className = "no-rewards";
+      noRewards.innerHTML = `
       <span class="no-rewards-icon">✗</span>
       No Rewards Earned
     `;
-    rewardsList.appendChild(noRewards);
+      rewardsList.appendChild(noRewards);
+    }
   }
 
   const milestonesList = document.getElementById("milestones-list");
@@ -937,4 +1035,23 @@ function showResults() {
 
 exitBtn.addEventListener("click", () => {
   if (!exitBtn.disabled) showResults();
+});
+
+let retreatRequested = false;
+let retreatResolver = null;
+
+function handleRetreat() {
+  if (retreatRequested) return;
+  retreatRequested = true;
+  retreatBtn.disabled = true;
+  BattleManager.logEntry(
+    "system",
+    "⚠ Your party retreats from the dungeon!",
+    0,
+  );
+  if (retreatResolver) retreatResolver();
+}
+
+retreatBtn.addEventListener("click", () => {
+  if (!retreatBtn.disabled) handleRetreat();
 });

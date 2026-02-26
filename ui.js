@@ -622,7 +622,7 @@ function recruitHero(hero, element) {
   if (gameState.gold >= hero.cost) {
     gameState.gold -= hero.cost;
     addHero(hero);
-    gameState.shopHeroes = gameState.shopHeroes.filter((h) => h.id !== hero.id); // NEW
+    gameState.shopHeroes = gameState.shopHeroes.filter((h) => h.id !== hero.id);
     element.remove();
     updateUI();
     updateRefreshButton();
@@ -637,6 +637,10 @@ function hideShopScreen() {
 }
 
 function returnToGuild() {
+  retreatRequested = false;
+  gameState.retreated = false;
+  gameState.retreatRoomsCleared = 0;
+
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
   toggleCycle();
@@ -654,7 +658,7 @@ function returnToGuild() {
 
   if (!headerButtonsContainer || !header.contains(headerButtonsContainer)) {
     if (headerButtonsContainer) {
-      headerButtonsContainer.remove(); // Clean up any orphaned container
+      headerButtonsContainer.remove();
     }
     headerButtonsContainer = document.createElement("div");
     headerButtonsContainer.style.display = "flex";

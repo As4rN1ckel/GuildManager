@@ -21,6 +21,7 @@ const gameState = {
   selectedHero: null,
   selectedDungeon: null,
   casualties: [],
+  retreated: false,
   shopHeroes: [],
 };
 
@@ -134,6 +135,7 @@ function resetGame() {
   gameState.selectedHero = null;
   gameState.selectedDungeon = null;
   gameState.casualties = [];
+  gameState.retreated = false;
   gameState.shopHeroes = [];
   for (let i = 0; i < 3; i++) addHero(generateHero());
   localStorage.removeItem("gameState");
