@@ -756,15 +756,55 @@ function updateHeroStatsPanel() {
     } - ${passive?.description || "No description"}</div>
   `;
 
-  setTimeout(() => heroStatsPanel.classList.add("animate-in"), 10);
+  const refund = Math.floor(hero.cost * 0.3) + (hero.level - 1) * 10;
+  const inFormation = isHeroInFormation(hero);
 
-  if (isMobile) {
-    modalOverlay.addEventListener("touchmove", preventScroll, {
-      passive: false,
+  const dismissContainer = document.createElement("div");
+  dismissContainer.className = "dismiss-container";
+
+  const dismissBtn = document.createElement("button");
+  dismissBtn.className = "dismiss-btn";
+  dismissBtn.textContent = `Dismiss (${refund}g)`;
+  dismissBtn.disabled = inFormation;
+  dismissBtn.title = inFormation
+    ? "Remove from formation first"
+    : `Receive ${refund} gold`;
+
+  const confirmRow = document.createElement("div");
+  confirmRow.className = "dismiss-confirm-row";
+  confirmRow.style.display = "none";
+  confirmRow.innerHTML = `
+    <span style="font-size:0.85rem; color:#ccc;">Dismiss ${hero.name.split(" ")[0]} for ${refund}g?</span>
+    <div style="display:flex; gap:8px; margin-top:6px;">
+        <button class="dismiss-confirm-yes">Yes, Dismiss</button>
+        <button class="dismiss-confirm-no">Cancel</button>
+    </div>
+`;
+
+  dismissBtn.addEventListener("click", () => {
+    dismissBtn.style.display = "none";
+    confirmRow.style.display = "block";
+  });
+
+  confirmRow
+    .querySelector(".dismiss-confirm-yes")
+    .addEventListener("click", () => {
+      dismissHero(hero.id);
+      heroStatsPanel.style.display = "none";
+      modalOverlay.style.display = "none";
+      heroStatsPanel.classList.remove("visible");
     });
-  } else {
-    modalOverlay.removeEventListener("touchmove", preventScroll);
-  }
+
+  confirmRow
+    .querySelector(".dismiss-confirm-no")
+    .addEventListener("click", () => {
+      confirmRow.style.display = "none";
+      dismissBtn.style.display = "block";
+    });
+
+  dismissContainer.appendChild(dismissBtn);
+  dismissContainer.appendChild(confirmRow);
+  heroStatsContent.appendChild(dismissContainer);
 }
 
 function preventScroll(e) {

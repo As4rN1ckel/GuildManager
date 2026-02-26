@@ -88,6 +88,20 @@ function isHeroInFormation(hero) {
   return gameState.formation.some((slot) => slot === hero.id);
 }
 
+function dismissHero(heroId) {
+  const hero = gameState.heroes.find((h) => h.id === heroId);
+  if (!hero) return;
+
+  const refund = Math.floor(hero.cost * 0.3) + (hero.level - 1) * 10;
+  gameState.gold += refund;
+  gameState.heroes = gameState.heroes.filter((h) => h.id !== heroId);
+  gameState.formation = gameState.formation.map((id) =>
+    id === heroId ? null : id,
+  );
+  gameState.selectedHero = null;
+  updateUI();
+}
+
 function checkVictory() {
   return (
     gameState.casualties.length <
@@ -153,7 +167,5 @@ function toggleCycle() {
 // Browser-specific exports
 if (typeof window !== "undefined") {
   window.addEventListener("load", loadGame);
-  Object.assign(window, {
-    gameState,
-  });
+  Object.assign(window, gameState);
 }
