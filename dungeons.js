@@ -138,7 +138,7 @@ const enemies = {
     variance: 0.1,
     speed: 60,
   },
-  Demon: {
+  Imp: {
     name: "Imp",
     hp: 75,
     damage: 25,

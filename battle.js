@@ -898,7 +898,6 @@ function showResults() {
     }
 
     rewardsList.innerHTML = `
-        <h3 class="section-title">Rewards</h3>
         ${
           partialReward > 0
             ? `<div class="reward-item gold-reward">
@@ -960,11 +959,6 @@ function showResults() {
 
     rewardsList.innerHTML = "";
     if (victory) {
-      const rewardsTitle = document.createElement("h3");
-      rewardsTitle.textContent = "Rewards:";
-      rewardsTitle.className = "section-title";
-      rewardsList.appendChild(rewardsTitle);
-
       const reward = gameState.selectedDungeon.reward;
       gameState.gold += reward;
       rewardsList.innerHTML += `
