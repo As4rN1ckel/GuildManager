@@ -198,10 +198,10 @@ function updateUI() {
   renderHeroRoster();
   updateFormationGrid();
 
-  const injured = gameState.heroes.filter((hero) => hero.hp < hero.maxHp);
-  const cost = injured.length * 20;
+  const formationCount = gameState.formation.filter((id) => id !== null).length;
+  const cost = formationCount * 20;
   restCostAmount.textContent = cost;
-  restBtn.disabled = !injured.length || gameState.gold < cost;
+  restBtn.disabled = gameState.gold < cost;
 
   // Trigger animation for updated panels
   document.querySelectorAll(".panel").forEach((panel) => {
@@ -211,25 +211,34 @@ function updateUI() {
 }
 
 function restHeroes() {
-  const injured = gameState.heroes.filter((hero) => hero.hp < hero.maxHp);
-  const cost = injured.length * 20;
+  const formationHeroes = gameState.formation
+    .filter((id) => id !== null)
+    .map((id) => gameState.heroes.find((h) => h.id === id))
+    .filter(Boolean);
 
-  if (gameState.gold >= cost) {
-    gameState.gold -= cost;
-    injured.forEach((hero) => {
+  const cost = formationHeroes.length * 20;
+
+  if (gameState.gold < cost) {
+    alert(`Not enough gold! Need ${cost}g (${gameState.gold}g available).`);
+    return;
+  }
+
+  gameState.gold -= cost;
+
+  formationHeroes.forEach((hero) => {
+    if (hero.hp < hero.maxHp) {
       const heal = Math.floor(hero.maxHp * 0.5);
       hero.hp = Math.min(hero.maxHp, hero.hp + heal);
       addLogEntry(
         "heal",
         `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`,
       );
-    });
-    resolveContracts();
-    toggleCycle();
-    updateUI();
-  } else {
-    alert(`Not enough gold! Need ${cost} (${gameState.gold} available).`);
-  }
+    }
+  });
+
+  resolveContracts();
+  toggleCycle();
+  updateUI();
 }
 
 function renderHeroRoster() {
@@ -314,8 +323,7 @@ function handleFormationSlotClick(index) {
     gameState.formation[index] = gameState.selectedHero;
     gameState.selectedHero = null;
   }
-  renderHeroRoster();
-  updateFormationGrid();
+  updateUI();
   checkEmbarkButton();
 }
 
@@ -533,8 +541,7 @@ function handleDrop(e, targetIndex) {
   }
 
   gameState.selectedHero = null;
-  renderHeroRoster();
-  updateFormationGrid();
+  updateUI();
   checkEmbarkButton();
 }
 
@@ -1117,7 +1124,6 @@ function handleContractDrop(e, contractId, slotIndex) {
   pendingContractAssignments[contractId] = pending.filter(Boolean);
 
   renderContractsTab();
-  renderHeroRoster();
-  updateFormationGrid();
+  updateUI();
   checkEmbarkButton();
 }

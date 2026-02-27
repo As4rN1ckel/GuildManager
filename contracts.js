@@ -85,7 +85,7 @@ function getContractSuccessChance(heroIds, preferredClasses, difficulty) {
     return sum + tierPower + hero.level * 0.8 + classBonus;
   }, 0);
 
-  const threshold = difficulty * 4;
+  const threshold = difficulty * 5;
   return Math.min(0.99, Math.max(0.1, power / threshold));
 }
 
