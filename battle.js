@@ -4,10 +4,10 @@ const dungeonName = document.getElementById("dungeon-name");
 const resultTitle = document.getElementById("result-title");
 const casualtiesList = document.getElementById("casualties-list");
 const rewardsList = document.getElementById("rewards-list");
+const speedBtn = document.getElementById("speed-btn");
 const exitBtn = document.getElementById("exit-btn");
 const heroStatsList = document.getElementById("hero-stats-list");
 const enemyStatsList = document.getElementById("enemy-stats-list");
-const retreatBtn = document.getElementById("retreat-btn");
 
 const turnOrderContainer = document.createElement("div");
 turnOrderContainer.className = "turn-order-container";
@@ -39,6 +39,7 @@ class BattleManager {
     while (currentRoom < totalRooms) {
       currentRoom++;
       this.updateProgress(currentRoom, totalRooms);
+
       const formationHeroes = this.getFormationHeroes();
       if (!formationHeroes.length) {
         this.handleDefeat(
@@ -46,55 +47,35 @@ class BattleManager {
           roomEnemies[currentRoom - 1],
           currentRoom,
           totalRooms,
-          dungeon,
+          dungeon
         );
         return;
       }
-      const result = await this.simulateRoom(
+
+      const roomCleared = await this.simulateRoom(
         currentRoom,
         totalRooms,
         formationHeroes,
         roomEnemies[currentRoom - 1],
-        dungeon,
+        dungeon
       );
-
-      if (result === "retreated") {
-        gameState.retreatRoomsCleared = currentRoom - 1;
-        retreatBtn.disabled = true;
-        retreatBtn.style.display = "none";
-        exitBtn.disabled = false;
-        return;
-      }
-
       this.updateStats(
         formationHeroes,
         roomEnemies[currentRoom - 1],
         currentRoom,
-        totalRooms,
+        totalRooms
       );
-      if (!result) {
-        currentRoom--;
-        this.updateProgress(currentRoom + 0.5, totalRooms);
-        this.logEntry(
-          "system",
-          `Room ${currentRoom}: All heroes defeated! Press Exit for results.`,
-          currentRoom,
-        );
-        exitBtn.disabled = false;
-        retreatBtn.disabled = true;
-        retreatBtn.style.display = "none";
-        return;
-      }
+
+      if (!roomCleared) currentRoom--;
+      this.updateProgress(currentRoom + (roomCleared ? 0 : 0.5), totalRooms);
     }
 
     this.logEntry(
       "system",
       "Dungeon conquered. Press Exit for results.",
-      currentRoom,
+      currentRoom
     );
     exitBtn.disabled = false;
-    retreatBtn.disabled = true;
-    retreatBtn.style.display = "none";
   }
 
   static generateRooms(dungeon, totalRooms) {
@@ -115,20 +96,20 @@ class BattleManager {
     totalRooms,
     formationHeroes,
     enemyGroup,
-    dungeon,
+    dungeon
   ) {
     if (!enemyGroup || !formationHeroes.length) return false;
 
     const isBossRoom = roomNumber === totalRooms;
     const enemyDescriptions = enemyGroup
       .map(
-        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`,
+        (e) => `${e.isElite ? "Elite " : ""}${e.type} (${e.hp}/${e.maxHp} HP)`
       )
       .join(", ");
     this.logEntry(
       "system",
       `Room ${roomNumber}${isBossRoom ? " (Boss)" : ""}: ${enemyDescriptions}`,
-      roomNumber,
+      roomNumber
     );
 
     return await this.runBattleLoop(
@@ -137,7 +118,7 @@ class BattleManager {
       roomNumber,
       totalRooms,
       isBossRoom,
-      dungeon,
+      dungeon
     );
   }
 
@@ -147,7 +128,7 @@ class BattleManager {
     roomNumber,
     totalRooms,
     isBossRoom,
-    dungeon,
+    dungeon
   ) {
     const TURN_THRESHOLD = 100;
     const combatants = [
@@ -170,8 +151,6 @@ class BattleManager {
       const livingHeroes = formationHeroes.filter((h) => h.hp > 0);
       const livingEnemies = enemyGroup.filter((e) => e.hp > 0);
 
-      if (retreatRequested) return "retreated";
-
       if (livingEnemies.length === 0) {
         this.handleRoomClear(
           formationHeroes,
@@ -179,7 +158,7 @@ class BattleManager {
           roomNumber,
           totalRooms,
           isBossRoom,
-          dungeon,
+          dungeon
         );
         return true;
       }
@@ -196,12 +175,9 @@ class BattleManager {
       const nextCombatant = sortedCombatants[0];
 
       if (!nextCombatant || nextCombatant.entity.ticks < TURN_THRESHOLD) {
-        await new Promise((resolve) => {
-          retreatResolver = resolve;
-          setTimeout(resolve, 50);
-        });
-        retreatResolver = null;
-        if (retreatRequested) return "retreated";
+        await new Promise((resolve) =>
+          setTimeout(resolve, 50 / (gameState.battleSpeed || 1))
+        );
         continue;
       }
 
@@ -213,12 +189,12 @@ class BattleManager {
           livingHeroes,
           enemyGroup,
           roomNumber,
-          totalRooms,
+          totalRooms
         );
         if (nextCombatant.entity.hp <= 0) {
           gameState.casualties.push(nextCombatant.entity.id);
           const index = combatants.findIndex(
-            (c) => c.entity.id === nextCombatant.entity.id,
+            (c) => c.entity.id === nextCombatant.entity.id
           );
           if (index !== -1) combatants.splice(index, 1);
         }
@@ -228,11 +204,11 @@ class BattleManager {
           livingHeroes,
           enemyGroup,
           roomNumber,
-          totalRooms,
+          totalRooms
         );
         if (nextCombatant.entity.hp <= 0) {
           const index = combatants.findIndex(
-            (c) => c.entity === nextCombatant.entity,
+            (c) => c.entity === nextCombatant.entity
           );
           if (index !== -1) combatants.splice(index, 1);
         }
@@ -241,12 +217,9 @@ class BattleManager {
       this.updateStats(livingHeroes, livingEnemies, roomNumber, totalRooms);
       this.updateTurnOrder(combatants, TURN_THRESHOLD);
 
-      await new Promise((resolve) => {
-        retreatResolver = resolve;
-        setTimeout(resolve, 500);
-      });
-      retreatResolver = null;
-      if (retreatRequested) return "retreated";
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500 / (gameState.battleSpeed || 1))
+      );
     }
   }
 
@@ -265,13 +238,13 @@ class BattleManager {
         const speed = c.entity.speed;
         const progress = Math.min(
           100,
-          Math.floor((c.entity.ticks / threshold) * 100),
+          Math.floor((c.entity.ticks / threshold) * 100)
         );
         const className = c.isHero
           ? c.entity.class
           : c.entity.isElite
-            ? "elite"
-            : "enemy";
+          ? "elite"
+          : "enemy";
         return `
         <div class="turn-order-entry ${className}">
           <span class="turn-position">${position}</span>
@@ -291,11 +264,11 @@ class BattleManager {
     roomNumber,
     totalRooms,
     isBossRoom,
-    dungeon,
+    dungeon
   ) {
     const xpGained = enemyGroup.reduce(
       (total, enemy) => total + (enemy.hp <= 0 ? enemy.xp : 0),
-      0,
+      0
     );
     formationHeroes.forEach((hero) => {
       hero.xp = Math.round(hero.xp + xpGained);
@@ -308,12 +281,12 @@ class BattleManager {
     enemyGroup,
     roomNumber,
     totalRooms,
-    dungeon,
+    dungeon
   ) {
     this.logEntry(
       "system",
       `[Room ${roomNumber}] All heroes defeated! Press Exit for results.`,
-      roomNumber,
+      roomNumber
     );
     updateHeroStats(formationHeroes);
     updateEnemyStats(enemyGroup, roomNumber, totalRooms);
@@ -323,7 +296,7 @@ class BattleManager {
   static updateProgress(currentRoom, totalRooms) {
     const progress = Math.min(
       100,
-      Math.floor((currentRoom / totalRooms) * 100),
+      Math.floor((currentRoom / totalRooms) * 100)
     );
     battleProgress.style.width = `${progress}%`;
     document.querySelector(".progress-text").textContent = `${progress}%`;
@@ -345,7 +318,7 @@ class HeroActions {
     formationHeroes,
     enemyGroup,
     roomNumber,
-    totalRooms,
+    totalRooms
   ) {
     PassiveEffects.applyPassive(hero, formationHeroes);
 
@@ -377,20 +350,20 @@ class HeroActions {
         } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
           target.type
         } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-        roomNumber,
+        roomNumber
       );
       if (target.hp <= 0) {
         BattleManager.logEntry(
           "milestone",
           `[Room ${roomNumber}] ${hero.name} defeats ${target.type}!`,
-          roomNumber,
+          roomNumber
         );
       }
     } else if (target) {
       BattleManager.logEntry(
         "attack",
         `[Room ${roomNumber}] ${hero.name} misses ${target.type}!`,
-        roomNumber,
+        roomNumber
       );
     }
 
@@ -430,13 +403,13 @@ class HeroActions {
                 }! (${targetName} HP: ${Math.round(target.hp)}/${
                   target.maxHp
                 })`,
-                roomNumber,
+                roomNumber
               );
               if (target.hp <= 0) {
                 BattleManager.logEntry(
                   "milestone",
                   `[Room ${roomNumber}] ${hero.name} defeats ${targetName} with ${skill.name}!`,
-                  roomNumber,
+                  roomNumber
                 );
               }
             });
@@ -455,13 +428,13 @@ class HeroActions {
               } for ${finalSpecialDamage} damage${
                 isCritical ? " (Critical!)" : ""
               }! (${t.type} HP: ${Math.round(t.hp)}/${t.maxHp})`,
-              roomNumber,
+              roomNumber
             );
             if (t.hp <= 0) {
               BattleManager.logEntry(
                 "milestone",
                 `[Room ${roomNumber}] ${hero.name} defeats ${t.type} with ${skill.name}!`,
-                roomNumber,
+                roomNumber
               );
             }
           }
@@ -478,7 +451,7 @@ class HeroActions {
               } for ${heal} HP with ${skill.name}! (${
                 target.name
               } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-              roomNumber,
+              roomNumber
             );
           }
         }
@@ -487,13 +460,13 @@ class HeroActions {
         BattleManager.logEntry(
           "special",
           `[Room ${roomNumber}] ${hero.name} misses with ${hero.special}!`,
-          roomNumber,
+          roomNumber
         );
       } else {
         BattleManager.logEntry(
           "special",
           `[Room ${roomNumber}] ${hero.name} finds no targets for ${hero.special}!`,
-          roomNumber,
+          roomNumber
         );
       }
     }
@@ -506,7 +479,7 @@ class EnemyActions {
     formationHeroes,
     enemyGroup,
     roomNumber,
-    totalRooms,
+    totalRooms
   ) {
     const living = formationHeroes.filter((h) => h.hp > 0);
     if (!living.length) return;
@@ -542,21 +515,21 @@ class EnemyActions {
           } for ${finalDamage} damage${isCritical ? " (Critical!)" : ""}! (${
             target.name
           } HP: ${Math.round(target.hp)}/${target.maxHp})`,
-          roomNumber,
+          roomNumber
         );
         if (target.hp <= 0) {
           gameState.casualties.push(target.id);
           BattleManager.logEntry(
             "milestone",
             `[Room ${roomNumber}] ${target.name} has been defeated by ${enemy.type}!`,
-            roomNumber,
+            roomNumber
           );
         }
       } else {
         BattleManager.logEntry(
           "enemy-attack",
           `[Room ${roomNumber}] The ${enemy.type} misses ${target.name}!`,
-          roomNumber,
+          roomNumber
         );
       }
     }
@@ -566,7 +539,7 @@ class EnemyActions {
 class PassiveEffects {
   static applyPassive(hero, formationHeroes, formation = gameState.formation) {
     const passive = heroPassives.find(
-      (p) => p.name === hero.passive && p.appliesTo.includes(hero.class),
+      (p) => p.name === hero.passive && p.appliesTo.includes(hero.class)
     );
     if (!passive) return;
 
@@ -577,8 +550,8 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} reduces damage by ${Math.floor(
-              (1 - reduced / 100) * 100,
-            )}%.`,
+              (1 - reduced / 100) * 100
+            )}%.`
           );
         }
         break;
@@ -588,8 +561,8 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts hit chance by ${Math.floor(
-              (hitChance - hero.hitChance) * 100,
-            )}%.`,
+              (hitChance - hero.hitChance) * 100
+            )}%.`
           );
         }
         break;
@@ -599,14 +572,14 @@ class PassiveEffects {
           BattleManager.logEntry(
             "special",
             `${hero.name}'s ${passive.name} boosts damage by ${Math.floor(
-              (boosted / 100 - 1) * 100,
-            )}%.`,
+              (boosted / 100 - 1) * 100
+            )}%.`
           );
         }
         break;
       case "heal":
         const healed = formationHeroes.filter(
-          (h) => h.hp > 0 && h.hp < h.maxHp,
+          (h) => h.hp > 0 && h.hp < h.maxHp
         );
         if (healed.length > 0) {
           passive.apply(hero, healed);
@@ -616,13 +589,13 @@ class PassiveEffects {
                 (formation.indexOf(hero.id) >= 6 &&
                 formation.indexOf(hero.id) <= 8
                   ? 0.8
-                  : 0.4),
+                  : 0.4)
             );
             BattleManager.logEntry(
               "heal",
               `${hero.name} heals ${ally.name} for ${heal} HP via ${
                 passive.name
-              }! (${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp})`,
+              }! (${ally.name} HP: ${Math.round(ally.hp)}/${ally.maxHp})`
             );
           });
         }
@@ -637,17 +610,17 @@ function updateHeroStats(formationHeroes) {
     "Front Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 0 &&
-        gameState.formation.indexOf(h.id) <= 2,
+        gameState.formation.indexOf(h.id) <= 2
     ),
     "Middle Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 3 &&
-        gameState.formation.indexOf(h.id) <= 5,
+        gameState.formation.indexOf(h.id) <= 5
     ),
     "Back Row": formationHeroes.filter(
       (h) =>
         gameState.formation.indexOf(h.id) >= 6 &&
-        gameState.formation.indexOf(h.id) <= 8,
+        gameState.formation.indexOf(h.id) <= 8
     ),
   };
   for (const [rowName, heroes] of Object.entries(rows)) {
@@ -662,11 +635,11 @@ function updateHeroStats(formationHeroes) {
           hpPercentage < 0.25
             ? "red"
             : hpPercentage <= 0.6
-              ? "yellow"
-              : "green";
+            ? "yellow"
+            : "green";
         const skill = heroSkills.find((s) => s.name === hero.special);
         const chargePercentage = Math.floor(
-          (hero.charges / skill.maxCharges) * 100,
+          (hero.charges / skill.maxCharges) * 100
         );
         const stat = document.createElement("div");
         stat.className = `hero-stat ${hero.class}`;
@@ -677,18 +650,18 @@ function updateHeroStats(formationHeroes) {
                   </span>
                   <div class="stat-hp-bar">
                       <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-                        hpPercentage * 100,
-                      )}%;"></div>
+          hpPercentage * 100
+        )}%;"></div>
                   </div>
                   <span class="stat-health">HP: ${Math.round(hero.hp)}/${
-                    hero.maxHp
-                  }</span>
+          hero.maxHp
+        }</span>
                   <!-- Charges remain unchanged for now, will update below -->
                   <div class="charge-bar">
                       <div class="charge-fill" style="width: ${chargePercentage}%;"></div>
                       <span class="charge-text">Skill: ${hero.charges}/${
-                        skill.maxCharges
-                      }</span>
+          skill.maxCharges
+        }</span>
                   </div>
               `;
         heroStatsList.appendChild(stat);
@@ -722,8 +695,8 @@ function updateEnemyStats(enemyGroup, roomNumber, totalRooms) {
       </span>
       <div class="stat-hp-bar">
         <div class="stat-hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100,
-        )}%;"></div>
+      hpPercentage * 100
+    )}%;"></div>
       </div>
       <span class="stat-health">HP: ${Math.round(enemy.hp)}/${enemy.maxHp}</span>
     `;
@@ -741,10 +714,6 @@ function startMission() {
     return;
   }
 
-  retreatRequested = false;
-  retreatBtn.disabled = false;
-  retreatBtn.style.display = "inline-block";
-
   mainScreen.style.display = "none";
   battleScreen.style.display = "block";
   hideHeaderButtons();
@@ -754,9 +723,10 @@ function startMission() {
   battleProgress.style.width = "0%";
   document.querySelector(".progress-text").textContent = "0%";
   exitBtn.disabled = true;
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
   BattleManager.start(
     gameState.selectedDungeon,
-    gameState.selectedDungeon.roomCount,
+    gameState.selectedDungeon.roomCount
   );
 }
 
@@ -764,7 +734,7 @@ function randomizeStat(baseStat, enemyVariance, dungeonVariance) {
   const enemyMin = Math.round(baseStat * (1 - enemyVariance));
   const enemyMax = Math.round(baseStat * (1 + enemyVariance));
   const enemyAdjusted = Math.round(
-    Math.random() * (enemyMax - enemyMin) + enemyMin,
+    Math.random() * (enemyMax - enemyMin) + enemyMin
   );
 
   const finalMin = Math.round(enemyAdjusted * (1 - dungeonVariance));
@@ -785,7 +755,7 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
     ? Math.round(Math.random() * (bossCount.max - bossCount.min)) +
       bossCount.min
     : Math.round(
-        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min),
+        Math.random() * (enemyCountOnRoom.max - enemyCountOnRoom.min)
       ) + enemyCountOnRoom.min;
   const pool = isBossRoom ? bossNames : enemyNames;
   const source = isBossRoom ? bosses : enemies;
@@ -800,7 +770,7 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
       const baseDamage = randomizeStat(
         stats.damage,
         stats.variance,
-        statVariance,
+        statVariance
       );
       const hp = isElite ? Math.round(baseHp * ELITE_HP_MULTIPLIER) : baseHp;
       const damage = isElite
@@ -822,6 +792,12 @@ function generateEnemyGroup(dungeon, roomNumber, isBossRoom) {
     });
 }
 
+/**
+ * Logs battle events with room context and milestone tracking
+ * @param {string} type - Log type (e.g., "attack", "milestone")
+ * @param {string} text - Message to log
+ * @param {number} roomNumber - Current room number
+ */
 function addLogEntry(type, text, roomNumber) {
   const entry = document.createElement("div");
   entry.className = `log-entry ${type}`;
@@ -842,74 +818,14 @@ function addLogEntry(type, text, roomNumber) {
 function showResults() {
   battleScreen.style.display = "none";
   resultsScreen.style.display = "flex";
-  resultsScreen.classList.remove("victory", "defeat", "retreat");
+  resultsScreen.classList.remove("victory", "defeat");
 
-  const isRetreat = gameState.retreated || retreatRequested;
-  const victory = !isRetreat && checkVictory();
+  const victory = checkVictory();
+  resultsScreen.classList.add(victory ? "victory" : "defeat");
+  resultTitle.textContent = victory ? "Victory!" : "Defeat!";
+  resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
 
-  if (isRetreat) {
-    resultsScreen.classList.add("retreat");
-    resultTitle.innerHTML = `
-        <span class="outcome-icon retreat-icon"></span>Retreat!
-        <span class="result-subtitle">Your party fled with their lives...</span>
-    `;
-    resultTitle.style.color = "#e6a817";
-
-    const roomsCleared = gameState.retreatRoomsCleared || 0;
-    const totalRooms = gameState.selectedDungeon.roomCount;
-    const partialReward = Math.floor(
-      (roomsCleared / totalRooms) * gameState.selectedDungeon.reward * 0.5,
-    );
-    gameState.gold += partialReward;
-
-    casualtiesList.innerHTML = "";
-    if (gameState.casualties.length > 0) {
-      const casualtiesTitle = document.createElement("h3");
-      casualtiesTitle.textContent = "Casualties:";
-      casualtiesTitle.className = "section-title";
-      casualtiesList.appendChild(casualtiesTitle);
-
-      gameState.casualties.forEach((id) => {
-        const hero = gameState.heroes.find((h) => h.id === id);
-        if (hero) {
-          const el = document.createElement("div");
-          el.className = `hero-base hero ${hero.class} casualty`;
-          el.innerHTML = `
-                <div class="shape"></div>
-                <div class="hero-info">${hero.name}</div>
-                <span class="casualty-mark">✝</span>
-            `;
-          casualtiesList.appendChild(el);
-        }
-      });
-    } else {
-      casualtiesList.innerHTML = `
-        <div class="no-casualties">
-            <span class="no-casualties-icon">↩</span>
-            No casualties — party retreated safely
-        </div>
-    `;
-    }
-
-    rewardsList.innerHTML = `
-        ${
-          partialReward > 0
-            ? `<div class="reward-item gold-reward">
-                   <span class="reward-icon gold-icon"></span>
-                   Gold: ${partialReward} <small>(${roomsCleared}/${totalRooms} rooms)</small>
-               </div>`
-            : `<div class="no-rewards">
-                   <span class="no-rewards-icon">✗</span>
-                   No rooms cleared — no reward.
-               </div>`
-        }
-    `;
-  } else {
-    resultsScreen.classList.add(victory ? "victory" : "defeat");
-    resultTitle.textContent = victory ? "Victory!" : "Defeat!";
-    resultTitle.style.color = victory ? "#2ecc71" : "#e74c3c";
-
-    resultTitle.innerHTML = `
+  resultTitle.innerHTML = `
     <span class="outcome-icon ${
       victory ? "victory-icon" : "defeat-icon"
     }"></span>
@@ -921,41 +837,46 @@ function showResults() {
     }</span>
   `;
 
-    casualtiesList.innerHTML = "";
-    if (gameState.casualties.length > 0) {
-      const casualtiesTitle = document.createElement("h3");
-      casualtiesTitle.textContent = "Casualties:";
-      casualtiesTitle.className = "section-title";
-      casualtiesList.appendChild(casualtiesTitle);
+  casualtiesList.innerHTML = "";
+  if (gameState.casualties.length > 0) {
+    const casualtiesTitle = document.createElement("h3");
+    casualtiesTitle.textContent = "Casualties:";
+    casualtiesTitle.className = "section-title";
+    casualtiesList.appendChild(casualtiesTitle);
 
-      gameState.casualties.forEach((id) => {
-        const hero = gameState.heroes.find((h) => h.id === id);
-        if (hero) {
-          const el = document.createElement("div");
-          el.className = `hero-base hero ${hero.class} casualty`;
-          el.innerHTML = `
+    gameState.casualties.forEach((id) => {
+      const hero = gameState.heroes.find((h) => h.id === id);
+      if (hero) {
+        const el = document.createElement("div");
+        el.className = `hero-base hero ${hero.class} casualty`;
+        el.innerHTML = `
           <div class="shape"></div>
           <div class="hero-info">${hero.name}</div>
           <span class="casualty-mark">✝</span>
         `;
-          casualtiesList.appendChild(el);
-        }
-      });
-    } else {
-      const noCasualties = document.createElement("div");
-      noCasualties.className = "no-casualties";
-      noCasualties.innerHTML = `
+        casualtiesList.appendChild(el);
+      }
+    });
+  } else {
+    const noCasualties = document.createElement("div");
+    noCasualties.className = "no-casualties";
+    noCasualties.innerHTML = `
       <span class="no-casualties-icon">✔</span>
       No Casualties
     `;
-      casualtiesList.appendChild(noCasualties);
-    }
+    casualtiesList.appendChild(noCasualties);
+  }
 
-    rewardsList.innerHTML = "";
-    if (victory) {
-      const reward = gameState.selectedDungeon.reward;
-      gameState.gold += reward;
-      rewardsList.innerHTML += `
+  rewardsList.innerHTML = "";
+  if (victory) {
+    const rewardsTitle = document.createElement("h3");
+    rewardsTitle.textContent = "Rewards:";
+    rewardsTitle.className = "section-title";
+    rewardsList.appendChild(rewardsTitle);
+
+    const reward = gameState.selectedDungeon.reward;
+    gameState.gold += reward;
+    rewardsList.innerHTML += `
       <div class="reward-item gold-reward">
         <span class="reward-icon gold-icon"></span> Gold: ${reward}
       </div>
@@ -963,15 +884,14 @@ function showResults() {
         <span class="reward-icon cleared-icon"></span> Dungeon Cleared!
       </div>
     `;
-    } else {
-      const noRewards = document.createElement("div");
-      noRewards.className = "no-rewards";
-      noRewards.innerHTML = `
+  } else {
+    const noRewards = document.createElement("div");
+    noRewards.className = "no-rewards";
+    noRewards.innerHTML = `
       <span class="no-rewards-icon">✗</span>
       No Rewards Earned
     `;
-      rewardsList.appendChild(noRewards);
-    }
+    rewardsList.appendChild(noRewards);
   }
 
   const milestonesList = document.getElementById("milestones-list");
@@ -1012,34 +932,22 @@ function showResults() {
   }
 
   gameState.heroes = gameState.heroes.filter(
-    (h) => !gameState.casualties.includes(h.id),
+    (h) => !gameState.casualties.includes(h.id)
   );
   gameState.formation = gameState.formation.map((id) =>
-    gameState.casualties.includes(id) ? null : id,
+    gameState.casualties.includes(id) ? null : id
   );
 
   setTimeout(() => resultsScreen.classList.add("animate-in"), 10);
 }
 
-exitBtn.addEventListener("click", () => {
-  if (!exitBtn.disabled) showResults();
-});
-
-let retreatRequested = false;
-let retreatResolver = null;
-
-function handleRetreat() {
-  if (retreatRequested) return;
-  retreatRequested = true;
-  retreatBtn.disabled = true;
-  BattleManager.logEntry(
-    "system",
-    "⚠ Your party retreats from the dungeon!",
-    0,
-  );
-  if (retreatResolver) retreatResolver();
+function toggleBattleSpeed() {
+  const speeds = [0.5, 1, 2, 4];
+  const index = speeds.indexOf(gameState.battleSpeed);
+  gameState.battleSpeed = speeds[(index + 1) % speeds.length];
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
 }
 
-retreatBtn.addEventListener("click", () => {
-  if (!retreatBtn.disabled) handleRetreat();
+exitBtn.addEventListener("click", () => {
+  if (!exitBtn.disabled) showResults();
 });

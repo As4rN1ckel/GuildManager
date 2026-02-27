@@ -32,24 +32,11 @@ const resetBtn = document.createElement("button");
 resetBtn.textContent = "RESET";
 resetBtn.className = "primary";
 
+// Store buttons in an array for easier management
 const headerButtons = [saveBtn, loadBtn, resetBtn];
 
-// Tab Variables
-let activeTab = "dungeons"; // "dungeons" | "contracts"
-// Pending hero assignments per contract
-let pendingContractAssignments = {};
-
+// Initializes game UI with event listeners and content
 function initGame() {
-  document.addEventListener("dragover", (e) => {
-    const scrollable = document.querySelector("#contracts-tab-content");
-    if (!scrollable) return;
-    const rect = scrollable.getBoundingClientRect();
-    const edgeSize = 100;
-    const speed = 8;
-    if (e.clientY < rect.top + edgeSize) scrollable.scrollTop -= speed;
-    else if (e.clientY > rect.bottom - edgeSize) scrollable.scrollTop += speed;
-  });
-
   if (
     !heroRoster ||
     !formationGrid ||
@@ -75,6 +62,8 @@ function initGame() {
     return;
   }
 
+  speedBtn.textContent = `Speed: ${gameState.battleSpeed}x`;
+
   for (let i = 0; i < 9; i++) {
     const slot = document.createElement("div");
     slot.className = "formation-slot";
@@ -87,27 +76,23 @@ function initGame() {
   heroRoster.addEventListener("dragover", (e) => e.preventDefault());
   heroRoster.addEventListener("drop", (e) => handleDrop(e, null));
 
-  renderDungeonsTab();
-
-  document
-    .getElementById("tab-dungeons")
-    .addEventListener("click", () => switchTab("dungeons"));
-  document
-    .getElementById("tab-contracts")
-    .addEventListener("click", () => switchTab("contracts"));
+  dungeons.forEach((dungeon) => {
+    const el = document.createElement("div");
+    el.className = "dungeon";
+    el.innerHTML = `<div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div><div>Reward: ${dungeon.reward} Gold</div>`;
+    el.addEventListener("click", () => selectDungeon(dungeon));
+    dungeonList.appendChild(el);
+  });
 
   recruitBtn.addEventListener("click", showShopScreen);
   embarkBtn.addEventListener("click", startMission);
+  speedBtn.addEventListener("click", toggleBattleSpeed);
   continueBtn.addEventListener("click", returnToGuild);
   backToGuildBtn.addEventListener("click", hideShopScreen);
   restBtn.addEventListener("click", restHeroes);
   saveBtn.addEventListener("click", saveGame);
   loadBtn.addEventListener("click", loadGame);
   resetBtn.addEventListener("click", resetGame);
-
-  document
-    .getElementById("refresh-shop-btn")
-    .addEventListener("click", refreshShop);
 
   headerButtonsContainer = document.createElement("div");
   headerButtonsContainer.style.display = "flex";
@@ -118,13 +103,13 @@ function initGame() {
   showHeaderButtons();
 
   heroRoster.addEventListener("dragover", () =>
-    heroRoster.classList.add("dragover"),
+    heroRoster.classList.add("dragover")
   );
   heroRoster.addEventListener("dragleave", () =>
-    heroRoster.classList.remove("dragover"),
+    heroRoster.classList.remove("dragover")
   );
   heroRoster.addEventListener("drop", () =>
-    heroRoster.classList.remove("dragover"),
+    heroRoster.classList.remove("dragover")
   );
 
   closeHeroStatsBtn.addEventListener("click", () => {
@@ -137,10 +122,11 @@ function initGame() {
   updateUI();
 }
 
+// Helper function to show header buttons
 function showHeaderButtons() {
   if (!headerButtonsContainer) {
     console.error(
-      "headerButtonsContainer is null or undefined, attempting to recreate...",
+      "headerButtonsContainer is null or undefined, attempting to recreate..."
     );
     const header = document.querySelector(".header");
     if (header) {
@@ -160,7 +146,7 @@ function showHeaderButtons() {
       btn.style.display = "inline-block";
     } else {
       console.warn(
-        `Button ${index} not found in headerButtonsContainer, recreating...`,
+        `Button ${index} not found in headerButtonsContainer, recreating...`
       );
       const newBtn = document.createElement("button");
       if (index === 0) {
@@ -180,6 +166,7 @@ function showHeaderButtons() {
   });
 }
 
+// Helper function to hide header buttons
 function hideHeaderButtons() {
   if (headerButtonsContainer) {
     headerButtons.forEach((btn) => {
@@ -190,6 +177,7 @@ function hideHeaderButtons() {
   }
 }
 
+// Updates UI to reflect game state
 function updateUI() {
   goldAmount.textContent = gameState.gold;
   dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${
@@ -221,10 +209,9 @@ function restHeroes() {
       hero.hp = Math.min(hero.maxHp, hero.hp + heal);
       addLogEntry(
         "heal",
-        `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`,
+        `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`
       );
     });
-    resolveContracts();
     toggleCycle();
     updateUI();
   } else {
@@ -235,14 +222,7 @@ function restHeroes() {
 function renderHeroRoster() {
   heroRoster.innerHTML = "";
   gameState.heroes.forEach((hero) => {
-    const isPendingContract = Object.values(pendingContractAssignments).some(
-      (ids) => ids.includes(hero.id),
-    );
-    if (
-      !isHeroInFormation(hero) &&
-      !isHeroOnContract(hero.id) &&
-      !isPendingContract
-    ) {
+    if (!isHeroInFormation(hero)) {
       const hpPercentage = hero.hp / hero.maxHp;
       const hpClass =
         hpPercentage <= 0.6
@@ -268,11 +248,11 @@ function renderHeroRoster() {
         <div class="hero-info">${hero.name.split(" ")[0]}</div>
         <div class="level">Lv${hero.level}</div>
         <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
-          hpPercentage * 100,
-        )}%;"></div></div>
+        hpPercentage * 100
+      )}%;"></div></div>
       `;
       el.addEventListener("dragstart", (e) =>
-        e.dataTransfer.setData("text/plain", hero.id),
+        e.dataTransfer.setData("text/plain", hero.id)
       );
       el.addEventListener("click", () => selectHero(hero.id));
 
@@ -283,6 +263,9 @@ function renderHeroRoster() {
   });
 }
 
+/**
+ * @param {string} heroId - Hero ID to select/deselect
+ */
 function selectHero(heroId) {
   const tooltip = document.getElementById("hero-tooltip");
   if (tooltip) {
@@ -299,6 +282,9 @@ function selectHero(heroId) {
   checkEmbarkButton();
 }
 
+/**
+ * @param {number} index - Formation slot index
+ */
 function handleFormationSlotClick(index) {
   const current = gameState.formation[index];
   if (current && !gameState.selectedHero) {
@@ -308,7 +294,7 @@ function handleFormationSlotClick(index) {
     gameState.selectedHero = null;
   } else if (gameState.selectedHero && current) {
     const slot = gameState.formation.findIndex(
-      (id) => id === gameState.selectedHero,
+      (id) => id === gameState.selectedHero
     );
     if (slot !== -1) gameState.formation[slot] = current;
     gameState.formation[index] = gameState.selectedHero;
@@ -350,8 +336,8 @@ function updateFormationGrid() {
           hpPercentage < 0.25
             ? "red"
             : hpPercentage <= 0.6
-              ? "yellow"
-              : "green";
+            ? "yellow"
+            : "green";
 
         const el = document.createElement("div");
         el.className = `hero-base hero ${hero.class}`;
@@ -370,11 +356,11 @@ function updateFormationGrid() {
           <div class="hero-info">${hero.name.split(" ")[0]}</div>
           <div class="level">Lv${hero.level}</div>
           <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width: ${Math.floor(
-            hpPercentage * 100,
-          )}%;"></div></div>
+          hpPercentage * 100
+        )}%;"></div></div>
         `;
         el.addEventListener("dragstart", (e) =>
-          e.dataTransfer.setData("text/plain", hero.id),
+          e.dataTransfer.setData("text/plain", hero.id)
         );
         el.addEventListener("click", () => selectHero(hero.id));
 
@@ -508,6 +494,10 @@ function updateHeroTooltipListeners(heroElement) {
   heroElement.addEventListener("touchend", handleTouchEnd, { passive: true });
 }
 
+/**
+ * @param {DragEvent} e - Drag event
+ * @param {number|null} targetIndex - Target slot index or null for roster
+ */
 function handleDrop(e, targetIndex) {
   e.preventDefault();
   const heroId = e.dataTransfer.getData("text/plain");
@@ -538,6 +528,9 @@ function handleDrop(e, targetIndex) {
   checkEmbarkButton();
 }
 
+/**
+ * @param {Object} dungeon - Dungeon to select
+ */
 function selectDungeon(dungeon) {
   gameState.selectedDungeon = dungeon;
   dungeonList
@@ -560,8 +553,6 @@ function showShopScreen() {
   renderShop();
 }
 
-const SHOP_REFRESH_COST = 50;
-
 function renderShop() {
   const recruitList = document.getElementById("recruit-list");
   if (!recruitList) {
@@ -569,65 +560,40 @@ function renderShop() {
     return;
   }
   recruitList.innerHTML = "";
-
-  // Only generate new heroes if the pool is empty
-  if (gameState.shopHeroes.length === 0) {
-    for (let i = 0; i < 6; i++) {
-      gameState.shopHeroes.push(generateHero());
-    }
-  }
-
-  gameState.shopHeroes.forEach((hero) => {
+  for (let i = 0; i < 6; i++) {
+    const hero = generateHero();
     const el = document.createElement("div");
     el.className = `hero-base recruit-hero ${hero.class} animate-in`;
     el.innerHTML = `
-            <div class="shape"></div>
-            <div class="hero-info">${hero.name}</div>
-            <div class="class-info">Class: ${capitalize(hero.class)}</div>
-            <div class="tier-info">Tier: ${hero.tier}</div>
-            <div class="level">Lv${hero.level}</div>
-            <div class="cost">${hero.cost} Gold</div>
-        `;
+      <div class="shape"></div>
+      <div class="hero-info">${hero.name}</div>
+      <div class="class-info">Class: ${capitalize(hero.class)}</div>
+      <div class="tier-info">Tier: ${hero.tier}</div>
+      <div class="level">Lv${hero.level}</div>
+      <div class="cost">${hero.cost} Gold</div>
+    `;
     el.addEventListener("click", () => recruitHero(hero, el));
     recruitList.appendChild(el);
-  });
-
-  setTimeout(() => {
-    document
-      .querySelectorAll(".recruit-hero")
-      .forEach((h) => h.classList.add("visible"));
-  }, 10);
-
-  updateRefreshButton();
-}
-
-function updateRefreshButton() {
-  const btn = document.getElementById("refresh-shop-btn");
-  if (btn) {
-    btn.textContent = `Refresh Shop (${SHOP_REFRESH_COST}g)`;
-    btn.disabled = gameState.gold < SHOP_REFRESH_COST;
   }
+  setTimeout(
+    () =>
+      document
+        .querySelectorAll(".recruit-hero")
+        .forEach((hero) => hero.classList.add("visible")),
+    10
+  );
 }
 
-function refreshShop() {
-  if (gameState.gold < SHOP_REFRESH_COST) {
-    alert(`Not enough gold! Need ${SHOP_REFRESH_COST}g to refresh.`);
-    return;
-  }
-  gameState.gold -= SHOP_REFRESH_COST;
-  gameState.shopHeroes = [];
-  renderShop();
-  updateUI();
-}
-
+/**
+ * @param {Object} hero - Hero to recruit
+ * @param {HTMLElement} element - Shop element to remove
+ */
 function recruitHero(hero, element) {
   if (gameState.gold >= hero.cost) {
     gameState.gold -= hero.cost;
     addHero(hero);
-    gameState.shopHeroes = gameState.shopHeroes.filter((h) => h.id !== hero.id);
     element.remove();
     updateUI();
-    updateRefreshButton();
   } else {
     alert("Not enough gold!");
   }
@@ -639,12 +605,6 @@ function hideShopScreen() {
 }
 
 function returnToGuild() {
-  retreatRequested = false;
-  gameState.retreated = false;
-  gameState.retreatRoomsCleared = 0;
-
-  resolveContracts();
-
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
   toggleCycle();
@@ -662,7 +622,7 @@ function returnToGuild() {
 
   if (!headerButtonsContainer || !header.contains(headerButtonsContainer)) {
     if (headerButtonsContainer) {
-      headerButtonsContainer.remove();
+      headerButtonsContainer.remove(); // Clean up any orphaned container
     }
     headerButtonsContainer = document.createElement("div");
     headerButtonsContainer.style.display = "flex";
@@ -735,389 +695,42 @@ function updateHeroStatsPanel() {
   heroStatsContent.innerHTML = `
     <div class="hero-stat-item"><strong>Name:</strong> ${hero.name}</div>
     <div class="hero-stat-item"><strong>Class:</strong> ${capitalize(
-      hero.class,
+      hero.class
     )}</div>
     <div class="hero-stat-item"><strong>Tier:</strong> ${hero.tier}</div>
     <div class="hero-stat-item"><strong>Level:</strong> ${hero.level}</div>
     <div class="hero-stat-item"><strong>XP:</strong> ${hero.xp}/${
-      xpThresholds[hero.level]
-    }</div>
+    xpThresholds[hero.level]
+  }</div>
     <div class="hero-stat-item"><strong>HP:</strong> ${hero.hp}/${
-      hero.maxHp
-    }</div>
+    hero.maxHp
+  }</div>
     <div class="hero-stat-item"><strong>Attack:</strong> ${hero.attack}</div>
     <div class="hero-stat-item"><strong>Speed:</strong> ${hero.speed}</div>
     <div class="hero-stat-item"><strong>Hit Chance:</strong> ${Math.floor(
-      hero.hitChance * 100,
+      hero.hitChance * 100
     )}%</div>
     <div class="hero-stat-item special-item"><strong>Special:</strong> ${
       hero.special
     } - ${skill?.description || "No description"} (Charges: ${hero.charges}/${
-      skill.maxCharges
-    })</div>
+    skill.maxCharges
+  })</div>
     <div class="hero-stat-item passive-item"><strong>Passive:</strong> ${
       hero.passive
     } - ${passive?.description || "No description"}</div>
   `;
 
-  const refund = Math.floor(hero.cost * 0.3) + (hero.level - 1) * 10;
-  const inFormation = isHeroInFormation(hero);
+  setTimeout(() => heroStatsPanel.classList.add("animate-in"), 10);
 
-  const dismissContainer = document.createElement("div");
-  dismissContainer.className = "dismiss-container";
-
-  const dismissBtn = document.createElement("button");
-  dismissBtn.className = "dismiss-btn";
-  dismissBtn.textContent = `Dismiss (${refund}g)`;
-  dismissBtn.disabled = inFormation;
-  dismissBtn.title = inFormation
-    ? "Remove from formation first"
-    : `Receive ${refund} gold`;
-
-  const confirmRow = document.createElement("div");
-  confirmRow.className = "dismiss-confirm-row";
-  confirmRow.style.display = "none";
-  confirmRow.innerHTML = `
-    <span style="font-size:0.85rem; color:#ccc;">Dismiss ${hero.name.split(" ")[0]} for ${refund}g?</span>
-    <div style="display:flex; gap:8px; margin-top:6px;">
-        <button class="dismiss-confirm-yes">Yes, Dismiss</button>
-        <button class="dismiss-confirm-no">Cancel</button>
-    </div>
-`;
-
-  dismissBtn.addEventListener("click", () => {
-    dismissBtn.style.display = "none";
-    confirmRow.style.display = "block";
-  });
-
-  confirmRow
-    .querySelector(".dismiss-confirm-yes")
-    .addEventListener("click", () => {
-      dismissHero(hero.id);
-      heroStatsPanel.style.display = "none";
-      modalOverlay.style.display = "none";
-      heroStatsPanel.classList.remove("visible");
+  if (isMobile) {
+    modalOverlay.addEventListener("touchmove", preventScroll, {
+      passive: false,
     });
-
-  confirmRow
-    .querySelector(".dismiss-confirm-no")
-    .addEventListener("click", () => {
-      confirmRow.style.display = "none";
-      dismissBtn.style.display = "block";
-    });
-
-  dismissContainer.appendChild(dismissBtn);
-  dismissContainer.appendChild(confirmRow);
-  heroStatsContent.appendChild(dismissContainer);
-}
-
-function switchTab(tab) {
-  activeTab = tab;
-  document.getElementById("dungeons-tab-content").style.display =
-    tab === "dungeons" ? "block" : "none";
-  document.getElementById("contracts-tab-content").style.display =
-    tab === "contracts" ? "block" : "none";
-  document
-    .getElementById("tab-dungeons")
-    .classList.toggle("active", tab === "dungeons");
-  document
-    .getElementById("tab-contracts")
-    .classList.toggle("active", tab === "contracts");
-  embarkBtn.style.display = tab === "dungeons" ? "inline-block" : "none";
-
-  if (tab === "contracts") renderContractsTab();
-}
-
-function renderDungeonsTab() {
-  const dungeonList = document.getElementById("dungeon-list");
-  dungeonList.innerHTML = "";
-  dungeons.forEach((dungeon) => {
-    const el = document.createElement("div");
-    el.className = "dungeon";
-    el.innerHTML = `
-            <div><strong>${dungeon.name}</strong> ${dungeon.difficulty}</div>
-            ${dungeon.description}
-            <div><div>Reward ${dungeon.reward} Gold</div></div>
-        `;
-    el.addEventListener("click", () => selectDungeon(dungeon));
-    dungeonList.appendChild(el);
-  });
-}
-
-function renderContractsTab() {
-  resolveContracts();
-  const list = document.getElementById("contracts-list");
-  list.innerHTML = "";
-
-  // --- COMPLETED ---
-  const completed = gameState.activeContracts.filter(
-    (c) => c.status === "completed",
-  );
-  if (completed.length) {
-    const title = document.createElement("h3");
-    title.className = "section-title";
-    title.textContent = "⚑ Ready to Claim";
-    list.appendChild(title);
-    completed.forEach((contract) => renderCompletedContract(contract, list));
+  } else {
+    modalOverlay.removeEventListener("touchmove", preventScroll);
   }
-
-  // --- FAILED ---
-  const failed = gameState.activeContracts.filter((c) => c.status === "failed");
-  if (failed.length) {
-    const title = document.createElement("h3");
-    title.className = "section-title";
-    title.textContent = "✘ Failed";
-    list.appendChild(title);
-    failed.forEach((contract) => renderFailedContract(contract, list));
-  }
-
-  // --- IN PROGRESS ---
-  const active = gameState.activeContracts.filter((c) => c.status === "active");
-  if (active.length) {
-    const title = document.createElement("h3");
-    title.className = "section-title";
-    title.textContent = "⧗ In Progress";
-    list.appendChild(title);
-    active.forEach((contract) => renderActiveContract(contract, list));
-  }
-
-  // --- AVAILABLE ---
-  const availTitle = document.createElement("h3");
-  availTitle.className = "section-title";
-  availTitle.textContent = "Available Contracts";
-  list.appendChild(availTitle);
-
-  contractTemplates.forEach((template) => {
-    const alreadyActive = gameState.activeContracts.some(
-      (c) => c.contractId === template.id && c.status === "active",
-    );
-    if (!pendingContractAssignments[template.id]) {
-      pendingContractAssignments[template.id] = [];
-    }
-    renderAvailableContract(template, alreadyActive, list);
-  });
 }
 
-function renderCompletedContract(contract, list) {
-  const template = contractTemplates.find((t) => t.id === contract.contractId);
-  if (!template) return;
-  const heroNames = contract.assignedHeroes
-    .map(
-      (id) =>
-        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
-    )
-    .join(", ");
-  const el = document.createElement("div");
-  el.className = "contract-card contract-completed";
-  el.innerHTML = `
-        <div class="contract-name">✔ ${template.name}</div>
-        <div class="contract-desc">${heroNames} returned successfully.</div>
-        <div class="contract-meta">
-            <span>+${template.reward.gold}g</span>
-            <span>+${template.reward.xp} XP each</span>
-        </div>
-    `;
-  const btn = document.createElement("button");
-  btn.className = "contract-btn claim-btn";
-  btn.textContent = `Claim +${template.reward.gold}g`;
-  btn.addEventListener("click", () => {
-    claimContract(contract.contractId);
-    renderContractsTab();
-  });
-  el.appendChild(btn);
-  list.appendChild(el);
-}
-
-function renderFailedContract(contract, list) {
-  const template = contractTemplates.find((t) => t.id === contract.contractId);
-  if (!template) return;
-  const heroNames = contract.assignedHeroes
-    .map(
-      (id) =>
-        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
-    )
-    .join(", ");
-  const el = document.createElement("div");
-  el.className = "contract-card contract-failed";
-  el.innerHTML = `
-        <div class="contract-name">✘ ${template.name}</div>
-        <div class="contract-desc">${heroNames} returned empty-handed.</div>
-        <div class="contract-meta"><span>No reward</span></div>
-    `;
-  const btn = document.createElement("button");
-  btn.className = "contract-btn dismiss-contract-btn";
-  btn.textContent = "Dismiss";
-  btn.addEventListener("click", () => {
-    dismissContract(contract.contractId);
-    renderContractsTab();
-  });
-  el.appendChild(btn);
-  list.appendChild(el);
-}
-
-function renderActiveContract(contract, list) {
-  const template = contractTemplates.find((t) => t.id === contract.contractId);
-  if (!template) return;
-  const heroNames = contract.assignedHeroes
-    .map(
-      (id) =>
-        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
-    )
-    .join(", ");
-  const el = document.createElement("div");
-  el.className = "contract-card active-contract";
-  el.innerHTML = `
-        <div class="contract-name">${template.name}</div>
-        <div class="contract-desc">Heroes out: ${heroNames}</div>
-        <div class="contract-meta">
-            <span>Due: Day ${contract.completesOnDay} (${contract.completesOnCycle})</span>
-        </div>
-    `;
-  list.appendChild(el);
-}
-
-function renderAvailableContract(template, alreadyActive, list) {
-  const pending = pendingContractAssignments[template.id] || [];
-  const chance = getContractSuccessChance(
-    pending,
-    template.preferredClasses,
-    template.difficulty,
-  );
-  const chanceText = pending.length ? `${Math.round(chance * 100)}%` : "—";
-
-  const card = document.createElement("div");
-  card.className = `contract-card${alreadyActive ? " dimmed" : ""}`;
-  card.dataset.contractId = template.id;
-  card.innerHTML = `
-        <div class="contract-name">${template.name}</div>
-        <div class="contract-desc">${template.description}</div>
-        <div class="contract-meta">
-            <span>⧗ ${template.duration.days}d ${template.duration.cycles > 0 ? template.duration.cycles + "c" : ""}</span>
-            <span>Fee: ${template.fee}g</span>
-            <span>Difficulty: ${template.difficulty}</span>
-            <span>Reward: ${template.reward.gold}g +${template.reward.xp}XP</span>
-            <span>Preferred: ${template.preferredClasses.map(capitalize).join(", ")}</span>
-            <span class="chance-label" id="chance-${template.id}">Success: ${chanceText}</span>
-        </div>
-        <div class="contract-slots" id="slots-${template.id}"></div>
-    `;
-
-  // Build drop slots
-  const slotsContainer = card.querySelector(`#slots-${template.id}`);
-  for (let i = 0; i < template.slots; i++) {
-    const slot = document.createElement("div");
-    slot.className = "contract-slot";
-    slot.dataset.contractId = template.id;
-    slot.dataset.slotIndex = i;
-
-    const assignedHeroId = pending[i];
-    if (assignedHeroId) {
-      const hero = gameState.heroes.find((h) => h.id === assignedHeroId);
-      if (hero) {
-        slot.classList.add("occupied");
-        const heroEl = buildContractHeroEl(hero, template.id, i);
-        slot.appendChild(heroEl);
-      }
-    } else {
-      const slotLabel = document.createElement("span");
-      slotLabel.className = "slot-label";
-      slotLabel.textContent = "+ Hero";
-      slot.appendChild(slotLabel);
-    }
-
-    if (!alreadyActive) {
-      slot.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        slot.classList.add("dragover");
-      });
-      slot.addEventListener("dragleave", () =>
-        slot.classList.remove("dragover"),
-      );
-      slot.addEventListener("drop", (e) =>
-        handleContractDrop(e, template.id, i),
-      );
-    }
-    slotsContainer.appendChild(slot);
-  }
-
-  // Accept button
-  if (!alreadyActive) {
-    const acceptBtn = document.createElement("button");
-    acceptBtn.className = "contract-btn";
-    acceptBtn.textContent = pending.length
-      ? `Accept${template.fee > 0 ? ` (${template.fee}g fee)` : ""}`
-      : "Assign heroes first";
-    acceptBtn.disabled = !pending.length;
-    acceptBtn.addEventListener("click", () => {
-      const assigned = pendingContractAssignments[template.id] || [];
-      if (!assigned.length) return;
-      assignContract(template.id, assigned);
-      pendingContractAssignments[template.id] = [];
-      renderContractsTab();
-      renderHeroRoster();
-    });
-    card.appendChild(acceptBtn);
-  }
-
-  list.appendChild(card);
-}
-
-function buildContractHeroEl(hero, contractId, slotIndex) {
-  const hpPercentage = hero.hp / hero.maxHp;
-  const hpClass =
-    hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
-  const el = document.createElement("div");
-  el.className = `hero-base hero ${hero.class}`;
-  el.style.width = "4rem";
-  el.style.height = "4rem";
-  el.style.cursor = "pointer";
-  el.title = `Click to remove ${hero.name.split(" ")[0]}`;
-  el.innerHTML = `
-        <div class="shape"></div>
-        <div class="hero-info">${hero.name.split(" ")[0]}</div>
-        <div class="level">Lv${hero.level}</div>
-        <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width:${Math.floor(hpPercentage * 100)}%;"></div></div>
-    `;
-  // Click to remove from slot
-  el.addEventListener("click", () => {
-    pendingContractAssignments[contractId].splice(slotIndex, 1);
-    renderContractsTab();
-    renderHeroRoster();
-  });
-  return el;
-}
-
-function handleContractDrop(e, contractId, slotIndex) {
+function preventScroll(e) {
   e.preventDefault();
-  const slot = e.currentTarget;
-  slot.classList.remove("dragover");
-
-  const heroId = e.dataTransfer.getData("text/plain");
-  const hero = gameState.heroes.find((h) => h.id === heroId);
-  if (!hero) return;
-
-  if (isHeroOnContract(heroId)) return;
-
-  if (isHeroInFormation(hero)) {
-    const formationIndex = gameState.formation.indexOf(heroId);
-    if (formationIndex !== -1) gameState.formation[formationIndex] = null;
-  }
-
-  const pending = pendingContractAssignments[contractId] || [];
-  const template = contractTemplates.find((t) => t.id === contractId);
-
-  if (pending.includes(heroId)) return;
-  const busyElsewhere = Object.entries(pendingContractAssignments).some(
-    ([id, heroes]) => id !== contractId && heroes.includes(heroId),
-  );
-  if (busyElsewhere) return;
-  if (pending.length >= template.slots) return;
-
-  pending[slotIndex] = heroId;
-  pendingContractAssignments[contractId] = pending.filter(Boolean);
-
-  renderContractsTab();
-  renderHeroRoster();
-  updateFormationGrid();
-  checkEmbarkButton();
 }
