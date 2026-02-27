@@ -22,6 +22,7 @@ const gameState = {
   casualties: [],
   retreated: false,
   shopHeroes: [],
+  activeContracts: [],
 };
 
 function addHero(hero) {
@@ -108,6 +109,86 @@ function checkVictory() {
   );
 }
 
+function assignContract(templateId, heroIds) {
+  const template = contractTemplates.find((c) => c.id === templateId);
+  if (!template) return;
+
+  if (gameState.gold < template.fee) {
+    alert(`Not enough gold! Need ${template.fee}g.`);
+    return;
+  }
+
+  const alreadyBusy = heroIds.some((id) => isHeroOnContract(id));
+  if (alreadyBusy) {
+    alert("One or more heroes are already on a contract.");
+    return;
+  }
+
+  gameState.gold -= template.fee;
+  const completion = getCompletionPoint(template.duration);
+  gameState.activeContracts.push({
+    contractId: templateId,
+    assignedHeroes: heroIds,
+    completesOnDay: completion.day,
+    completesOnCycle: completion.cycle,
+    status: "active",
+  });
+  updateUI();
+}
+
+function resolveContracts() {
+  gameState.activeContracts.forEach((contract) => {
+    if (contract.status === "active" && isContractComplete(contract)) {
+      const template = contractTemplates.find(
+        (t) => t.id === contract.contractId,
+      );
+      if (!template) return;
+      const chance = getContractSuccessChance(
+        contract.assignedHeroes,
+        template.preferredClasses,
+      );
+      contract.status = Math.random() < chance ? "completed" : "failed";
+    }
+  });
+}
+
+function claimContract(contractId) {
+  const contract = gameState.activeContracts.find(
+    (c) => c.contractId === contractId && c.status === "completed",
+  );
+  if (!contract) return;
+
+  const template = contractTemplates.find((t) => t.id === contractId);
+  if (!template) return;
+
+  gameState.gold += template.reward.gold;
+  contract.assignedHeroes.forEach((id) => {
+    const hero = gameState.heroes.find((h) => h.id === id);
+    if (hero) {
+      hero.xp = Math.round(hero.xp + template.reward.xp);
+      levelUpHero(hero);
+    }
+  });
+
+  gameState.activeContracts = gameState.activeContracts.filter(
+    (c) => !(c.contractId === contractId && c.status === "completed"),
+  );
+  updateUI();
+}
+
+function dismissContract(contractId) {
+  gameState.activeContracts = gameState.activeContracts.filter(
+    (c) => !(c.contractId === contractId && c.status === "failed"),
+  );
+  updateUI();
+}
+
+function isHeroOnContract(heroId) {
+  return gameState.activeContracts.some(
+    (c) => c.status === "active" && c.assignedHeroes.includes(heroId),
+  );
+}
+
 function saveGame() {
   try {
     localStorage.setItem("gameState", JSON.stringify(gameState));
@@ -167,4 +248,9 @@ function toggleCycle() {
 if (typeof window !== "undefined") {
   window.addEventListener("load", loadGame);
   Object.assign(window, gameState);
+  window.assignContract = assignContract;
+  window.resolveContracts = resolveContracts;
+  window.isHeroOnContract = isHeroOnContract;
+  window.claimContract = claimContract;
+  window.dismissContract = dismissContract;
 }

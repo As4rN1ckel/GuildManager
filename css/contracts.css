@@ -1,0 +1,103 @@
+.contracts-screen {
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+.contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.contract-card {
+  background: #1e1e2e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.contract-card.active-contract {
+  border-color: #e6a817;
+  opacity: 0.85;
+}
+.contract-card.dimmed {
+  opacity: 0.5;
+}
+.contract-name {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #f0c040;
+}
+.contract-desc {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+.contract-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #ccc;
+}
+.contract-meta span {
+  background: #2a2a3e;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.assign-title {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #ccc;
+}
+.contract-btn {
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  align-self: flex-start;
+}
+.contract-btn:hover:not(:disabled) {
+  background: #43a047;
+}
+.contract-btn.disabled,
+.contract-btn:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.contract-card.contract-completed {
+  border-color: #2e7d32;
+  background: #1a2e1a;
+}
+.contract-card.contract-failed {
+  border-color: #922;
+  background: #2e1a1a;
+}
+.claim-btn {
+  background: #2e7d32;
+}
+.claim-btn:hover {
+  background: #43a047;
+}
+.dismiss-contract-btn {
+  background: #555;
+  color: #ccc;
+}
+.dismiss-contract-btn:hover {
+  background: #777;
+}

@@ -18,6 +18,7 @@ const modalOverlay = document.getElementById("modal-overlay");
 const closeHeroStatsBtn = document.getElementById("close-hero-stats");
 const restBtn = document.getElementById("rest-btn");
 const restCostAmount = document.getElementById("rest-cost-amount");
+const contractsScreen = document.getElementById("contracts-screen");
 
 // Dynamic Buttons
 const saveBtn = document.createElement("button");
@@ -118,6 +119,13 @@ function initGame() {
     gameState.selectedHero = null;
   });
 
+  document
+    .getElementById("contracts-btn")
+    .addEventListener("click", showContractsScreen);
+  document
+    .getElementById("back-from-contracts-btn")
+    .addEventListener("click", hideContractsScreen);
+
   updateUI();
 }
 
@@ -208,6 +216,7 @@ function restHeroes() {
         `${hero.name} rests, recovering ${heal} HP. (HP: ${hero.hp}/${hero.maxHp})`,
       );
     });
+    resolveContracts();
     toggleCycle();
     updateUI();
   } else {
@@ -218,7 +227,7 @@ function restHeroes() {
 function renderHeroRoster() {
   heroRoster.innerHTML = "";
   gameState.heroes.forEach((hero) => {
-    if (!isHeroInFormation(hero)) {
+    if (!isHeroInFormation(hero) && !isHeroOnContract(hero.id)) {
       const hpPercentage = hero.hp / hero.maxHp;
       const hpClass =
         hpPercentage <= 0.6
@@ -618,6 +627,7 @@ function returnToGuild() {
   retreatRequested = false;
   gameState.retreated = false;
   gameState.retreatRoomsCleared = 0;
+  resolveContracts();
 
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
@@ -787,4 +797,249 @@ function updateHeroStatsPanel() {
 
 function preventScroll(e) {
   e.preventDefault();
+}
+
+function showContractResults(results) {
+  const lines = results.map(({ template, contract, success }) => {
+    const heroNames = contract.assignedHeroes
+      .map(
+        (id) =>
+          gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
+          "Unknown",
+      )
+      .join(", ");
+    if (success) {
+      return `✔ [${template.name}] — ${heroNames} succeeded! +${template.reward.gold}g, +${template.reward.xp} XP each.`;
+    } else {
+      return `✘ [${template.name}] — ${heroNames} failed. No reward.`;
+    }
+  });
+  alert(lines.join("\n\n"));
+}
+
+function showContractsScreen() {
+  resolveContracts();
+  mainScreen.style.display = "none";
+  contractsScreen.style.display = "flex";
+  renderContractsScreen();
+}
+
+function hideContractsScreen() {
+  contractsScreen.style.display = "none";
+  mainScreen.style.display = "block";
+}
+
+function renderContractsScreen() {
+  resolveContracts();
+  const list = document.getElementById("contracts-list");
+  list.innerHTML = "";
+
+  // --- COMPLETED ---
+  const completed = gameState.activeContracts.filter(
+    (c) => c.status === "completed",
+  );
+  if (completed.length) {
+    const title = document.createElement("h3");
+    title.className = "section-title";
+    title.textContent = "⚑ Ready to Claim";
+    list.appendChild(title);
+
+    completed.forEach((contract) => {
+      const template = contractTemplates.find(
+        (t) => t.id === contract.contractId,
+      );
+      if (!template) return;
+      const heroNames = contract.assignedHeroes
+        .map(
+          (id) =>
+            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
+            "?",
+        )
+        .join(", ");
+
+      const el = document.createElement("div");
+      el.className = "contract-card contract-completed";
+      el.innerHTML = `
+                <div class="contract-name">✔ ${template.name}</div>
+                <div class="contract-desc">Heroes: ${heroNames} returned successfully.</div>
+                <div class="contract-meta">
+                    <span>Reward: +${template.reward.gold}g</span>
+                    <span>+${template.reward.xp} XP each</span>
+                </div>
+            `;
+      const claimBtn = document.createElement("button");
+      claimBtn.className = "contract-btn claim-btn";
+      claimBtn.textContent = `Claim +${template.reward.gold}g`;
+      claimBtn.addEventListener("click", () => {
+        claimContract(contract.contractId);
+        renderContractsScreen();
+      });
+      el.appendChild(claimBtn);
+      list.appendChild(el);
+    });
+  }
+
+  // --- FAILED ---
+  const failed = gameState.activeContracts.filter((c) => c.status === "failed");
+  if (failed.length) {
+    const title = document.createElement("h3");
+    title.className = "section-title";
+    title.textContent = "✘ Failed Contracts";
+    list.appendChild(title);
+
+    failed.forEach((contract) => {
+      const template = contractTemplates.find(
+        (t) => t.id === contract.contractId,
+      );
+      if (!template) return;
+      const heroNames = contract.assignedHeroes
+        .map(
+          (id) =>
+            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
+            "?",
+        )
+        .join(", ");
+
+      const el = document.createElement("div");
+      el.className = "contract-card contract-failed";
+      el.innerHTML = `
+                <div class="contract-name">✘ ${template.name}</div>
+                <div class="contract-desc">Heroes: ${heroNames} returned empty-handed.</div>
+                <div class="contract-meta"><span>No reward</span></div>
+            `;
+      const dismissBtn = document.createElement("button");
+      dismissBtn.className = "contract-btn dismiss-contract-btn";
+      dismissBtn.textContent = "Dismiss";
+      dismissBtn.addEventListener("click", () => {
+        dismissContract(contract.contractId);
+        renderContractsScreen();
+      });
+      el.appendChild(dismissBtn);
+      list.appendChild(el);
+    });
+  }
+
+  // --- ACTIVE ---
+  const active = gameState.activeContracts.filter((c) => c.status === "active");
+  if (active.length) {
+    const title = document.createElement("h3");
+    title.className = "section-title";
+    title.textContent = "⧗ In Progress";
+    list.appendChild(title);
+
+    active.forEach((contract) => {
+      const template = contractTemplates.find(
+        (t) => t.id === contract.contractId,
+      );
+      if (!template) return;
+      const heroNames = contract.assignedHeroes
+        .map(
+          (id) =>
+            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
+            "?",
+        )
+        .join(", ");
+
+      const el = document.createElement("div");
+      el.className = "contract-card active-contract";
+      el.innerHTML = `
+                <div class="contract-name">${template.name}</div>
+                <div class="contract-desc">Heroes: ${heroNames}</div>
+                <div class="contract-meta">
+                    <span>Due: Day ${contract.completesOnDay} (${contract.completesOnCycle})</span>
+                </div>
+            `;
+      list.appendChild(el);
+    });
+  }
+
+  // --- AVAILABLE ---
+  const availTitle = document.createElement("h3");
+  availTitle.className = "section-title";
+  availTitle.textContent = "Available Contracts";
+  list.appendChild(availTitle);
+
+  contractTemplates.forEach((template) => {
+    const alreadyActive = gameState.activeContracts.some(
+      (c) => c.contractId === template.id && c.status === "active",
+    );
+    const availableHeroes = gameState.heroes.filter(
+      (h) => !isHeroOnContract(h.id) && !isHeroInFormation(h),
+    );
+    const chance = getContractSuccessChance(
+      availableHeroes.slice(0, template.slots).map((h) => h.id),
+      template.preferredClasses,
+    );
+
+    const card = document.createElement("div");
+    card.className = `contract-card${alreadyActive ? " dimmed" : ""}`;
+    card.innerHTML = `
+            <div class="contract-name">${template.name}</div>
+            <div class="contract-desc">${template.description}</div>
+            <div class="contract-meta">
+                <span>Slots: ${template.slots}</span>
+                <span>Duration: ${template.duration.days}d ${template.duration.cycles}c</span>
+                <span>Fee: ${template.fee}g</span>
+                <span>Reward: ${template.reward.gold}g + ${template.reward.xp} XP</span>
+                <span>Preferred: ${template.preferredClasses.join(", ")}</span>
+            </div>
+            <div class="contract-assign" id="assign-${template.id}"></div>
+            <button class="contract-btn${alreadyActive ? " disabled" : ""}"
+                    data-id="${template.id}" ${alreadyActive ? "disabled" : ""}>
+                ${alreadyActive ? "In Progress" : `Accept (${template.fee}g fee)`}
+            </button>
+        `;
+
+    // Hero assignment checkboxes
+    const assignArea = card.querySelector(`#assign-${template.id}`);
+    const assignTitle = document.createElement("div");
+    assignTitle.className = "assign-title";
+    assignTitle.textContent = `Assign heroes (up to ${template.slots}):`;
+    assignArea.appendChild(assignTitle);
+
+    gameState.heroes.forEach((hero) => {
+      const busy = isHeroOnContract(hero.id);
+      const inFormation = isHeroInFormation(hero);
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = `cb-${template.id}-${hero.id}`;
+      cb.value = hero.id;
+      cb.disabled = busy || inFormation || alreadyActive;
+
+      const label = document.createElement("label");
+      label.htmlFor = cb.id;
+      label.textContent = `${hero.name.split(" ")[0]} (${capitalize(hero.class)}, ${hero.tier}, Lv${hero.level})${busy ? " [On Contract]" : inFormation ? " [In Formation]" : ""}`;
+
+      const row = document.createElement("div");
+      row.className = "assign-row";
+      row.appendChild(cb);
+      row.appendChild(label);
+      assignArea.appendChild(row);
+    });
+
+    // Enforce slot cap
+    card.querySelectorAll(`input[type=checkbox]`).forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const checked = card.querySelectorAll(`input[type=checkbox]:checked`);
+        if (checked.length > template.slots) {
+          cb.checked = false;
+        }
+      });
+    });
+
+    // Accept button
+    card.querySelector(".contract-btn").addEventListener("click", () => {
+      const checked = [
+        ...card.querySelectorAll(`input[type=checkbox]:checked`),
+      ].map((c) => c.value);
+      if (!checked.length) {
+        alert("Assign at least one hero.");
+        return;
+      }
+      assignContract(template.id, checked);
+      renderContractsScreen();
+    });
+
+    list.appendChild(card);
+  });
 }

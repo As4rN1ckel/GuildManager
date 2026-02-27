@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/battle.css" />
     <link rel="stylesheet" href="css/shop.css" />
     <link rel="stylesheet" href="css/responsive.css" />
+    <link rel="stylesheet" href="css/contracts.css" />
   </head>
 
   <body>
@@ -64,6 +65,7 @@
         </div>
         <div class="buttons">
           <button id="recruit-btn">Recruit Heroes</button>
+          <button id="contracts-btn">Contracts Board</button>
           <button id="embark-btn" class="primary" disabled>
             Embark on Mission
           </button>
@@ -127,12 +129,23 @@
       </div>
     </div>
 
+    <div id="contracts-screen" class="contracts-screen" style="display: none">
+      <h2 class="panel-title">CONTRACTS BOARD</h2>
+      <div id="contracts-list" class="contracts-list"></div>
+      <div class="buttons">
+        <button id="back-from-contracts-btn" class="primary">
+          BACK TO GUILD
+        </button>
+      </div>
+    </div>
+
     <!-- Script loading order -->
     <script src="heroes.js"></script>
     <script src="dungeons.js"></script>
     <script src="game.js"></script>
     <script src="ui.js"></script>
     <script src="battle.js"></script>
+    <script src="contracts.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         initGame();
