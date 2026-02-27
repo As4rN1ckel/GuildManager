@@ -18,7 +18,6 @@ const modalOverlay = document.getElementById("modal-overlay");
 const closeHeroStatsBtn = document.getElementById("close-hero-stats");
 const restBtn = document.getElementById("rest-btn");
 const restCostAmount = document.getElementById("rest-cost-amount");
-const contractsScreen = document.getElementById("contracts-screen");
 
 // Dynamic Buttons
 const saveBtn = document.createElement("button");
@@ -35,7 +34,22 @@ resetBtn.className = "primary";
 
 const headerButtons = [saveBtn, loadBtn, resetBtn];
 
+// Tab Variables
+let activeTab = "dungeons"; // "dungeons" | "contracts"
+// Pending hero assignments per contract
+let pendingContractAssignments = {};
+
 function initGame() {
+  document.addEventListener("dragover", (e) => {
+    const scrollable = document.querySelector("#contracts-tab-content");
+    if (!scrollable) return;
+    const rect = scrollable.getBoundingClientRect();
+    const edgeSize = 100;
+    const speed = 8;
+    if (e.clientY < rect.top + edgeSize) scrollable.scrollTop -= speed;
+    else if (e.clientY > rect.bottom - edgeSize) scrollable.scrollTop += speed;
+  });
+
   if (
     !heroRoster ||
     !formationGrid ||
@@ -73,13 +87,14 @@ function initGame() {
   heroRoster.addEventListener("dragover", (e) => e.preventDefault());
   heroRoster.addEventListener("drop", (e) => handleDrop(e, null));
 
-  dungeons.forEach((dungeon) => {
-    const el = document.createElement("div");
-    el.className = "dungeon";
-    el.innerHTML = `<div><strong>${dungeon.name}</strong> (${dungeon.difficulty})<div>${dungeon.description}</div></div><div>Reward: ${dungeon.reward} Gold</div>`;
-    el.addEventListener("click", () => selectDungeon(dungeon));
-    dungeonList.appendChild(el);
-  });
+  renderDungeonsTab();
+
+  document
+    .getElementById("tab-dungeons")
+    .addEventListener("click", () => switchTab("dungeons"));
+  document
+    .getElementById("tab-contracts")
+    .addEventListener("click", () => switchTab("contracts"));
 
   recruitBtn.addEventListener("click", showShopScreen);
   embarkBtn.addEventListener("click", startMission);
@@ -118,13 +133,6 @@ function initGame() {
     heroStatsPanel.classList.remove("visible");
     gameState.selectedHero = null;
   });
-
-  document
-    .getElementById("contracts-btn")
-    .addEventListener("click", showContractsScreen);
-  document
-    .getElementById("back-from-contracts-btn")
-    .addEventListener("click", hideContractsScreen);
 
   updateUI();
 }
@@ -227,7 +235,14 @@ function restHeroes() {
 function renderHeroRoster() {
   heroRoster.innerHTML = "";
   gameState.heroes.forEach((hero) => {
-    if (!isHeroInFormation(hero) && !isHeroOnContract(hero.id)) {
+    const isPendingContract = Object.values(pendingContractAssignments).some(
+      (ids) => ids.includes(hero.id),
+    );
+    if (
+      !isHeroInFormation(hero) &&
+      !isHeroOnContract(hero.id) &&
+      !isPendingContract
+    ) {
       const hpPercentage = hero.hp / hero.maxHp;
       const hpClass =
         hpPercentage <= 0.6
@@ -627,6 +642,7 @@ function returnToGuild() {
   retreatRequested = false;
   gameState.retreated = false;
   gameState.retreatRoomsCleared = 0;
+
   resolveContracts();
 
   resultsScreen.style.display = "none";
@@ -795,41 +811,40 @@ function updateHeroStatsPanel() {
   heroStatsContent.appendChild(dismissContainer);
 }
 
-function preventScroll(e) {
-  e.preventDefault();
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById("dungeons-tab-content").style.display =
+    tab === "dungeons" ? "block" : "none";
+  document.getElementById("contracts-tab-content").style.display =
+    tab === "contracts" ? "block" : "none";
+  document
+    .getElementById("tab-dungeons")
+    .classList.toggle("active", tab === "dungeons");
+  document
+    .getElementById("tab-contracts")
+    .classList.toggle("active", tab === "contracts");
+  embarkBtn.style.display = tab === "dungeons" ? "inline-block" : "none";
+
+  if (tab === "contracts") renderContractsTab();
 }
 
-function showContractResults(results) {
-  const lines = results.map(({ template, contract, success }) => {
-    const heroNames = contract.assignedHeroes
-      .map(
-        (id) =>
-          gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
-          "Unknown",
-      )
-      .join(", ");
-    if (success) {
-      return `✔ [${template.name}] — ${heroNames} succeeded! +${template.reward.gold}g, +${template.reward.xp} XP each.`;
-    } else {
-      return `✘ [${template.name}] — ${heroNames} failed. No reward.`;
-    }
+function renderDungeonsTab() {
+  const dungeonList = document.getElementById("dungeon-list");
+  dungeonList.innerHTML = "";
+  dungeons.forEach((dungeon) => {
+    const el = document.createElement("div");
+    el.className = "dungeon";
+    el.innerHTML = `
+            <div><strong>${dungeon.name}</strong> ${dungeon.difficulty}</div>
+            ${dungeon.description}
+            <div><div>Reward ${dungeon.reward} Gold</div></div>
+        `;
+    el.addEventListener("click", () => selectDungeon(dungeon));
+    dungeonList.appendChild(el);
   });
-  alert(lines.join("\n\n"));
 }
 
-function showContractsScreen() {
-  resolveContracts();
-  mainScreen.style.display = "none";
-  contractsScreen.style.display = "flex";
-  renderContractsScreen();
-}
-
-function hideContractsScreen() {
-  contractsScreen.style.display = "none";
-  mainScreen.style.display = "block";
-}
-
-function renderContractsScreen() {
+function renderContractsTab() {
   resolveContracts();
   const list = document.getElementById("contracts-list");
   list.innerHTML = "";
@@ -843,40 +858,7 @@ function renderContractsScreen() {
     title.className = "section-title";
     title.textContent = "⚑ Ready to Claim";
     list.appendChild(title);
-
-    completed.forEach((contract) => {
-      const template = contractTemplates.find(
-        (t) => t.id === contract.contractId,
-      );
-      if (!template) return;
-      const heroNames = contract.assignedHeroes
-        .map(
-          (id) =>
-            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
-            "?",
-        )
-        .join(", ");
-
-      const el = document.createElement("div");
-      el.className = "contract-card contract-completed";
-      el.innerHTML = `
-                <div class="contract-name">✔ ${template.name}</div>
-                <div class="contract-desc">Heroes: ${heroNames} returned successfully.</div>
-                <div class="contract-meta">
-                    <span>Reward: +${template.reward.gold}g</span>
-                    <span>+${template.reward.xp} XP each</span>
-                </div>
-            `;
-      const claimBtn = document.createElement("button");
-      claimBtn.className = "contract-btn claim-btn";
-      claimBtn.textContent = `Claim +${template.reward.gold}g`;
-      claimBtn.addEventListener("click", () => {
-        claimContract(contract.contractId);
-        renderContractsScreen();
-      });
-      el.appendChild(claimBtn);
-      list.appendChild(el);
-    });
+    completed.forEach((contract) => renderCompletedContract(contract, list));
   }
 
   // --- FAILED ---
@@ -884,73 +866,19 @@ function renderContractsScreen() {
   if (failed.length) {
     const title = document.createElement("h3");
     title.className = "section-title";
-    title.textContent = "✘ Failed Contracts";
+    title.textContent = "✘ Failed";
     list.appendChild(title);
-
-    failed.forEach((contract) => {
-      const template = contractTemplates.find(
-        (t) => t.id === contract.contractId,
-      );
-      if (!template) return;
-      const heroNames = contract.assignedHeroes
-        .map(
-          (id) =>
-            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
-            "?",
-        )
-        .join(", ");
-
-      const el = document.createElement("div");
-      el.className = "contract-card contract-failed";
-      el.innerHTML = `
-                <div class="contract-name">✘ ${template.name}</div>
-                <div class="contract-desc">Heroes: ${heroNames} returned empty-handed.</div>
-                <div class="contract-meta"><span>No reward</span></div>
-            `;
-      const dismissBtn = document.createElement("button");
-      dismissBtn.className = "contract-btn dismiss-contract-btn";
-      dismissBtn.textContent = "Dismiss";
-      dismissBtn.addEventListener("click", () => {
-        dismissContract(contract.contractId);
-        renderContractsScreen();
-      });
-      el.appendChild(dismissBtn);
-      list.appendChild(el);
-    });
+    failed.forEach((contract) => renderFailedContract(contract, list));
   }
 
-  // --- ACTIVE ---
+  // --- IN PROGRESS ---
   const active = gameState.activeContracts.filter((c) => c.status === "active");
   if (active.length) {
     const title = document.createElement("h3");
     title.className = "section-title";
     title.textContent = "⧗ In Progress";
     list.appendChild(title);
-
-    active.forEach((contract) => {
-      const template = contractTemplates.find(
-        (t) => t.id === contract.contractId,
-      );
-      if (!template) return;
-      const heroNames = contract.assignedHeroes
-        .map(
-          (id) =>
-            gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] ||
-            "?",
-        )
-        .join(", ");
-
-      const el = document.createElement("div");
-      el.className = "contract-card active-contract";
-      el.innerHTML = `
-                <div class="contract-name">${template.name}</div>
-                <div class="contract-desc">Heroes: ${heroNames}</div>
-                <div class="contract-meta">
-                    <span>Due: Day ${contract.completesOnDay} (${contract.completesOnCycle})</span>
-                </div>
-            `;
-      list.appendChild(el);
-    });
+    active.forEach((contract) => renderActiveContract(contract, list));
   }
 
   // --- AVAILABLE ---
@@ -963,83 +891,233 @@ function renderContractsScreen() {
     const alreadyActive = gameState.activeContracts.some(
       (c) => c.contractId === template.id && c.status === "active",
     );
-    const availableHeroes = gameState.heroes.filter(
-      (h) => !isHeroOnContract(h.id) && !isHeroInFormation(h),
-    );
-    const chance = getContractSuccessChance(
-      availableHeroes.slice(0, template.slots).map((h) => h.id),
-      template.preferredClasses,
-    );
-
-    const card = document.createElement("div");
-    card.className = `contract-card${alreadyActive ? " dimmed" : ""}`;
-    card.innerHTML = `
-            <div class="contract-name">${template.name}</div>
-            <div class="contract-desc">${template.description}</div>
-            <div class="contract-meta">
-                <span>Slots: ${template.slots}</span>
-                <span>Duration: ${template.duration.days}d ${template.duration.cycles}c</span>
-                <span>Fee: ${template.fee}g</span>
-                <span>Reward: ${template.reward.gold}g + ${template.reward.xp} XP</span>
-                <span>Preferred: ${template.preferredClasses.join(", ")}</span>
-            </div>
-            <div class="contract-assign" id="assign-${template.id}"></div>
-            <button class="contract-btn${alreadyActive ? " disabled" : ""}"
-                    data-id="${template.id}" ${alreadyActive ? "disabled" : ""}>
-                ${alreadyActive ? "In Progress" : `Accept (${template.fee}g fee)`}
-            </button>
-        `;
-
-    // Hero assignment checkboxes
-    const assignArea = card.querySelector(`#assign-${template.id}`);
-    const assignTitle = document.createElement("div");
-    assignTitle.className = "assign-title";
-    assignTitle.textContent = `Assign heroes (up to ${template.slots}):`;
-    assignArea.appendChild(assignTitle);
-
-    gameState.heroes.forEach((hero) => {
-      const busy = isHeroOnContract(hero.id);
-      const inFormation = isHeroInFormation(hero);
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.id = `cb-${template.id}-${hero.id}`;
-      cb.value = hero.id;
-      cb.disabled = busy || inFormation || alreadyActive;
-
-      const label = document.createElement("label");
-      label.htmlFor = cb.id;
-      label.textContent = `${hero.name.split(" ")[0]} (${capitalize(hero.class)}, ${hero.tier}, Lv${hero.level})${busy ? " [On Contract]" : inFormation ? " [In Formation]" : ""}`;
-
-      const row = document.createElement("div");
-      row.className = "assign-row";
-      row.appendChild(cb);
-      row.appendChild(label);
-      assignArea.appendChild(row);
-    });
-
-    // Enforce slot cap
-    card.querySelectorAll(`input[type=checkbox]`).forEach((cb) => {
-      cb.addEventListener("change", () => {
-        const checked = card.querySelectorAll(`input[type=checkbox]:checked`);
-        if (checked.length > template.slots) {
-          cb.checked = false;
-        }
-      });
-    });
-
-    // Accept button
-    card.querySelector(".contract-btn").addEventListener("click", () => {
-      const checked = [
-        ...card.querySelectorAll(`input[type=checkbox]:checked`),
-      ].map((c) => c.value);
-      if (!checked.length) {
-        alert("Assign at least one hero.");
-        return;
-      }
-      assignContract(template.id, checked);
-      renderContractsScreen();
-    });
-
-    list.appendChild(card);
+    if (!pendingContractAssignments[template.id]) {
+      pendingContractAssignments[template.id] = [];
+    }
+    renderAvailableContract(template, alreadyActive, list);
   });
+}
+
+function renderCompletedContract(contract, list) {
+  const template = contractTemplates.find((t) => t.id === contract.contractId);
+  if (!template) return;
+  const heroNames = contract.assignedHeroes
+    .map(
+      (id) =>
+        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
+    )
+    .join(", ");
+  const el = document.createElement("div");
+  el.className = "contract-card contract-completed";
+  el.innerHTML = `
+        <div class="contract-name">✔ ${template.name}</div>
+        <div class="contract-desc">${heroNames} returned successfully.</div>
+        <div class="contract-meta">
+            <span>+${template.reward.gold}g</span>
+            <span>+${template.reward.xp} XP each</span>
+        </div>
+    `;
+  const btn = document.createElement("button");
+  btn.className = "contract-btn claim-btn";
+  btn.textContent = `Claim +${template.reward.gold}g`;
+  btn.addEventListener("click", () => {
+    claimContract(contract.contractId);
+    renderContractsTab();
+  });
+  el.appendChild(btn);
+  list.appendChild(el);
+}
+
+function renderFailedContract(contract, list) {
+  const template = contractTemplates.find((t) => t.id === contract.contractId);
+  if (!template) return;
+  const heroNames = contract.assignedHeroes
+    .map(
+      (id) =>
+        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
+    )
+    .join(", ");
+  const el = document.createElement("div");
+  el.className = "contract-card contract-failed";
+  el.innerHTML = `
+        <div class="contract-name">✘ ${template.name}</div>
+        <div class="contract-desc">${heroNames} returned empty-handed.</div>
+        <div class="contract-meta"><span>No reward</span></div>
+    `;
+  const btn = document.createElement("button");
+  btn.className = "contract-btn dismiss-contract-btn";
+  btn.textContent = "Dismiss";
+  btn.addEventListener("click", () => {
+    dismissContract(contract.contractId);
+    renderContractsTab();
+  });
+  el.appendChild(btn);
+  list.appendChild(el);
+}
+
+function renderActiveContract(contract, list) {
+  const template = contractTemplates.find((t) => t.id === contract.contractId);
+  if (!template) return;
+  const heroNames = contract.assignedHeroes
+    .map(
+      (id) =>
+        gameState.heroes.find((h) => h.id === id)?.name.split(" ")[0] || "?",
+    )
+    .join(", ");
+  const el = document.createElement("div");
+  el.className = "contract-card active-contract";
+  el.innerHTML = `
+        <div class="contract-name">${template.name}</div>
+        <div class="contract-desc">Heroes out: ${heroNames}</div>
+        <div class="contract-meta">
+            <span>Due: Day ${contract.completesOnDay} (${contract.completesOnCycle})</span>
+        </div>
+    `;
+  list.appendChild(el);
+}
+
+function renderAvailableContract(template, alreadyActive, list) {
+  const pending = pendingContractAssignments[template.id] || [];
+  const chance = getContractSuccessChance(
+    pending,
+    template.preferredClasses,
+    template.difficulty,
+  );
+  const chanceText = pending.length ? `${Math.round(chance * 100)}%` : "—";
+
+  const card = document.createElement("div");
+  card.className = `contract-card${alreadyActive ? " dimmed" : ""}`;
+  card.dataset.contractId = template.id;
+  card.innerHTML = `
+        <div class="contract-name">${template.name}</div>
+        <div class="contract-desc">${template.description}</div>
+        <div class="contract-meta">
+            <span>⧗ ${template.duration.days}d ${template.duration.cycles > 0 ? template.duration.cycles + "c" : ""}</span>
+            <span>Fee: ${template.fee}g</span>
+            <span>Difficulty: ${template.difficulty}</span>
+            <span>Reward: ${template.reward.gold}g +${template.reward.xp}XP</span>
+            <span>Preferred: ${template.preferredClasses.map(capitalize).join(", ")}</span>
+            <span class="chance-label" id="chance-${template.id}">Success: ${chanceText}</span>
+        </div>
+        <div class="contract-slots" id="slots-${template.id}"></div>
+    `;
+
+  // Build drop slots
+  const slotsContainer = card.querySelector(`#slots-${template.id}`);
+  for (let i = 0; i < template.slots; i++) {
+    const slot = document.createElement("div");
+    slot.className = "contract-slot";
+    slot.dataset.contractId = template.id;
+    slot.dataset.slotIndex = i;
+
+    const assignedHeroId = pending[i];
+    if (assignedHeroId) {
+      const hero = gameState.heroes.find((h) => h.id === assignedHeroId);
+      if (hero) {
+        slot.classList.add("occupied");
+        const heroEl = buildContractHeroEl(hero, template.id, i);
+        slot.appendChild(heroEl);
+      }
+    } else {
+      const slotLabel = document.createElement("span");
+      slotLabel.className = "slot-label";
+      slotLabel.textContent = "+ Hero";
+      slot.appendChild(slotLabel);
+    }
+
+    if (!alreadyActive) {
+      slot.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        slot.classList.add("dragover");
+      });
+      slot.addEventListener("dragleave", () =>
+        slot.classList.remove("dragover"),
+      );
+      slot.addEventListener("drop", (e) =>
+        handleContractDrop(e, template.id, i),
+      );
+    }
+    slotsContainer.appendChild(slot);
+  }
+
+  // Accept button
+  if (!alreadyActive) {
+    const acceptBtn = document.createElement("button");
+    acceptBtn.className = "contract-btn";
+    acceptBtn.textContent = pending.length
+      ? `Accept${template.fee > 0 ? ` (${template.fee}g fee)` : ""}`
+      : "Assign heroes first";
+    acceptBtn.disabled = !pending.length;
+    acceptBtn.addEventListener("click", () => {
+      const assigned = pendingContractAssignments[template.id] || [];
+      if (!assigned.length) return;
+      assignContract(template.id, assigned);
+      pendingContractAssignments[template.id] = [];
+      renderContractsTab();
+      renderHeroRoster();
+    });
+    card.appendChild(acceptBtn);
+  }
+
+  list.appendChild(card);
+}
+
+function buildContractHeroEl(hero, contractId, slotIndex) {
+  const hpPercentage = hero.hp / hero.maxHp;
+  const hpClass =
+    hpPercentage < 0.25 ? "red" : hpPercentage <= 0.6 ? "yellow" : "green";
+  const el = document.createElement("div");
+  el.className = `hero-base hero ${hero.class}`;
+  el.style.width = "4rem";
+  el.style.height = "4rem";
+  el.style.cursor = "pointer";
+  el.title = `Click to remove ${hero.name.split(" ")[0]}`;
+  el.innerHTML = `
+        <div class="shape"></div>
+        <div class="hero-info">${hero.name.split(" ")[0]}</div>
+        <div class="level">Lv${hero.level}</div>
+        <div class="hp-bar"><div class="hp-fill ${hpClass}" style="width:${Math.floor(hpPercentage * 100)}%;"></div></div>
+    `;
+  // Click to remove from slot
+  el.addEventListener("click", () => {
+    pendingContractAssignments[contractId].splice(slotIndex, 1);
+    renderContractsTab();
+    renderHeroRoster();
+  });
+  return el;
+}
+
+function handleContractDrop(e, contractId, slotIndex) {
+  e.preventDefault();
+  const slot = e.currentTarget;
+  slot.classList.remove("dragover");
+
+  const heroId = e.dataTransfer.getData("text/plain");
+  const hero = gameState.heroes.find((h) => h.id === heroId);
+  if (!hero) return;
+
+  if (isHeroOnContract(heroId)) return;
+
+  if (isHeroInFormation(hero)) {
+    const formationIndex = gameState.formation.indexOf(heroId);
+    if (formationIndex !== -1) gameState.formation[formationIndex] = null;
+  }
+
+  const pending = pendingContractAssignments[contractId] || [];
+  const template = contractTemplates.find((t) => t.id === contractId);
+
+  if (pending.includes(heroId)) return;
+  const busyElsewhere = Object.entries(pendingContractAssignments).some(
+    ([id, heroes]) => id !== contractId && heroes.includes(heroId),
+  );
+  if (busyElsewhere) return;
+  if (pending.length >= template.slots) return;
+
+  pending[slotIndex] = heroId;
+  pendingContractAssignments[contractId] = pending.filter(Boolean);
+
+  renderContractsTab();
+  renderHeroRoster();
+  updateFormationGrid();
+  checkEmbarkButton();
 }

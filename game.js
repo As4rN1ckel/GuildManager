@@ -146,6 +146,7 @@ function resolveContracts() {
       const chance = getContractSuccessChance(
         contract.assignedHeroes,
         template.preferredClasses,
+        template.difficulty,
       );
       contract.status = Math.random() < chance ? "completed" : "failed";
     }

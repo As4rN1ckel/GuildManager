@@ -59,13 +59,22 @@
           <h2 class="panel-title">Formation</h2>
           <div class="formation-grid" id="formation-grid"></div>
         </div>
-        <div class="panel">
-          <h2 class="panel-title">Available Dungeons</h2>
-          <div class="dungeon-list" id="dungeon-list"></div>
+        <div class="panel" id="activity-panel">
+          <div class="tab-bar">
+            <button class="tab-btn active" id="tab-dungeons">⚔ Dungeons</button>
+            <button class="tab-btn" id="tab-contracts">📋 Contracts</button>
+          </div>
+          <!-- Dungeons tab -->
+          <div id="dungeons-tab-content">
+            <div class="dungeon-list" id="dungeon-list"></div>
+          </div>
+          <!-- Contracts tab -->
+          <div id="contracts-tab-content" style="display: none">
+            <div id="contracts-list" class="contracts-list"></div>
+          </div>
         </div>
         <div class="buttons">
           <button id="recruit-btn">Recruit Heroes</button>
-          <button id="contracts-btn">Contracts Board</button>
           <button id="embark-btn" class="primary" disabled>
             Embark on Mission
           </button>
@@ -129,23 +138,13 @@
       </div>
     </div>
 
-    <div id="contracts-screen" class="contracts-screen" style="display: none">
-      <h2 class="panel-title">CONTRACTS BOARD</h2>
-      <div id="contracts-list" class="contracts-list"></div>
-      <div class="buttons">
-        <button id="back-from-contracts-btn" class="primary">
-          BACK TO GUILD
-        </button>
-      </div>
-    </div>
-
     <!-- Script loading order -->
     <script src="heroes.js"></script>
     <script src="dungeons.js"></script>
+    <script src="contracts.js"></script>
     <script src="game.js"></script>
     <script src="ui.js"></script>
     <script src="battle.js"></script>
-    <script src="contracts.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         initGame();
