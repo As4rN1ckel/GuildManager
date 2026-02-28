@@ -192,9 +192,7 @@ function hideHeaderButtons() {
 
 function updateUI() {
   goldAmount.textContent = gameState.gold;
-  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${
-    gameState.day
-  }`;
+  dayCount.textContent = `${gameState.cycle === "day" ? "Day" : "Night"} ${gameState.day}`;
   renderHeroRoster();
   updateFormationGrid();
 
@@ -203,7 +201,8 @@ function updateUI() {
   restCostAmount.textContent = cost;
   restBtn.disabled = gameState.gold < cost;
 
-  // Trigger animation for updated panels
+  if (activeTab === "contracts") renderContractsTab();
+
   document.querySelectorAll(".panel").forEach((panel) => {
     panel.classList.remove("animate-in");
     setTimeout(() => panel.classList.add("animate-in"), 10);
@@ -651,7 +650,7 @@ function returnToGuild() {
   gameState.retreatRoomsCleared = 0;
 
   resolveContracts();
-
+  
   resultsScreen.style.display = "none";
   mainScreen.style.display = "block";
   toggleCycle();
@@ -1126,4 +1125,18 @@ function handleContractDrop(e, contractId, slotIndex) {
   renderContractsTab();
   updateUI();
   checkEmbarkButton();
+}
+
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("visible"), 10);
+
+  setTimeout(() => {
+    toast.classList.remove("visible");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
 }

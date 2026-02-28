@@ -85,7 +85,7 @@ function getContractSuccessChance(heroIds, preferredClasses, difficulty) {
     return sum + tierPower + hero.level * 0.8 + classBonus;
   }, 0);
 
-  const threshold = difficulty * 5;
+  const threshold = difficulty * 6;
   return Math.min(0.99, Math.max(0.1, power / threshold));
 }
 
@@ -109,13 +109,12 @@ function getCompletionPoint(duration) {
 }
 
 function isContractComplete(contract) {
-  if (contract.completesOnDay < gameState.day) return true;
-  if (contract.completesOnDay === gameState.day) {
-    if (contract.completesOnCycle === "day" && gameState.cycle === "day")
-      return true;
-    if (contract.completesOnCycle === "night") return true;
-  }
-  return false;
+    if (contract.completesOnDay < gameState.day) return true;
+    if (contract.completesOnDay === gameState.day) {
+        if (contract.completesOnCycle === "day" && gameState.cycle === "day") return true;
+        if (contract.completesOnCycle === "night" && gameState.cycle === "night") return true;
+    }
+    return false;
 }
 
 if (typeof window !== "undefined") {

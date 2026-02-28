@@ -148,7 +148,20 @@ function resolveContracts() {
         template.preferredClasses,
         template.difficulty,
       );
-      contract.status = Math.random() < chance ? "completed" : "failed";
+      const success = Math.random() < chance;
+      contract.status = success ? "completed" : "failed";
+
+      if (success) {
+        showToast(
+          `✔ "${template.name}" succeeded! Claim your reward.`,
+          "success",
+        );
+      } else {
+        showToast(
+          `✘ "${template.name}" failed. Heroes returned empty-handed.`,
+          "failed",
+        );
+      }
     }
   });
 }
